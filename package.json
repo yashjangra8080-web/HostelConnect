@@ -1,0 +1,32 @@
+{
+  "name": "hostelconnect",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Next-Gen Hostel Management System, NSUT Dwarka",
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "start": "npm run start --workspace=server",
+    "dev": "concurrently \"npm run dev --workspace=server\" \"npm run dev --workspace=web\"",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:routines": "tsx scripts/routine-loader.ts",
+    "db:audit-triggers": "tsx scripts/generate-audit-triggers.ts",
+    "db:seed": "tsx scripts/seed.ts",
+    "db:reset": "tsx scripts/reset-demo.ts",
+    "show-grants": "tsx scripts/show-grants.ts",
+    "test": "vitest run",
+    "test:sql": "tsx scripts/sql-assertion-runner.ts",
+    "build": "npm run build --workspaces"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "concurrently": "^9.1.0",
+    "playwright": "^1.64.1",
+    "puppeteer-core": "^25.16.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

@@ -35,8 +35,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import { CommandPalette } from '../ui/CommandPalette.js';
-import { Drawer } from '../ui/Drawer.js';
-import { StatusTag } from '../ui/StatusTag.js';
+import { NotificationPopover, NotificationItem } from '../NotificationPopover.js';
 
 interface NavItem {
   key: string;
@@ -120,9 +119,9 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
   const { user, logout } = useAuth();
   const [navGroups, setNavGroups] = useState<NavGroup[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
-  const [isNotifDrawerOpen, setIsNotifDrawerOpen] = useState(false);
+  const [isNotifPopoverOpen, setIsNotifPopoverOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [currentTimeIST, setCurrentTimeIST] = useState<string>('');
@@ -168,24 +167,31 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch recent notifications when drawer opens
-  const openNotifDrawer = () => {
-    setIsNotifDrawerOpen(true);
-    fetch('/api/notifications?page=1&pageSize=15', { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() : { notifications: [] }))
-      .then((data) => setNotifications(data.notifications || []))
-      .catch(() => setNotifications([]));
+  // Fetch latest 8 notifications when popover opens (unread first)
+  const toggleNotifPopover = () => {
+    if (!isNotifPopoverOpen) {
+      fetch('/api/notifications?page=1&pageSize=8', { credentials: 'include' })
+        .then((res) => (res.ok ? res.json() : { notifications: [] }))
+        .then((data) => setNotifications(data.notifications || []))
+        .catch(() => setNotifications([]));
+    }
+    setIsNotifPopoverOpen((prev) => !prev);
   };
 
   const markNotificationRead = (notifId: number) => {
-    fetch(`/api/notifications/${notifId}/read`, { method: 'PATCH', credentials: 'include' })
-      .then(() => {
-        setNotifications((prev) =>
-          prev.map((n) => (n.notif_id === notifId ? { ...n, is_read: true } : n))
-        );
-        fetchNotifCount();
-      })
-      .catch(() => {});
+    // Optimistic update: drop badge and mark read immediately
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+    setNotifications((prev) =>
+      prev.map((n) => (n.notif_id === notifId ? { ...n, is_read: true } : n))
+    );
+    fetch(`/api/notifications/${notifId}/read`, { method: 'PATCH', credentials: 'include' }).catch(() => {});
+  };
+
+  const markAllNotificationsRead = () => {
+    // Optimistic update: zero unread badge immediately
+    setUnreadCount(0);
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+    fetch('/api/notifications/read-all', { method: 'POST', credentials: 'include' }).catch(() => {});
   };
 
   // Global Ctrl+K / Cmd+K listener
@@ -363,7 +369,7 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
             <div className="relative">
               <button
                 type="button"
-                onClick={openNotifDrawer}
+                onClick={toggleNotifPopover}
                 aria-label="View notifications"
                 className="relative p-2 rounded text-ink-secondary hover:text-ink-primary hover:bg-surface-subtle transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
               >
@@ -374,6 +380,16 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
                   </span>
                 )}
               </button>
+
+              <NotificationPopover
+                isOpen={isNotifPopoverOpen}
+                onClose={() => setIsNotifPopoverOpen(false)}
+                notifications={notifications}
+                onMarkRead={markNotificationRead}
+                onMarkAllRead={markAllNotificationsRead}
+                onNavigate={onNavigate}
+                userRole={user?.role}
+              />
             </div>
 
             <div className="h-4 w-[1px] bg-border mx-1" />
@@ -458,67 +474,6 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
           onNavigate(res.url);
         }}
       />
-
-      {/* Notifications Drawer */}
-      <Drawer
-        isOpen={isNotifDrawerOpen}
-        onClose={() => setIsNotifDrawerOpen(false)}
-        title="Notifications & Alerts"
-        subtitle={`You have ${unreadCount} unread message(s)`}
-      >
-        <div className="space-y-2">
-          {notifications.length === 0 ? (
-            <div className="py-8 text-center text-xs text-ink-muted">
-              No notifications at this time.
-            </div>
-          ) : (
-            notifications.map((notif) => (
-              <div
-                key={notif.notif_id}
-                onClick={() => !notif.is_read && markNotificationRead(notif.notif_id)}
-                className={`p-3 rounded border transition-colors ${
-                  notif.is_read
-                    ? 'bg-surface border-border text-ink-secondary'
-                    : 'bg-primary-subtle/30 border-primary-border text-ink-primary cursor-pointer'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-semibold leading-tight">{notif.title}</span>
-                  {!notif.is_read && (
-                    <StatusTag status="saffron" label="NEW" size="sm" />
-                  )}
-                </div>
-                {notif.body && (
-                  <p className="text-xs text-ink-secondary mt-1 leading-snug">{notif.body}</p>
-                )}
-                <div className="flex items-center justify-between mt-2 pt-1 border-t border-border/40 text-[10px] text-ink-muted">
-                  <span className="font-mono">
-                    {new Date(notif.created_at).toLocaleDateString('en-IN', {
-                      timeZone: 'Asia/Kolkata',
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </span>
-                  {notif.link && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsNotifDrawerOpen(false);
-                        onNavigate(notif.link);
-                      }}
-                      className="text-primary hover:underline font-medium"
-                    >
-                      View Details →
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </Drawer>
     </div>
   );
 };

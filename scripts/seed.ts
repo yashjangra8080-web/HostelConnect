@@ -1,6 +1,7 @@
 import path from 'path';
 import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
+import { seedNotifications } from './seed-notifications.js';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 dotenv.config({ path: path.resolve(process.cwd(), 'server/.env') });
@@ -935,16 +936,7 @@ async function seedDatabase() {
       [maintSchedulesData]
     );
 
-    const notificationsData = [
-      [1, 11, 'ALLOTMENT', 'Hostel Allotment Published', 'The official room allotment for cycle 2026-27 is now published.', '/allotment', 0, '2026-08-01 10:05:00'],
-      [2, 12, 'ALLOTMENT', 'Hostel Allotment Published', 'The official room allotment for cycle 2026-27 is now published.', '/allotment', 1, '2026-08-01 10:05:00'],
-      [3, 11, 'NOTICE', 'New Circular: Dining Hall Protocols', 'A new general circular has been published by Chief Warden.', '/notices', 0, '2026-09-02 08:30:00'],
-      [4, 15, 'COMPLAINT', 'Complaint Status Updated', 'Your complaint HC1000000001 has been marked IN_PROGRESS.', '/complaints', 0, '2026-10-06 14:05:00']
-    ];
-    await conn.query(
-      'INSERT INTO notifications (notif_id, user_id, notif_type, title, body, link, is_read, created_at) VALUES ?',
-      [notificationsData]
-    );
+    await seedNotifications(conn);
 
     console.log('[Seed Runner] 14. Re-enabling foreign key checks...');
     await conn.query('SET FOREIGN_KEY_CHECKS = 1;');

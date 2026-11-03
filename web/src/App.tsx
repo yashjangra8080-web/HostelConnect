@@ -6,6 +6,7 @@ import { AppShell } from './components/layout/AppShell.js';
 import { Button } from './components/ui/Button.js';
 import { LoginPage } from './pages/LoginPage.js';
 import { ChangePasswordPage } from './pages/ChangePasswordPage.js';
+import { NotificationsPage } from './pages/NotificationsPage.js';
 import { RoleDashboard } from './components/dashboard/RoleDashboard.js';
 import { MessManagerCounter } from './components/mess/MessManagerCounter.js';
 import { StudentAttendanceStrip } from './components/mess/StudentAttendanceStrip.js';
@@ -92,6 +93,8 @@ function AppContent() {
   // 4. Authenticated main router wrapped in AppShell
   const renderContent = () => {
     switch (currentPath) {
+      case '/notifications':
+        return <NotificationsPage onNavigate={navigateTo} />;
       case '/change-password':
         return <ChangePasswordPage onSuccess={() => navigateTo('/')} />;
 

@@ -7,6 +7,7 @@ import { Button } from './components/ui/Button.js';
 import { LoginPage } from './pages/LoginPage.js';
 import { ChangePasswordPage } from './pages/ChangePasswordPage.js';
 import { NotificationsPage } from './pages/NotificationsPage.js';
+import { MessCheckInPage } from './pages/MessCheckInPage.js';
 import { RoleDashboard } from './components/dashboard/RoleDashboard.js';
 import { MessManagerCounter } from './components/mess/MessManagerCounter.js';
 import { StudentAttendanceStrip } from './components/mess/StudentAttendanceStrip.js';
@@ -167,6 +168,8 @@ function AppContent() {
       case '/mess/counter':
       case '/warden/mess':
         return <MessManagerCounter />;
+      case '/mess/check-in':
+        return <MessCheckInPage onNavigate={navigateTo} />;
       case '/mess/refunds':
         return <ManagerRefundConsole />;
       case '/mess/config':

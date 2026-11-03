@@ -128,6 +128,7 @@ export const ALLOWED_INTERNAL_ROUTES = [
   '/caretaker',
   '/mess/attendance',
   '/mess/counter',
+  '/mess/check-in',
   '/mess/refunds',
   '/mess/config',
   '/mess',

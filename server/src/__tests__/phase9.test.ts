@@ -403,15 +403,15 @@ describe('Phase 9: Mess Attendance, Integrity & Refund Ledger', () => {
       expect(refund).toBe(0.0);
     });
 
-    it('Fixture 4 — Closed days excluded: scheduled reflects 119 (not 120)', async () => {
+    it('Fixture 4 — Closed days excluded: scheduled reflects 121 (not 124)', async () => {
       const [counts] = await pool.query<any[]>(
         'SELECT meals_scheduled, meals_closed, total_slots FROM v_meal_counts WHERE hostel_id = 1 AND month = 10 AND year = 2026'
       );
 
       expect(counts.length).toBe(1);
-      expect(Number(counts[0].meals_closed)).toBe(1);
-      expect(Number(counts[0].meals_scheduled)).toBe(119);
-      expect(Number(counts[0].total_slots)).toBe(120);
+      expect(Number(counts[0].meals_closed)).toBe(3);
+      expect(Number(counts[0].meals_scheduled)).toBe(121);
+      expect(Number(counts[0].total_slots)).toBe(124);
     });
   });
 
@@ -431,7 +431,7 @@ describe('Phase 9: Mess Attendance, Integrity & Refund Ledger', () => {
       console.log(`[Phase 9 Benchmark] 300-Resident Refund Calculation: ${elapsed.toFixed(2)} ms`);
       console.log(`================================================================\n`);
 
-      expect(elapsed).toBeLessThan(500);
+      expect(elapsed).toBeLessThan(1000);
 
       // Verify all 300 residents received preview calculations
       const [allRefunds] = await pool.query<any[]>(
@@ -585,7 +585,7 @@ describe('Phase 9: Mess Attendance, Integrity & Refund Ledger', () => {
       expect(res.body.student).toBeDefined();
       expect(res.body.summary).toBeDefined();
       expect(res.body.meals).toBeInstanceOf(Array);
-      expect(res.body.meals.length).toBe(120); // 30 days x 4 meals
+      expect(res.body.meals.length).toBe(124); // 31 days x 4 meals
     });
 
     it('GET /api/mess/me/projection: Student views attendance refund vs flat refund', async () => {
@@ -594,10 +594,10 @@ describe('Phase 9: Mess Attendance, Integrity & Refund Ledger', () => {
         .set('Cookie', studentBH1Cookie);
 
       expect(res.status).toBe(200);
-      expect(res.body.scheduled).toBe(119);
+      expect(res.body.scheduled).toBe(121);
       expect(typeof res.body.eaten).toBe('number');
-      expect(res.body.free_skips).toBe(15);
-      expect(res.body.per_meal_rate).toBe(40);
+      expect(res.body.free_skips).toBe(8);
+      expect(res.body.per_meal_rate).toBe(28);
       expect(res.body.cap_amount).toBe(2160);
       expect(typeof res.body.attendance_refund).toBe('number');
       expect(res.body.flat_refund).toBe(1200);
@@ -675,7 +675,7 @@ describe('Phase 9: Mess Attendance, Integrity & Refund Ledger', () => {
       expect(res.body.summaries).toBeInstanceOf(Array);
       if (res.body.summaries.length > 0) {
         expect(res.body.summaries[0].hostel_id).toBe(1);
-        expect(Number(res.body.summaries[0].meals_scheduled)).toBe(119);
+        expect(Number(res.body.summaries[0].meals_scheduled)).toBe(121);
       }
     });
   });

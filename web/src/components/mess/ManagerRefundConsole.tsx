@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   RefreshCw,
   Lock,
+  BarChart2,
 } from 'lucide-react';
 import { Button } from '../ui/Button.js';
 import { Input } from '../ui/Input.js';
@@ -15,6 +16,7 @@ import { StatusTag } from '../ui/StatusTag.js';
 import { KPIStrip } from '../ui/KPIStrip.js';
 import { ConfirmDialog } from '../ui/ConfirmDialog.js';
 import { useToast } from '../ui/Toast.js';
+import { formatCurrencyINR } from '../../utils/format.js';
 
 interface RefundRecord {
   refund_id: number | null;
@@ -29,6 +31,19 @@ interface RefundRecord {
   eligible_missed: number;
   refund_amount: number;
   status: 'PREVIEW' | 'FINAL' | 'NOT_CALCULATED';
+}
+
+interface HistogramBin {
+  label: string;
+  count: number;
+}
+
+interface MessConfigData {
+  per_meal_refund_rate: number;
+  free_skips: number;
+  cap_pct: number;
+  food_component: number;
+  monthly_fee: number;
 }
 
 interface RefundConsoleResponse {
@@ -46,6 +61,8 @@ interface RefundConsoleResponse {
     preview_count: number;
     status: 'PREVIEW' | 'FINAL' | 'NOT_CALCULATED';
   };
+  histogram?: HistogramBin[];
+  config?: MessConfigData;
   refunds: RefundRecord[];
 }
 
@@ -271,6 +288,7 @@ export const ManagerRefundConsole: React.FC = () => {
               <option value={1}>BH1 (Boys Hostel 1)</option>
               <option value={2}>BH2 (Boys Hostel 2)</option>
               <option value={3}>GH1 (Girls Hostel 1)</option>
+              <option value={4}>GH2 (Girls Hostel 2)</option>
             </select>
           </div>
 
@@ -288,7 +306,6 @@ export const ManagerRefundConsole: React.FC = () => {
               <option value={9}>Sep 2026</option>
               <option value={10}>Oct 2026</option>
               <option value={11}>Nov 2026</option>
-              <option value={12}>Dec 2026</option>
             </select>
           </div>
 
@@ -341,7 +358,7 @@ export const ManagerRefundConsole: React.FC = () => {
             Ledger Metrics • Hostel {selectedHostel} ({month}/{year})
           </span>
           <span className="text-ink-muted font-mono tabular-nums">
-            Rate: ₹40.00/meal • Free Skips: 15 • Cap: 60%
+            Rate: {formatCurrencyINR(data?.config?.per_meal_refund_rate ?? 28)}/meal • Free Skips: {data?.config?.free_skips ?? 8} • Cap: {data?.config?.cap_pct ?? 60}%
           </span>
         </div>
 
@@ -357,8 +374,8 @@ export const ManagerRefundConsole: React.FC = () => {
             {
               id: '2',
               label: 'Calculated Outlay',
-              value: `₹${totalOutlay.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
-              subtext: `Avg ₹${(totalOutlay / (totalResidents || 1)).toFixed(2)} / resident`,
+              value: formatCurrencyINR(totalOutlay),
+              subtext: `Avg ${formatCurrencyINR(totalOutlay / (totalResidents || 1))} / resident`,
               badge: <StatusTag status="success" label="LEDGER OUTLAY" size="sm" />,
             },
             {
@@ -384,6 +401,55 @@ export const ManagerRefundConsole: React.FC = () => {
           ]}
         />
       </section>
+
+      {/* Preview Distribution Histogram */}
+      {data?.histogram && data.histogram.length > 0 && (
+        <div className="bg-surface border border-border rounded-lg p-5 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-border">
+            <div className="flex items-center gap-2">
+              <BarChart2 className="w-4 h-4 text-saffron" strokeWidth={1.75} />
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-ink-primary">
+                Preview Distribution Histogram ({data.summary.total_calculated} Calculated Residents)
+              </h3>
+            </div>
+            <span className="text-[11px] text-ink-muted font-mono">
+              Formula: min(cap, max(0, missed - free_skips) × rate)
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+            {data.histogram.map((bin) => {
+              const totalCalc = data.summary.total_calculated || 1;
+              const pct = Math.round((bin.count / totalCalc) * 100);
+              return (
+                <div
+                  key={bin.label}
+                  className="bg-surface-subtle border border-border rounded p-3 flex flex-col justify-between space-y-2"
+                >
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-mono font-semibold text-ink-primary">{bin.label}</span>
+                    <span className="text-ink-muted font-mono tabular-nums">{pct}%</span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="w-full bg-border/60 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-saffron h-full rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(100, Math.max(pct > 0 ? 6 : 0, pct))}%` }}
+                      />
+                    </div>
+                    <div className="text-right">
+                      <span className="font-mono text-xs font-bold text-ink-primary tabular-nums">
+                        {bin.count}
+                      </span>
+                      <span className="text-[10px] text-ink-muted ml-1">res.</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Search and Table Controls */}
       <div className="p-4 bg-surface border border-border rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -476,7 +542,7 @@ export const ManagerRefundConsole: React.FC = () => {
                       {row.eligible_missed}
                     </td>
                     <td className="py-3 px-4 text-right font-mono tabular-nums font-bold text-ink-primary">
-                      ₹{Number(row.refund_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      {formatCurrencyINR(row.refund_amount)}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <StatusTag
@@ -547,7 +613,7 @@ export const ManagerRefundConsole: React.FC = () => {
               <div className="flex justify-between">
                 <span>Total Outlay:</span>
                 <strong className="text-emerald-700">
-                  ₹{totalOutlay.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  {formatCurrencyINR(totalOutlay)}
                 </strong>
               </div>
             </div>

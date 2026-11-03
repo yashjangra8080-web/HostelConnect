@@ -109,6 +109,39 @@ messRouter.get(
 
         const [timeRows] = await conn.query<any[]>('SELECT CURTIME() AS cur_time, CURDATE() AS cur_date');
 
+        // 14-day daily turnout trend for this hostel
+        const [trendRows] = await conn.query<any[]>(
+          `SELECT 
+             DATE_FORMAT(m.meal_date, '%Y-%m-%d') AS date,
+             COUNT(DISTINCT ma.att_id) AS attended,
+             COUNT(DISTINCT CASE WHEN m.is_closed = 0 THEN m.meal_id END) * ? AS scheduled
+           FROM meals m
+           LEFT JOIN mess_attendance ma ON m.meal_id = ma.meal_id
+           WHERE m.hostel_id = ? 
+             AND m.meal_date BETWEEN DATE_SUB(CURDATE(), INTERVAL 14 DAY) AND CURDATE()
+           GROUP BY m.meal_date
+           ORDER BY m.meal_date ASC`,
+          [totalResidents, targetHostelId]
+        );
+
+        // Per-meal-type turnout rates over past 30 days
+        const [rateRows] = await conn.query<any[]>(
+          `SELECT 
+             mt.meal_type_id,
+             mt.type_name,
+             COUNT(ma.att_id) AS attended,
+             COUNT(DISTINCT m.meal_id) * ? AS scheduled
+           FROM meals m
+           JOIN meal_types mt ON m.meal_type_id = mt.meal_type_id
+           LEFT JOIN mess_attendance ma ON m.meal_id = ma.meal_id
+           WHERE m.hostel_id = ? 
+             AND m.is_closed = 0
+             AND m.meal_date BETWEEN DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND CURDATE()
+           GROUP BY mt.meal_type_id, mt.type_name
+           ORDER BY mt.meal_type_id ASC`,
+          [totalResidents, targetHostelId]
+        );
+
         return res.status(200).json({
           hostel,
           meal: selectedMeal,
@@ -123,6 +156,8 @@ messRouter.get(
           currentTimeIST: timeRows[0]?.cur_time,
           currentDateIST: timeRows[0]?.cur_date,
           todaySlots: todayMeals,
+          fourteenDayTrend: trendRows,
+          mealTypeRates: rateRows,
         });
       });
     } catch (err) {
@@ -296,9 +331,10 @@ messRouter.get('/me/month', requireAuth, async (req: Request, res: Response, nex
       const [mealRows] = await conn.query<any[]>(
         `SELECT 
            m.meal_id,
-           m.meal_date,
+           DATE_FORMAT(m.meal_date, '%Y-%m-%d') AS meal_date,
            m.menu,
            m.is_closed,
+           m.closure_reason,
            mt.meal_type_id,
            mt.type_name,
            mt.start_time,
@@ -309,6 +345,7 @@ messRouter.get('/me/month', requireAuth, async (req: Request, res: Response, nex
            CASE 
              WHEN m.is_closed = 1 THEN 'CLOSED'
              WHEN ma.att_id IS NOT NULL THEN 'EATEN'
+             WHEN m.meal_date > CURDATE() OR (m.meal_date = CURDATE() AND CURTIME() < mt.end_time) THEN 'NOT_YET_SERVED'
              ELSE 'MISSED'
            END AS status
          FROM meals m
@@ -323,24 +360,73 @@ messRouter.get('/me/month', requireAuth, async (req: Request, res: Response, nex
         [studentId, residence.hostel_id, month, year]
       );
 
-      // 3. Compute summary counts
+      // 3. Compute summary counts, streak, per-meal meters, and weekly trends
       let scheduled = 0;
       let eaten = 0;
       let missed = 0;
       let closed = 0;
+      let upcoming = 0;
+
+      const mealTypeMeters: Record<number, { name: string; scheduled: number; eaten: number }> = {
+        1: { name: 'Breakfast', scheduled: 0, eaten: 0 },
+        2: { name: 'Lunch', scheduled: 0, eaten: 0 },
+        3: { name: 'Snacks', scheduled: 0, eaten: 0 },
+        4: { name: 'Dinner', scheduled: 0, eaten: 0 },
+      };
+
+      const weeklyCounts: Record<number, { scheduled: number; eaten: number }> = {
+        1: { scheduled: 0, eaten: 0 },
+        2: { scheduled: 0, eaten: 0 },
+        3: { scheduled: 0, eaten: 0 },
+        4: { scheduled: 0, eaten: 0 },
+        5: { scheduled: 0, eaten: 0 },
+      };
 
       for (const m of mealRows) {
+        const d = Number(m.meal_date.split('-')[2]);
+        const w = d <= 7 ? 1 : d <= 14 ? 2 : d <= 21 ? 3 : d <= 28 ? 4 : 5;
+
         if (m.is_closed === 1) {
           closed++;
+        } else if (m.status === 'NOT_YET_SERVED') {
+          upcoming++;
         } else {
           scheduled++;
-          if (m.att_id) {
+          if (mealTypeMeters[m.meal_type_id]) {
+            mealTypeMeters[m.meal_type_id].scheduled++;
+          }
+          weeklyCounts[w].scheduled++;
+
+          if (m.status === 'EATEN') {
             eaten++;
+            if (mealTypeMeters[m.meal_type_id]) {
+              mealTypeMeters[m.meal_type_id].eaten++;
+            }
+            weeklyCounts[w].eaten++;
           } else {
             missed++;
           }
         }
       }
+
+      // Compute streak: consecutive eaten meals ending at latest served meal
+      let streak = 0;
+      const servedMeals = mealRows.filter((m) => m.is_closed === 0 && m.status !== 'NOT_YET_SERVED');
+      for (let i = servedMeals.length - 1; i >= 0; i--) {
+        if (servedMeals[i].status === 'EATEN') {
+          streak++;
+        } else {
+          break;
+        }
+      }
+
+      const weeklyTrend = Object.entries(weeklyCounts).map(([week, counts]) => ({
+        week: Number(week),
+        label: `W${week}`,
+        attendancePct: counts.scheduled > 0 ? Number(((counts.eaten / counts.scheduled) * 100).toFixed(0)) : 0,
+        eaten: counts.eaten,
+        scheduled: counts.scheduled,
+      }));
 
       return res.status(200).json({
         student: residence,
@@ -352,7 +438,11 @@ messRouter.get('/me/month', requireAuth, async (req: Request, res: Response, nex
           eaten,
           missed,
           closed,
+          upcoming,
+          streak,
           attendance_pct: scheduled > 0 ? Number(((eaten / scheduled) * 100).toFixed(1)) : 0,
+          mealTypeMeters,
+          weeklyTrend,
         },
         meals: mealRows,
       });
@@ -480,6 +570,140 @@ messRouter.get('/me/projection', requireAuth, async (req: Request, res: Response
 });
 
 // ============================================================================
+// 5B. GET /api/mess/me/ledger
+// Multi-month summary table for student refund ledger:
+// September (FINAL), October (PREVIEW), November (IN_PROGRESS live projection)
+// ============================================================================
+messRouter.get('/me/ledger', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = req.user!;
+    await withRequestConn(user.role, user.userId, async (conn) => {
+      let studentId = user.studentId;
+      if (!studentId) {
+        const [sRows] = await conn.query<any[]>(
+          'SELECT student_id FROM students WHERE user_id = ? LIMIT 1',
+          [user.userId]
+        );
+        studentId = sRows[0]?.student_id;
+      }
+
+      if (!studentId) {
+        return res.status(200).json({ isResident: false, student: null, ledger: [] });
+      }
+
+      const [resRows] = await conn.query<any[]>(
+        'SELECT student_id, roll_no, full_name, hostel_id, hostel_name, room_no FROM v_current_residence WHERE student_id = ? LIMIT 1',
+        [studentId]
+      );
+      const student = resRows[0];
+      if (!student) {
+        return res.status(200).json({ isResident: false, student: null, ledger: [] });
+      }
+
+      const [appRows] = await conn.query<any[]>(
+        "SELECT setting_value FROM app_settings WHERE setting_key = 'mess_flat_refund' LIMIT 1"
+      );
+      const flatRefundBenchmark = Number(appRows[0]?.setting_value || 1200);
+
+      const monthsToProcess = [
+        { month: 9, year: 2026, name: 'September 2026' },
+        { month: 10, year: 2026, name: 'October 2026' },
+        { month: 11, year: 2026, name: 'November 2026' },
+      ];
+
+      const ledgerRecords: any[] = [];
+
+      for (const mItem of monthsToProcess) {
+        const [cfgRows] = await conn.query<any[]>(
+          'SELECT monthly_fee, food_component, per_meal_refund_rate, free_skips, cap_pct FROM mess_config WHERE hostel_id = ? AND month = ? AND year = ?',
+          [student.hostel_id, mItem.month, mItem.year]
+        );
+        const cfg = cfgRows[0] || {
+          monthly_fee: 4500,
+          food_component: 3600,
+          per_meal_refund_rate: 28,
+          free_skips: 8,
+          cap_pct: 60,
+        };
+
+        const [refRows] = await conn.query<any[]>(
+          'SELECT * FROM mess_refunds WHERE student_id = ? AND month = ? AND year = ?',
+          [studentId, mItem.month, mItem.year]
+        );
+        const refRow = refRows[0];
+
+        if (refRow) {
+          const scheduled = Number(refRow.meals_scheduled);
+          const eaten = Number(refRow.meals_eaten);
+          const missed = scheduled - eaten;
+          const freeSkips = Number(cfg.free_skips);
+          const attendanceRefund = Number(refRow.refund_amount);
+          const difference = attendanceRefund - flatRefundBenchmark;
+
+          ledgerRecords.push({
+            month: mItem.month,
+            year: mItem.year,
+            monthName: mItem.name,
+            scheduled,
+            eaten,
+            missed,
+            freeSkips,
+            attendanceRefund,
+            flatRefund: flatRefundBenchmark,
+            difference,
+            status: refRow.status as 'FINAL' | 'PREVIEW',
+          });
+        } else {
+          const [cntRows] = await conn.query<any[]>(
+            'SELECT COUNT(*) as scheduled FROM meals WHERE hostel_id = ? AND MONTH(meal_date) = ? AND YEAR(meal_date) = ? AND is_closed = 0',
+            [student.hostel_id, mItem.month, mItem.year]
+          );
+          const scheduled = Number(cntRows[0]?.scheduled || 118);
+
+          const [eatenRows] = await conn.query<any[]>(
+            `SELECT COUNT(*) as eaten FROM mess_attendance ma
+             JOIN meals m ON ma.meal_id = m.meal_id
+             WHERE ma.student_id = ? AND MONTH(m.meal_date) = ? AND YEAR(m.meal_date) = ?`,
+            [studentId, mItem.month, mItem.year]
+          );
+          const eaten = Number(eatenRows[0]?.eaten || 0);
+          const missed = scheduled - eaten;
+          const freeSkips = Number(cfg.free_skips);
+          const eligibleMissed = Math.max(0, missed - freeSkips);
+          const rate = Number(cfg.per_meal_refund_rate);
+          const cap = (Number(cfg.food_component) * Number(cfg.cap_pct)) / 100;
+          const attendanceRefund = Math.min(cap, eligibleMissed * rate);
+          const difference = attendanceRefund - flatRefundBenchmark;
+
+          ledgerRecords.push({
+            month: mItem.month,
+            year: mItem.year,
+            monthName: mItem.name,
+            scheduled,
+            eaten,
+            missed,
+            freeSkips,
+            attendanceRefund,
+            flatRefund: flatRefundBenchmark,
+            difference,
+            status: 'IN_PROGRESS',
+          });
+        }
+      }
+
+      return res.status(200).json({
+        isResident: true,
+        student,
+        flatRefundBenchmark,
+        ledger: ledgerRecords,
+      });
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ============================================================================
 // 6. GET /api/mess/refunds
 // Manager refund console list of residents with pagination, sorting & search
 // ============================================================================
@@ -541,13 +765,59 @@ messRouter.get('/refunds', requireAuth, async (req: Request, res: Response, next
            COUNT(mr.refund_id) AS total_calculated,
            COALESCE(SUM(mr.refund_amount), 0) AS total_amount,
            SUM(CASE WHEN mr.status = 'FINAL' THEN 1 ELSE 0 END) AS final_count,
-           SUM(CASE WHEN mr.status = 'PREVIEW' THEN 1 ELSE 0 END) AS preview_count
+           SUM(CASE WHEN mr.status = 'PREVIEW' THEN 1 ELSE 0 END) AS preview_count,
+           SUM(CASE WHEN mr.refund_amount = 0 THEN 1 ELSE 0 END) AS bin_0,
+           SUM(CASE WHEN mr.refund_amount > 0 AND mr.refund_amount <= 300 THEN 1 ELSE 0 END) AS bin_1_300,
+           SUM(CASE WHEN mr.refund_amount > 300 AND mr.refund_amount <= 600 THEN 1 ELSE 0 END) AS bin_301_600,
+           SUM(CASE WHEN mr.refund_amount > 600 AND mr.refund_amount <= 900 THEN 1 ELSE 0 END) AS bin_601_900,
+           SUM(CASE WHEN mr.refund_amount > 900 AND mr.refund_amount <= 1200 THEN 1 ELSE 0 END) AS bin_901_1200,
+           SUM(CASE WHEN mr.refund_amount > 1200 AND mr.refund_amount <= 1500 THEN 1 ELSE 0 END) AS bin_1201_1500,
+           SUM(CASE WHEN mr.refund_amount > 1500 AND mr.refund_amount <= 1800 THEN 1 ELSE 0 END) AS bin_1501_1800,
+           SUM(CASE WHEN mr.refund_amount > 1800 THEN 1 ELSE 0 END) AS bin_gt_1800
          FROM mess_refunds mr
          JOIN v_current_residence cr ON mr.student_id = cr.student_id
          WHERE cr.hostel_id = ? AND mr.month = ? AND mr.year = ?`,
         [hostelId, month, year]
       );
-      const summary = sumResult[0] || { total_calculated: 0, total_amount: 0, final_count: 0, preview_count: 0 };
+      const summary = sumResult[0] || {
+        total_calculated: 0,
+        total_amount: 0,
+        final_count: 0,
+        preview_count: 0,
+        bin_0: 0,
+        bin_1_300: 0,
+        bin_301_600: 0,
+        bin_601_900: 0,
+        bin_901_1200: 0,
+        bin_1201_1500: 0,
+        bin_1501_1800: 0,
+        bin_gt_1800: 0,
+      };
+
+      const histogram = [
+        { label: '₹0', count: Number(summary.bin_0 || 0) },
+        { label: '₹1 - ₹300', count: Number(summary.bin_1_300 || 0) },
+        { label: '₹301 - ₹600', count: Number(summary.bin_301_600 || 0) },
+        { label: '₹601 - ₹900', count: Number(summary.bin_601_900 || 0) },
+        { label: '₹901 - ₹1200', count: Number(summary.bin_901_1200 || 0) },
+        { label: '₹1201 - ₹1500', count: Number(summary.bin_1201_1500 || 0) },
+        { label: '₹1501 - ₹1800', count: Number(summary.bin_1501_1800 || 0) },
+        { label: '> ₹1800', count: Number(summary.bin_gt_1800 || 0) },
+      ];
+
+      const [configRows] = await conn.query<any[]>(
+        `SELECT per_meal_refund_rate, free_skips, cap_pct, food_component, monthly_fee
+         FROM mess_config
+         WHERE hostel_id = ? AND month = ? AND year = ?`,
+        [hostelId, month, year]
+      );
+      const config = configRows[0] || {
+        per_meal_refund_rate: 28.00,
+        free_skips: 8,
+        cap_pct: 60,
+        food_component: 3600.00,
+        monthly_fee: 4500.00,
+      };
 
       // Query resident refund table records
       const [rows] = await conn.query<any[]>(
@@ -591,6 +861,8 @@ messRouter.get('/refunds', requireAuth, async (req: Request, res: Response, next
           preview_count: Number(summary.preview_count),
           status: summary.final_count > 0 ? 'FINAL' : summary.preview_count > 0 ? 'PREVIEW' : 'NOT_CALCULATED',
         },
+        histogram,
+        config,
         refunds: rows,
       });
     });

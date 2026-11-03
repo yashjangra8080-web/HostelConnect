@@ -37,6 +37,8 @@ interface CounterMealData {
   currentTimeIST: string;
   currentDateIST: string;
   todaySlots: any[];
+  fourteenDayTrend?: { date: string; attended: number; scheduled: number }[];
+  mealTypeRates?: { meal_type_id: number; type_name: string; attended: number; scheduled: number }[];
 }
 
 export const MessManagerCounter: React.FC = () => {
@@ -63,9 +65,10 @@ export const MessManagerCounter: React.FC = () => {
       const json = await res.json();
       setData(json);
 
-      // Generate QR Code data URL
+      // Generate QR Code data URL encoding /mess/check-in?t=...
       if (json.token) {
-        const url = await QRCode.toDataURL(json.token, {
+        const checkInUrl = `${window.location.origin}/mess/check-in?t=${encodeURIComponent(json.token)}`;
+        const url = await QRCode.toDataURL(checkInUrl, {
           width: 320,
           margin: 1,
           color: {
@@ -361,6 +364,121 @@ export const MessManagerCounter: React.FC = () => {
                 ))
               )}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Today's Headcount Across All 4 Meals */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between text-xs text-ink-secondary">
+          <span className="font-semibold uppercase tracking-wider text-ink-primary">
+            Today's Headcount per Meal Slot (Hostel {selectedHostel})
+          </span>
+          <span className="font-mono text-ink-muted">Resident Count: {data?.totalResidents ?? 75}</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {(data?.todaySlots || []).map((slot: any) => {
+            const count = Number(slot.marked_count || 0);
+            const total = Number(data?.totalResidents || 75);
+            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+            const isClosed = slot.is_closed === 1;
+
+            return (
+              <div key={`today-slot-${slot.meal_id}`} className="p-4 bg-surface border border-border rounded-lg space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-xs text-ink-primary">{slot.type_name}</span>
+                  {isClosed ? (
+                    <StatusTag status="warning" label="CLOSED" size="sm" />
+                  ) : (
+                    <span className="text-[10px] font-mono text-ink-muted">
+                      {slot.start_time?.slice(0, 5)} - {slot.end_time?.slice(0, 5)}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-baseline justify-between">
+                  <div className="text-2xl font-serif font-bold text-ink-primary tabular-nums">
+                    {count} <span className="text-xs font-sans text-ink-muted font-normal">/ {total}</span>
+                  </div>
+                  <span className="text-xs font-mono font-semibold text-primary tabular-nums">{pct}%</span>
+                </div>
+
+                <div className="w-full bg-surface-subtle border border-border h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-primary h-full rounded-full transition-all" style={{ width: `${Math.min(100, pct)}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 14-Day Trend & 30-Day Per-Meal Rates */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* 14-Day Daily Attendance Trend (7 cols) */}
+        <div className="lg:col-span-7 p-5 bg-surface border border-border rounded-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-ink-primary">
+              14-Day Daily Turnout Trend
+            </span>
+            <span className="text-[11px] font-mono text-ink-muted">Daily Attendance %</span>
+          </div>
+
+          <div className="grid grid-cols-7 sm:grid-cols-14 gap-1.5 text-center items-end min-h-[90px] pt-4">
+            {(data?.fourteenDayTrend || []).map((t: any) => {
+              const attended = Number(t.attended || 0);
+              const scheduled = Number(t.scheduled || 1);
+              const pct = scheduled > 0 ? Math.min(100, Math.round((attended / scheduled) * 100)) : 0;
+              const dayStr = t.date ? t.date.slice(8, 10) : '';
+
+              return (
+                <div key={`trend-${t.date}`} className="flex flex-col items-center gap-1 group">
+                  <div className="text-[9px] font-mono text-ink-muted group-hover:text-ink-primary tabular-nums">
+                    {pct}%
+                  </div>
+                  <div className="w-full h-14 bg-surface-subtle border border-border/80 rounded-t flex items-end overflow-hidden">
+                    <div
+                      className="w-full bg-primary transition-all duration-300"
+                      style={{ height: `${pct}%` }}
+                      title={`${t.date}: ${attended}/${scheduled} meals (${pct}%)`}
+                    />
+                  </div>
+                  <span className="text-[10px] font-mono text-ink-secondary">{dayStr}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 30-Day Per-Meal-Type Turnover Rates (5 cols) */}
+        <div className="lg:col-span-5 p-5 bg-surface border border-border rounded-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-ink-primary">
+              Per-Meal-Type Rates (Past 30 Days)
+            </span>
+            <span className="text-[11px] font-mono text-ink-muted">Turnout %</span>
+          </div>
+
+          <div className="space-y-3 pt-1">
+            {(data?.mealTypeRates || []).map((rate: any) => {
+              const attended = Number(rate.attended || 0);
+              const scheduled = Number(rate.scheduled || 1);
+              const pct = scheduled > 0 ? Math.round((attended / scheduled) * 100) : 0;
+
+              return (
+                <div key={`rate-${rate.meal_type_id}`} className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="font-semibold text-ink-primary">{rate.type_name}</span>
+                    <span className="font-mono text-ink-secondary tabular-nums">
+                      {attended} / {scheduled} ({pct}%)
+                    </span>
+                  </div>
+                  <div className="w-full bg-surface-subtle border border-border h-2 rounded-full overflow-hidden">
+                    <div className="bg-primary h-full rounded-full transition-all" style={{ width: `${Math.min(100, pct)}%` }} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

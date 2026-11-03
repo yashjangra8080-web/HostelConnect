@@ -5,123 +5,185 @@ import {
   Check,
   Minus,
   Ban,
-  Receipt,
   RefreshCw,
   QrCode,
-  TrendingUp,
-  TrendingDown,
+  ChevronDown,
+  ChevronUp,
+  Flame,
 } from 'lucide-react';
 import { Button } from '../ui/Button.js';
 import { Input } from '../ui/Input.js';
 import { StatusTag } from '../ui/StatusTag.js';
-import { KPIStrip } from '../ui/KPIStrip.js';
+import { EmptyState } from '../ui/EmptyState.js';
 import { useToast } from '../ui/Toast.js';
+import { formatCurrencyINR, formatDateIST } from '../../utils/format.js';
 
 interface MealSlotInfo {
   meal_id: number;
+  meal_date: string;
+  menu: string;
+  is_closed: number;
+  closure_reason: string | null;
   meal_type_id: number;
   type_name: string;
   start_time: string;
   end_time: string;
-  menu: string;
-  is_closed: number;
-  eaten: boolean;
-  via: string | null;
-  eaten_at: string | null;
+  att_id: number | null;
+  marked_via: 'QR' | 'COUNTER' | null;
+  marked_at: string | null;
+  status: 'EATEN' | 'MISSED' | 'CLOSED' | 'NOT_YET_SERVED';
+}
+
+interface MonthSummary {
+  total_slots: number;
+  scheduled: number;
+  eaten: number;
+  missed: number;
+  closed: number;
+  upcoming: number;
+  streak: number;
+  attendance_pct: number;
+  mealTypeMeters: Record<number, { name: string; scheduled: number; eaten: number }>;
+  weeklyTrend: { week: number; label: string; attendancePct: number; eaten: number; scheduled: number }[];
+}
+
+interface StudentInfo {
+  student_id: number;
+  roll_no: string;
+  full_name: string;
+  hostel_id: number;
+  hostel_name: string;
+  room_no: string;
 }
 
 interface MonthAttendanceResponse {
-  student: {
-    student_id: number;
-    roll_number: string;
-    name: string;
-    hostel_id: number;
-    hostel_name: string;
-    room_number: string;
-  };
+  student: StudentInfo;
   month: number;
   year: number;
-  scheduledMeals: number;
-  mealsEaten: number;
-  mealsMissed: number;
-  closedMeals: number;
-  matrix: Record<string, Record<string, MealSlotInfo>>;
-  days: {
-    day: number;
-    date: string;
-    slots: MealSlotInfo[];
-  }[];
+  summary: MonthSummary;
+  meals: MealSlotInfo[];
+}
+
+interface LedgerRecord {
+  month: number;
+  year: number;
+  monthName: string;
+  scheduled: number;
+  eaten: number;
+  missed: number;
+  freeSkips: number;
+  attendanceRefund: number;
+  flatRefund: number;
+  difference: number;
+  status: 'FINAL' | 'PREVIEW' | 'IN_PROGRESS';
 }
 
 interface ProjectionResponse {
+  student: StudentInfo;
   month: number;
   year: number;
-  scheduledMeals: number;
-  mealsEaten: number;
-  freeSkips: number;
-  eligibleMissed: number;
-  perMealRate: number;
-  foodComponent: number;
-  capPct: number;
-  rawRefund: number;
-  cappedRefund: number;
-  refundCap: number;
-  flatRefundBenchmark: number;
-  isCapped: boolean;
-  differenceFromFlat: number;
-  recordStatus: 'PREVIEW' | 'FINAL';
+  scheduled: number;
+  eaten: number;
+  free_skips: number;
+  eligible_missed: number;
+  per_meal_rate: number;
+  food_component: number;
+  cap_pct: number;
+  cap_amount: number;
+  attendance_refund: number;
+  flat_refund: number;
+  difference: number;
+  is_capped: boolean;
+  status: 'FINAL' | 'PREVIEW' | 'PROJECTED';
 }
 
-export const StudentAttendanceStrip: React.FC = () => {
+interface StudentAttendanceStripProps {
+  onNavigate?: (path: string) => void;
+}
+
+const MONTH_NAMES: Record<number, string> = {
+  9: 'September',
+  10: 'October',
+  11: 'November',
+};
+
+export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ onNavigate }) => {
   const { toast } = useToast();
+  // Months with data: 9 (September), 10 (October), 11 (November)
   const [month, setMonth] = useState<number>(10);
   const year = 2026;
   const [loading, setLoading] = useState<boolean>(true);
+  const [isNonResident, setIsNonResident] = useState<boolean>(false);
+
   const [attendanceData, setAttendanceData] = useState<MonthAttendanceResponse | null>(null);
   const [projection, setProjection] = useState<ProjectionResponse | null>(null);
+  const [ledgerHistory, setLedgerHistory] = useState<LedgerRecord[]>([]);
 
-  // Self-marking counter token input
+  // Manual fallback check-in
   const [scanToken, setScanToken] = useState<string>('');
   const [isSubmittingToken, setIsSubmittingToken] = useState<boolean>(false);
+  const [showManualFallback, setShowManualFallback] = useState<boolean>(false);
 
-  // Active tooltip slot for hover inspection
-  const [hoveredSlot, setHoveredSlot] = useState<{
-    date: string;
-    day: number;
-    slot: MealSlotInfo;
-  } | null>(null);
+  // Active inspect slot
+  const [activeSlot, setActiveSlot] = useState<MealSlotInfo | null>(null);
 
-  const fetchAttendance = async () => {
+  // Tab: 'ATTENDANCE' | 'LEDGER'
+  const [activeTab, setActiveTab] = useState<'ATTENDANCE' | 'LEDGER'>('ATTENDANCE');
+
+  // Compute days in current month
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  // Anchor date for today check (2 Nov 2026)
+  const todayDay = month === 11 ? 2 : null;
+
+  const fetchMonthData = async () => {
     setLoading(true);
+    setIsNonResident(false);
+
     try {
-      const [attRes, projRes] = await Promise.all([
+      const [attRes, projRes, ledgerRes] = await Promise.all([
         fetch(`/api/mess/me/month?month=${month}&year=${year}`, { credentials: 'include' }),
         fetch(`/api/mess/me/projection?month=${month}&year=${year}`, { credentials: 'include' }),
+        fetch('/api/mess/me/ledger', { credentials: 'include' }),
       ]);
 
-      if (!attRes.ok) throw new Error('Failed to load monthly attendance.');
-      if (!projRes.ok) throw new Error('Failed to load refund projection.');
+      if (attRes.status === 404) {
+        setIsNonResident(true);
+        setAttendanceData(null);
+        return;
+      }
+
+      if (!attRes.ok) throw new Error('Failed to load mess attendance data');
 
       const attJson = await attRes.json();
-      const projJson = await projRes.json();
-
       setAttendanceData(attJson);
-      setProjection(projJson);
+
+      if (projRes.ok) {
+        const projJson = await projRes.json();
+        setProjection(projJson);
+      }
+
+      if (ledgerRes.ok) {
+        const ledgerJson = await ledgerRes.json();
+        if (ledgerJson.ledger) {
+          setLedgerHistory(ledgerJson.ledger);
+        }
+      }
     } catch (err: any) {
-      toast.error(err.message || 'Error loading mess records');
+      toast.error(err.message || 'Error fetching dining records');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAttendance();
+    fetchMonthData();
   }, [month, year]);
 
-  const handleMarkWithToken = async (e: React.FormEvent) => {
+  const handleMarkManual = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!scanToken.trim()) {
-      toast.error('Please enter the 64-character meal QR token.');
+      toast.error('Please enter the 64-character token.');
       return;
     }
 
@@ -136,18 +198,31 @@ export const StudentAttendanceStrip: React.FC = () => {
 
       const json = await res.json();
       if (!res.ok) {
-        throw new Error(json.error || 'Failed to record meal attendance.');
+        throw new Error(json.message || json.error || 'Failed to record attendance');
       }
 
-      toast.success(json.message || 'Meal marked successfully via QR token!');
+      toast.success(json.message || 'Attendance recorded successfully!');
       setScanToken('');
-      fetchAttendance();
+      setShowManualFallback(false);
+      fetchMonthData();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to mark meal');
+      toast.error(err.message || 'Error marking attendance');
     } finally {
       setIsSubmittingToken(false);
     }
   };
+
+  // Build matrix lookup: `day:meal_type_id` -> MealSlotInfo
+  const mealMatrix = React.useMemo(() => {
+    const map = new Map<string, MealSlotInfo>();
+    if (attendanceData?.meals) {
+      for (const m of attendanceData.meals) {
+        const dayNum = Number(m.meal_date.split('-')[2]);
+        map.set(`${dayNum}:${m.meal_type_id}`, m);
+      }
+    }
+    return map;
+  }, [attendanceData]);
 
   const mealTypes = [
     { id: 1, name: 'Breakfast', time: '07:30 - 09:30' },
@@ -156,428 +231,641 @@ export const StudentAttendanceStrip: React.FC = () => {
     { id: 4, name: 'Dinner', time: '20:00 - 22:00' },
   ];
 
+  // =========================================================================
+  // Non-Resident Empty State
+  // =========================================================================
+  if (!loading && isNonResident) {
+    return (
+      <div className="max-w-4xl mx-auto py-12 px-4">
+        <EmptyState
+          icon={<Utensils className="w-5 h-5 text-ink-muted" strokeWidth={1.75} />}
+          title="Mess Facilities Reserved for Hostel Residents"
+          description="Institutional dining facilities, daily meal attendance tracking, and mess rebate ledger calculations are available exclusively to registered hostel residents who hold an active room allotment."
+          actionLabel="View Room Allotment Status"
+          onAction={() => onNavigate ? onNavigate('/student/allotment') : (window.location.href = '/student/allotment')}
+        />
+      </div>
+    );
+  }
+
+  const summary = attendanceData?.summary;
+  const student = attendanceData?.student;
+
   return (
-    <div className="space-y-8 max-w-6xl mx-auto pb-12">
-      {/* Header and Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-border">
+    <div className="space-y-6 max-w-6xl mx-auto pb-14 px-4 sm:px-6">
+      {/* Top Banner and Navigation */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-border">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-saffron mb-1">
-            <Utensils className="w-4 h-4" strokeWidth={1.75} />
-            <span>HostelConnect • Resident Dining Portal</span>
-          </div>
           <h1 className="text-2xl font-serif font-bold text-ink-primary">
             Mess Attendance & Refund Ledger
           </h1>
           <p className="text-xs text-ink-secondary mt-1">
-            {attendanceData?.student ? (
+            {student ? (
               <>
-                Resident: <strong className="font-semibold text-ink-primary">{attendanceData.student.name}</strong> ({attendanceData.student.roll_number}) • Room {attendanceData.student.room_number} ({attendanceData.student.hostel_name})
+                Resident: <strong className="font-semibold text-ink-primary">{student.full_name}</strong> ({student.roll_no}) • Room {student.room_no} ({student.hostel_name})
               </>
             ) : (
-              'Track daily meal check-ins and verify formulated rebate calculations in IST.'
+              'Institutional daily dining verification and formulated rebate ledger in IST.'
             )}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* View Tabs & Month Selector */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* View Toggle */}
+          <div className="inline-flex rounded-md border border-border p-0.5 bg-surface-subtle text-xs">
+            <button
+              type="button"
+              onClick={() => setActiveTab('ATTENDANCE')}
+              className={`px-3 py-1.5 font-medium rounded transition-colors ${
+                activeTab === 'ATTENDANCE'
+                  ? 'bg-surface text-ink-primary shadow-xs font-semibold'
+                  : 'text-ink-secondary hover:text-ink-primary'
+              }`}
+            >
+              Attendance Strip
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('LEDGER')}
+              className={`px-3 py-1.5 font-medium rounded transition-colors ${
+                activeTab === 'LEDGER'
+                  ? 'bg-surface text-ink-primary shadow-xs font-semibold'
+                  : 'text-ink-secondary hover:text-ink-primary'
+              }`}
+            >
+              Refund Ledger
+            </button>
+          </div>
+
+          {/* Month Selector (Listing only months with real data) */}
           <div className="flex items-center gap-2 bg-surface border border-border rounded px-3 py-1.5 text-xs">
-            <Calendar className="w-4 h-4 text-ink-muted" strokeWidth={1.75} />
+            <Calendar className="w-3.5 h-3.5 text-ink-muted" strokeWidth={1.75} />
             <select
               value={month}
               onChange={(e) => setMonth(Number(e.target.value))}
+              aria-label="Select mess attendance month"
               className="bg-transparent font-medium text-ink-primary focus:outline-none cursor-pointer"
             >
               <option value={9}>September 2026</option>
               <option value={10}>October 2026</option>
               <option value={11}>November 2026</option>
-              <option value={12}>December 2026</option>
             </select>
           </div>
 
-          <Button variant="outline" size="sm" onClick={fetchAttendance} disabled={loading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} strokeWidth={1.75} />
-            Refresh
+          <Button variant="outline" size="sm" onClick={fetchMonthData} disabled={loading} aria-label="Refresh mess data">
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} strokeWidth={1.75} />
           </Button>
         </div>
       </div>
 
-      {/* Quick QR Token Check-in Bar */}
-      <div className="p-4 bg-surface border border-border rounded-lg flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded bg-primary-subtle text-primary border border-primary-border flex items-center justify-center shrink-0">
-            <QrCode className="w-4 h-4" strokeWidth={1.75} />
-          </div>
-          <div>
-            <h3 className="text-xs font-semibold text-ink-primary uppercase tracking-wider">
-              Counter QR Check-in
-            </h3>
-            <p className="text-[11px] text-ink-muted">
-              Scan the 60s rotating QR code at the dining hall or paste the rotating HMAC token here.
-            </p>
-          </div>
-        </div>
+      {/* =====================================================================
+          FLAT KPI STRIP (Eaten / Scheduled, %, Streak, Missed, Closed, Meters)
+          ===================================================================== */}
+      {summary && (
+        <section aria-label="Monthly Attendance Performance" className="space-y-3">
+          {/* Main KPI Strip */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            {/* 1. Meals Eaten / Scheduled */}
+            <div className="p-4 bg-surface border border-border rounded-lg space-y-1">
+              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">
+                Meals Eaten / Sched.
+              </span>
+              <div className="text-2xl font-serif font-bold text-ink-primary tabular-nums">
+                {summary.eaten} <span className="text-sm font-sans font-normal text-ink-muted">/ {summary.scheduled}</span>
+              </div>
+              <div className="text-[11px] text-ink-secondary font-mono">
+                {summary.upcoming > 0 ? `${summary.upcoming} upcoming` : 'All slots served'}
+              </div>
+            </div>
 
-        <form onSubmit={handleMarkWithToken} className="flex items-center gap-2 w-full md:w-auto">
-          <Input
-            placeholder="Paste 64-char QR Token..."
-            value={scanToken}
-            onChange={(e) => setScanToken(e.target.value)}
-            className="w-full md:w-72 font-mono text-xs"
-          />
-          <Button
-            type="submit"
-            size="sm"
-            disabled={isSubmittingToken || !scanToken.trim()}
-            className="shrink-0"
-          >
-            {isSubmittingToken ? 'Verifying...' : 'Record Attendance'}
-          </Button>
-        </form>
-      </div>
+            {/* 2. Attendance % */}
+            <div className="p-4 bg-surface border border-border rounded-lg space-y-1">
+              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">
+                Attendance Rate
+              </span>
+              <div className="text-2xl font-serif font-bold text-ink-primary tabular-nums">
+                {summary.attendance_pct}%
+              </div>
+              <div className="w-full bg-surface-subtle border border-border h-1.5 rounded-full overflow-hidden mt-1">
+                <div
+                  className="bg-primary h-full rounded-full"
+                  style={{ width: `${Math.min(100, summary.attendance_pct)}%` }}
+                />
+              </div>
+            </div>
 
-      {/* KPI Overview Strip */}
-      {attendanceData && (
-        <section className="space-y-2">
-          <div className="flex items-center justify-between text-xs text-ink-secondary">
-            <span className="font-semibold uppercase tracking-wider">Month Summary ({month}/2026)</span>
-            <span className="text-ink-muted font-mono tabular-nums">IST +05:30</span>
+            {/* 3. Current Streak */}
+            <div className="p-4 bg-surface border border-border rounded-lg space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">
+                  Current Streak
+                </span>
+                <Flame className="w-4 h-4 text-saffron shrink-0" />
+              </div>
+              <div className="text-2xl font-serif font-bold text-ink-primary tabular-nums">
+                {summary.streak} <span className="text-xs font-sans font-normal text-ink-muted">meals</span>
+              </div>
+              <div className="text-[11px] text-ink-muted">Consecutive attended</div>
+            </div>
+
+            {/* 4. Missed Meals */}
+            <div className="p-4 bg-surface border border-border rounded-lg space-y-1">
+              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">
+                Missed Meals
+              </span>
+              <div className="text-2xl font-serif font-bold text-amber-700 tabular-nums">
+                {summary.missed}
+              </div>
+              <div className="text-[11px] text-ink-muted">
+                Free skip quota: {projection?.free_skips ?? 8}
+              </div>
+            </div>
+
+            {/* 5. Closed Slots */}
+            <div className="p-4 bg-surface border border-border rounded-lg space-y-1 col-span-2 sm:col-span-1">
+              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">
+                Closed Slots
+              </span>
+              <div className="text-2xl font-serif font-bold text-ink-secondary tabular-nums">
+                {summary.closed}
+              </div>
+              <div className="text-[11px] text-ink-muted">Maintenance & holidays</div>
+            </div>
           </div>
-          <KPIStrip
-            items={[
-              {
-                id: '1',
-                label: 'Scheduled Meals',
-                value: String(attendanceData.scheduledMeals),
-                subtext: `${attendanceData.closedMeals} closed slot excluded`,
-                badge: <StatusTag status="neutral" label="ACTIVE SLOTS" size="sm" />,
-              },
-              {
-                id: '2',
-                label: 'Meals Consumed',
-                value: String(attendanceData.mealsEaten),
-                subtext: `${((attendanceData.mealsEaten / (attendanceData.scheduledMeals || 1)) * 100).toFixed(1)}% attendance`,
-                badge: <StatusTag status="success" label="RECORDED" size="sm" />,
-              },
-              {
-                id: '3',
-                label: 'Meals Missed',
-                value: String(attendanceData.mealsMissed),
-                subtext: 'Potential rebate base',
-                badge: <StatusTag status="warning" label="MISSED" size="sm" />,
-              },
-              {
-                id: '4',
-                label: 'Free Skip Quota',
-                value: `${projection?.freeSkips ?? 15} meals`,
-                subtext: 'Built-in monthly allowance',
-                badge: <StatusTag status="primary" label="ALLOWANCE" size="sm" />,
-              },
-            ]}
-          />
+
+          {/* Sub-Strip: 4 Per-Meal-Type Meters & Weekly Trend */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+            {/* 4 Per-Meal-Type Meters (7 cols) */}
+            <div className="lg:col-span-7 p-3.5 bg-surface border border-border rounded-lg space-y-2.5">
+              <span className="text-[10px] font-semibold text-ink-muted uppercase tracking-wider">
+                Turnout by Meal Type
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                {([1, 2, 3, 4] as const).map((mt) => {
+                  const meter = summary.mealTypeMeters?.[mt] || { name: '', scheduled: 0, eaten: 0 };
+                  const pct = meter.scheduled > 0 ? Math.round((meter.eaten / meter.scheduled) * 100) : 0;
+                  return (
+                    <div key={`meter-${mt}`} className="space-y-1 p-2 rounded bg-surface-subtle border border-border/60">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-semibold text-ink-primary truncate">{meter.name}</span>
+                        <span className="font-mono tabular-nums text-ink-secondary">{pct}%</span>
+                      </div>
+                      <div className="w-full bg-border h-1.5 rounded-full overflow-hidden">
+                        <div
+                          className="bg-primary h-full rounded-full transition-all"
+                          style={{ width: `${Math.min(100, pct)}%` }}
+                        />
+                      </div>
+                      <div className="text-[10px] text-ink-muted tabular-nums">
+                        {meter.eaten} / {meter.scheduled} eaten
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Weekly Trend (5 cols) */}
+            <div className="lg:col-span-5 p-3.5 bg-surface border border-border rounded-lg space-y-2.5">
+              <span className="text-[10px] font-semibold text-ink-muted uppercase tracking-wider">
+                Weekly Attendance Trend
+              </span>
+              <div className="grid grid-cols-5 gap-1.5 text-xs">
+                {summary.weeklyTrend?.map((wt) => (
+                  <div key={`wt-${wt.week}`} className="flex flex-col items-center p-1.5 rounded bg-surface-subtle border border-border/60 text-center">
+                    <span className="text-[10px] font-semibold text-ink-secondary">{wt.label}</span>
+                    <span className="text-xs font-mono font-bold text-ink-primary mt-0.5 tabular-nums">
+                      {wt.attendancePct}%
+                    </span>
+                    <span className="text-[9px] text-ink-muted tabular-nums mt-0.5">
+                      {wt.eaten}/{wt.scheduled}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </section>
       )}
 
-      {/* 30-Day x 4-Meal Attendance Strip Matrix */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-ink-primary">
-              30-Day × 4-Meal Attendance Strip
-            </h2>
-            <p className="text-xs text-ink-muted">
-              Hover over any slot cell to inspect dining menu, service window, and check-in timestamp.
-            </p>
-          </div>
+      {/* =====================================================================
+          TAB 1: DYNAMIC ATTENDANCE STRIP MATRIX
+          ===================================================================== */}
+      {activeTab === 'ATTENDANCE' && (
+        <section aria-label="Attendance Strip Matrix" className="space-y-3">
+          {/* Strip Header (Dynamic: "October 2026 — 31 days × 4 meals") */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h2 className="text-base font-serif font-bold text-ink-primary">
+                {MONTH_NAMES[month] || `Month ${month}`} {year} — {daysInMonth} days × 4 meals
+              </h2>
+              <p className="text-xs text-ink-muted">
+                Each cell is keyboard-focusable with interactive tooltips. Use Tab / arrow keys to inspect.
+              </p>
+            </div>
 
-          <div className="flex items-center gap-4 text-xs">
-            <span className="flex items-center gap-1.5 text-ink-secondary">
-              <span className="w-3.5 h-3.5 rounded bg-emerald-100 border border-emerald-400 flex items-center justify-center">
-                <Check className="w-2.5 h-2.5 text-emerald-800" strokeWidth={2.5} />
+            {/* Cell Legend */}
+            <div className="flex flex-wrap items-center gap-3 text-xs">
+              <span className="flex items-center gap-1.5 text-ink-secondary">
+                <span className="w-4 h-4 rounded bg-emerald-100 border border-emerald-400 flex items-center justify-center">
+                  <Check className="w-2.5 h-2.5 text-emerald-800" strokeWidth={2.5} />
+                </span>
+                <span>Eaten</span>
               </span>
-              <span>Eaten</span>
-            </span>
-            <span className="flex items-center gap-1.5 text-ink-secondary">
-              <span className="w-3.5 h-3.5 rounded bg-slate-100 border border-slate-300 flex items-center justify-center">
-                <Minus className="w-2.5 h-2.5 text-slate-500" strokeWidth={2.5} />
+              <span className="flex items-center gap-1.5 text-ink-secondary">
+                <span className="w-4 h-4 rounded bg-slate-100 border border-slate-300 flex items-center justify-center">
+                  <Minus className="w-2.5 h-2.5 text-slate-500" strokeWidth={2.5} />
+                </span>
+                <span>Missed</span>
               </span>
-              <span>Missed</span>
-            </span>
-            <span className="flex items-center gap-1.5 text-ink-secondary">
-              <span className="w-3.5 h-3.5 rounded bg-amber-50 border border-amber-300 flex items-center justify-center">
-                <Ban className="w-2.5 h-2.5 text-amber-700" strokeWidth={2.5} />
-              </span>
-              <span>Closed</span>
-            </span>
-          </div>
-        </div>
-
-        {/* Matrix Container */}
-        <div className="bg-surface border border-border rounded-lg overflow-x-auto select-none shadow-none">
-          <div className="min-w-[840px] p-4">
-            <div className="grid grid-cols-[120px_repeat(31,minmax(22px,1fr))] gap-1 items-center">
-              {/* Day Header Row */}
-              <div className="text-[11px] font-semibold text-ink-muted uppercase">Day →</div>
-              {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                <div
-                  key={`day-head-${d}`}
-                  className="text-center font-mono text-[10px] text-ink-secondary font-medium tabular-nums"
+              <span className="flex items-center gap-1.5 text-ink-secondary">
+                <span
+                  className="w-4 h-4 rounded border border-amber-300 flex items-center justify-center"
+                  style={{
+                    background: 'repeating-linear-gradient(45deg, #fef3c7, #fef3c7 2px, #fde68a 2px, #fde68a 4px)',
+                  }}
                 >
-                  {d}
-                </div>
-              ))}
-
-              {/* 4 Meal Rows */}
-              {mealTypes.map((type) => (
-                <React.Fragment key={`meal-row-${type.id}`}>
-                  {/* Left Label */}
-                  <div className="py-2 pr-2 text-xs font-medium text-ink-primary flex flex-col justify-center border-t border-border/50">
-                    <span className="truncate">{type.name}</span>
-                    <span className="text-[9px] text-ink-muted font-mono truncate">{type.time}</span>
-                  </div>
-
-                  {/* 31 Day Cells */}
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => {
-                    const dayKey = String(d);
-                    const slotInfo = attendanceData?.matrix?.[dayKey]?.[String(type.id)];
-
-                    if (!slotInfo) {
-                      return (
-                        <div
-                          key={`cell-${type.id}-${d}`}
-                          className="h-8 rounded bg-surface-subtle border border-border/40 flex items-center justify-center text-[10px] text-ink-muted"
-                          title={`Day ${d} - No Slot Scheduled`}
-                        >
-                          •
-                        </div>
-                      );
-                    }
-
-                    const isClosed = slotInfo.is_closed === 1;
-                    const isEaten = slotInfo.eaten;
-
-                    return (
-                      <div
-                        key={`cell-${type.id}-${d}`}
-                        onMouseEnter={() =>
-                          setHoveredSlot({
-                            date: `2026-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
-                            day: d,
-                            slot: slotInfo,
-                          })
-                        }
-                        className={`h-8 rounded flex items-center justify-center transition-colors cursor-pointer border ${
-                          isClosed
-                            ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
-                            : isEaten
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
-                            : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'
-                        }`}
-                        title={`Day ${d} ${type.name}: ${isClosed ? 'Closed' : isEaten ? 'Eaten' : 'Missed'}`}
-                      >
-                        {isClosed ? (
-                          <Ban className="w-3.5 h-3.5" strokeWidth={2} />
-                        ) : isEaten ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-700" strokeWidth={2.5} />
-                        ) : (
-                          <Minus className="w-3 h-3 text-slate-300" strokeWidth={2} />
-                        )}
-                      </div>
-                    );
-                  })}
-                </React.Fragment>
-              ))}
-            </div>
-          </div>
-
-          {/* Interactive Inspection Tooltip / Drawer Footer */}
-          <div className="px-5 py-3 bg-surface-subtle border-t border-border flex items-center justify-between text-xs">
-            {hoveredSlot ? (
-              <div className="flex flex-wrap items-center gap-4">
-                <span className="font-semibold text-ink-primary">
-                  {hoveredSlot.slot.type_name} • {hoveredSlot.date} (Day {hoveredSlot.day})
+                  <Ban className="w-2.5 h-2.5 text-amber-800" strokeWidth={2.5} />
                 </span>
-                <span className="text-ink-secondary">
-                  Window: <strong className="font-mono text-ink-primary">{hoveredSlot.slot.start_time.slice(0, 5)} - {hoveredSlot.slot.end_time.slice(0, 5)}</strong>
-                </span>
-                <span className="text-ink-secondary">
-                  Menu: <strong className="text-ink-primary">{hoveredSlot.slot.menu || 'Standard Dining Menu'}</strong>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  Status:
-                  {hoveredSlot.slot.is_closed ? (
-                    <StatusTag status="warning" label="CLOSED MAINTENANCE" size="sm" />
-                  ) : hoveredSlot.slot.eaten ? (
-                    <StatusTag
-                      status="success"
-                      label={`EATEN VIA ${hoveredSlot.slot.via || 'QR'}`}
-                      size="sm"
-                    />
-                  ) : (
-                    <StatusTag status="neutral" label="MISSED" size="sm" />
-                  )}
-                </span>
-              </div>
-            ) : (
-              <span className="text-ink-muted italic">
-                Hover over any cell above to preview meal timestamps, menu description, and serving window.
+                <span>Closed</span>
               </span>
-            )}
-
-            <span className="text-[11px] text-ink-muted font-mono shrink-0">
-              {attendanceData?.days?.length || 0} days recorded
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* Projection Panel: Formulated Refund vs Flat Benchmark */}
-      {projection && (
-        <section className="space-y-4">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary mb-1">
-              <Receipt className="w-4 h-4" strokeWidth={1.75} />
-              <span>Financial Rebate Projection Engine</span>
-            </div>
-            <h2 className="text-lg font-serif font-bold text-ink-primary">
-              Attendance-Based Refund vs Historical Flat Policy
-            </h2>
-            <p className="text-xs text-ink-secondary">
-              Verified via institutional formula: <code className="bg-surface-subtle px-1 py-0.5 rounded font-mono text-[11px]">refund = LEAST(food_component * cap_pct/100, eligible_missed * per_meal_rate)</code>.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* 1. Formulated Refund Card */}
-            <div className="p-5 bg-surface border-2 border-emerald-500/40 rounded-lg space-y-3 relative overflow-hidden">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-emerald-800 uppercase tracking-wider">
-                  Attendance-Based Refund
+              <span className="flex items-center gap-1.5 text-ink-secondary">
+                <span className="w-4 h-4 rounded border border-dashed border-border flex items-center justify-center text-[9px] text-ink-muted">
+                  ○
                 </span>
-                <StatusTag
-                  status={projection.recordStatus === 'FINAL' ? 'success' : 'primary'}
-                  label={projection.recordStatus}
-                  size="sm"
-                />
-              </div>
+                <span>Upcoming</span>
+              </span>
+            </div>
+          </div>
 
-              <div>
-                <div className="text-3xl font-serif font-bold text-ink-primary font-mono tabular-nums">
-                  ₹{Number(projection.cappedRefund).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+          {/* Matrix Container: Horizontal scrolling with sticky meal labels */}
+          <div className="bg-surface border border-border rounded-lg overflow-x-auto shadow-none">
+            <div className="min-w-[860px] p-4">
+              <div
+                className="grid gap-1 items-center"
+                style={{
+                  gridTemplateColumns: `125px repeat(${daysInMonth}, minmax(22px, 1fr))`,
+                }}
+              >
+                {/* Day Header Row */}
+                <div className="text-[11px] font-semibold text-ink-muted uppercase sticky left-0 bg-surface z-10 pr-2">
+                  Meal \ Day →
                 </div>
-                <div className="text-xs text-ink-secondary mt-1">
-                  Based on <strong className="font-semibold text-ink-primary font-mono">{projection.eligibleMissed}</strong> eligible missed meals @ ₹{projection.perMealRate}/meal
-                </div>
-              </div>
+                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
+                  const isTodayCol = todayDay === d;
+                  return (
+                    <div
+                      key={`day-head-${d}`}
+                      className={`text-center font-mono text-[10px] py-1 font-medium tabular-nums rounded ${
+                        isTodayCol ? 'bg-primary/10 text-primary font-bold ring-1 ring-primary' : 'text-ink-secondary'
+                      }`}
+                      title={isTodayCol ? 'Today (02 Nov 2026)' : undefined}
+                    >
+                      {d}
+                    </div>
+                  );
+                })}
 
-              <div className="pt-3 border-t border-border/80 text-[11px] text-ink-secondary space-y-1 font-mono">
-                <div className="flex justify-between">
-                  <span>Raw Calculated:</span>
-                  <span className="font-medium text-ink-primary">₹{Number(projection.rawRefund).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Policy Ceiling (60%):</span>
-                  <span className="font-medium text-ink-primary">₹{Number(projection.refundCap).toFixed(2)}</span>
-                </div>
-                {projection.isCapped && (
-                  <div className="text-amber-700 font-sans font-semibold">
-                    * Capped at 60% of monthly food component
+                {/* 4 Meal Rows */}
+                {mealTypes.map((type) => (
+                  <React.Fragment key={`meal-row-${type.id}`}>
+                    {/* Left Sticky Label */}
+                    <div className="py-2.5 pr-2.5 text-xs font-semibold text-ink-primary flex flex-col justify-center border-t border-border/60 sticky left-0 bg-surface z-10">
+                      <span className="truncate">{type.name}</span>
+                      <span className="text-[10px] text-ink-muted font-mono font-normal truncate">
+                        {type.time}
+                      </span>
+                    </div>
+
+                    {/* Day Cells */}
+                    {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
+                      const slot = mealMatrix.get(`${d}:${type.id}`);
+                      const isTodayCol = todayDay === d;
+
+                      if (!slot) {
+                        return (
+                          <div
+                            key={`cell-${type.id}-${d}`}
+                            className="h-8 rounded bg-surface-subtle border border-border/40 flex items-center justify-center text-[10px] text-ink-muted"
+                          >
+                            •
+                          </div>
+                        );
+                      }
+
+                      const isClosed = slot.status === 'CLOSED';
+                      const isEaten = slot.status === 'EATEN';
+                      const isUpcoming = slot.status === 'NOT_YET_SERVED';
+
+                      let cellClass = '';
+                      let cellStyle: React.CSSProperties = {};
+
+                      if (isClosed) {
+                        cellStyle = {
+                          background: 'repeating-linear-gradient(45deg, #fef3c7, #fef3c7 3px, #fde68a 3px, #fde68a 6px)',
+                        };
+                        cellClass = 'border-amber-400 text-amber-800';
+                      } else if (isEaten) {
+                        cellClass = 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100';
+                      } else if (isUpcoming) {
+                        cellClass = 'bg-surface border-dashed border-border text-ink-muted hover:border-ink-secondary';
+                      } else {
+                        cellClass = 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100';
+                      }
+
+                      if (isTodayCol) {
+                        cellClass += ' ring-1 ring-primary';
+                      }
+
+                      return (
+                        <button
+                          key={`cell-${type.id}-${d}`}
+                          type="button"
+                          tabIndex={0}
+                          onClick={() => setActiveSlot(slot)}
+                          onMouseEnter={() => setActiveSlot(slot)}
+                          onFocus={() => setActiveSlot(slot)}
+                          className={`h-8 rounded flex items-center justify-center border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary ${cellClass}`}
+                          style={cellStyle}
+                          aria-label={`Day ${d} ${type.name}: ${
+                            isClosed ? `Closed (${slot.closure_reason || 'Maintenance'})` : isEaten ? 'Eaten' : isUpcoming ? 'Upcoming' : 'Missed'
+                          }`}
+                        >
+                          {isClosed ? (
+                            <Ban className="w-3.5 h-3.5 text-amber-800" strokeWidth={2} />
+                          ) : isEaten ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-700" strokeWidth={2.5} />
+                          ) : isUpcoming ? (
+                            <span className="text-[10px] text-ink-muted">○</span>
+                          ) : (
+                            <Minus className="w-3 h-3 text-slate-400" strokeWidth={2} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+
+            {/* Interactive Inspector Footer Bar */}
+            <div className="px-5 py-3.5 bg-surface-subtle border-t border-border text-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+              {activeSlot ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="font-semibold text-ink-primary">
+                    {activeSlot.type_name} • {formatDateIST(activeSlot.meal_date)}
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* 2. Old Flat Refund Benchmark */}
-            <div className="p-5 bg-surface border border-border rounded-lg space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider">
-                  Historical Flat Policy
-                </span>
-                <StatusTag status="neutral" label="LEGACY BENCHMARK" size="sm" />
-              </div>
-
-              <div>
-                <div className="text-3xl font-serif font-bold text-ink-secondary font-mono tabular-nums">
-                  ₹{Number(projection.flatRefundBenchmark).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  <div className="text-ink-secondary">
+                    Window: <span className="font-mono text-ink-primary">{activeSlot.start_time.slice(0, 5)} - {activeSlot.end_time.slice(0, 5)} IST</span>
+                  </div>
+                  <div className="text-ink-secondary">
+                    Menu: <span className="text-ink-primary">{activeSlot.menu}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {activeSlot.status === 'CLOSED' ? (
+                      <StatusTag
+                        status="warning"
+                        label={`CLOSED: ${activeSlot.closure_reason || 'Maintenance'}`}
+                        size="sm"
+                      />
+                    ) : activeSlot.status === 'EATEN' ? (
+                      <StatusTag
+                        status="success"
+                        label={`EATEN VIA ${activeSlot.marked_via || 'QR'}${activeSlot.marked_at ? ` at ${activeSlot.marked_at.slice(11, 16)} IST` : ''}`}
+                        size="sm"
+                      />
+                    ) : activeSlot.status === 'NOT_YET_SERVED' ? (
+                      <StatusTag status="neutral" label="UPCOMING / NOT YET SERVED" size="sm" />
+                    ) : (
+                      <StatusTag status="neutral" label="MISSED MEAL" size="sm" />
+                    )}
+                  </div>
                 </div>
-                <div className="text-xs text-ink-muted mt-1">
-                  Static uncalibrated rebate stored in <code className="font-mono text-[10px]">app_settings</code>
+              ) : (
+                <div className="text-ink-muted italic">
+                  Hover or focus on any meal slot above to inspect detailed menu, timing window, and check-in timestamp.
                 </div>
-              </div>
+              )}
 
-              <div className="pt-3 border-t border-border/80 text-[11px] text-ink-muted space-y-1">
-                <p className="leading-relaxed">
-                  The legacy flat rebate was applied uniformly regardless of whether a student consumed all meals or was away on academic leave.
-                </p>
-              </div>
-            </div>
-
-            {/* 3. Variance & Policy Impact */}
-            <div className="p-5 bg-surface border border-border rounded-lg space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-ink-primary uppercase tracking-wider">
-                  Net Variance
-                </span>
-                {projection.differenceFromFlat >= 0 ? (
-                  <span className="flex items-center gap-1 text-xs text-emerald-700 font-semibold font-mono">
-                    <TrendingUp className="w-3.5 h-3.5" /> +₹{Math.abs(projection.differenceFromFlat).toFixed(2)}
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-xs text-amber-700 font-semibold font-mono">
-                    <TrendingDown className="w-3.5 h-3.5" /> -₹{Math.abs(projection.differenceFromFlat).toFixed(2)}
-                  </span>
-                )}
-              </div>
-
-              <div>
-                <div className="text-2xl font-serif font-bold text-ink-primary font-mono tabular-nums">
-                  {projection.differenceFromFlat >= 0 ? '+' : '-'}₹{Math.abs(projection.differenceFromFlat).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                </div>
-                <div className="text-xs text-ink-secondary mt-1">
-                  {projection.differenceFromFlat >= 0
-                    ? 'Higher refund awarded for extended absence/leaves.'
-                    : 'Lower refund reflects frequent dining attendance.'}
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-border/80 text-[11px] text-ink-secondary space-y-1">
-                <p className="leading-relaxed">
-                  Formula incentivizes dining attendance and discourages food waste while accurately crediting unconsumed meals beyond the 15-meal skip quota.
-                </p>
+              <div className="text-[11px] text-ink-muted font-mono shrink-0">
+                IST Timezone (+05:30)
               </div>
             </div>
           </div>
 
-          {/* Formula Parameter Table */}
-          <div className="bg-surface border border-border rounded-lg p-5">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-ink-primary mb-3">
-              Detailed Formula Audit Log
-            </h4>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
-              <div className="p-3 bg-surface-subtle rounded border border-border">
-                <div className="text-ink-muted text-[10px]">SCHEDULED (S)</div>
-                <div className="text-base font-bold text-ink-primary mt-1">{projection.scheduledMeals}</div>
-                <div className="text-[10px] text-ink-muted">Non-closed meals</div>
+          {/* Quick Counter QR Check-in Box (Replaces paste 64-char token) */}
+          <div className="p-4 bg-surface border border-border rounded-lg space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded bg-primary-subtle text-primary border border-primary-border flex items-center justify-center shrink-0">
+                  <QrCode className="w-4.5 h-4.5" strokeWidth={1.75} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-semibold text-ink-primary uppercase tracking-wider">
+                    Counter QR Check-in
+                  </h3>
+                  <p className="text-[11px] text-ink-muted">
+                    Scan the rotating 60-second QR code at the dining hall entrance to auto-record your meal attendance.
+                  </p>
+                </div>
               </div>
 
-              <div className="p-3 bg-surface-subtle rounded border border-border">
-                <div className="text-ink-muted text-[10px]">EATEN (E)</div>
-                <div className="text-base font-bold text-ink-primary mt-1">{projection.mealsEaten}</div>
-                <div className="text-[10px] text-ink-muted">Recorded check-ins</div>
-              </div>
-
-              <div className="p-3 bg-surface-subtle rounded border border-border">
-                <div className="text-ink-muted text-[10px]">FREE SKIPS (K)</div>
-                <div className="text-base font-bold text-ink-primary mt-1">{projection.freeSkips}</div>
-                <div className="text-[10px] text-ink-muted">Statutory quota</div>
-              </div>
-
-              <div className="p-3 bg-surface-subtle rounded border border-border">
-                <div className="text-ink-muted text-[10px]">ELIGIBLE MISSED</div>
-                <div className="text-base font-bold text-emerald-700 mt-1">{projection.eligibleMissed}</div>
-                <div className="text-[10px] text-ink-muted">MAX(0, S - E - K)</div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowManualFallback((prev) => !prev)}
+                >
+                  <span>{showManualFallback ? 'Hide manual code' : 'Enter code manually'}</span>
+                  {showManualFallback ? <ChevronUp className="w-3.5 h-3.5 ml-1" /> : <ChevronDown className="w-3.5 h-3.5 ml-1" />}
+                </Button>
               </div>
             </div>
+
+            {/* Collapsed manual fallback form */}
+            {showManualFallback && (
+              <form onSubmit={handleMarkManual} className="pt-3 border-t border-border flex flex-col sm:flex-row items-center gap-2">
+                <Input
+                  placeholder="Paste 64-char HMAC token from counter screen..."
+                  value={scanToken}
+                  onChange={(e) => setScanToken(e.target.value)}
+                  className="w-full sm:flex-1 font-mono text-xs"
+                />
+                <Button type="submit" size="sm" disabled={isSubmittingToken || !scanToken.trim()}>
+                  {isSubmittingToken ? 'Verifying...' : 'Record Attendance'}
+                </Button>
+              </form>
+            )}
           </div>
+        </section>
+      )}
+
+      {/* =====================================================================
+          TAB 2 / SECTION: REFUND LEDGER & FORMULA PROJECTION PANEL
+          ===================================================================== */}
+      {activeTab === 'LEDGER' && (
+        <section aria-label="Mess Refund Ledger" className="space-y-6">
+          {/* Multi-Month Refund Ledger Table */}
+          <div className="bg-surface border border-border rounded-lg overflow-hidden shadow-none space-y-0">
+            <div className="px-5 py-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h2 className="text-base font-serif font-bold text-ink-primary">
+                  Mess Refund Ledger by Month
+                </h2>
+                <p className="text-xs text-ink-secondary">
+                  Audited monthly dining rebate records calculated via <code className="font-mono text-[11px] bg-surface-subtle px-1 py-0.5 rounded">sp_calculate_refunds</code>.
+                </p>
+              </div>
+              <span className="text-xs font-mono text-ink-muted">
+                Statutory Free Skips: {projection?.free_skips ?? 8} meals
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-surface-subtle border-b border-border text-ink-secondary uppercase font-semibold text-[10px] tracking-wider">
+                  <tr>
+                    <th className="py-2.5 px-4">Month</th>
+                    <th className="py-2.5 px-3 text-right">Scheduled</th>
+                    <th className="py-2.5 px-3 text-right">Eaten</th>
+                    <th className="py-2.5 px-3 text-right">Missed</th>
+                    <th className="py-2.5 px-3 text-right">Free Skips</th>
+                    <th className="py-2.5 px-3 text-right">Attendance Refund</th>
+                    <th className="py-2.5 px-3 text-right">Flat Refund</th>
+                    <th className="py-2.5 px-3 text-right">Difference</th>
+                    <th className="py-2.5 px-4 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border font-mono text-[11px]">
+                  {ledgerHistory.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="py-6 text-center text-ink-muted font-sans text-xs">
+                        No refund ledger records found.
+                      </td>
+                    </tr>
+                  ) : (
+                    ledgerHistory.map((rec) => {
+                      const isPositiveDiff = rec.difference >= 0;
+                      return (
+                        <tr key={`ledger-${rec.month}-${rec.year}`} className="hover:bg-surface-subtle transition-colors">
+                          <td className="py-3 px-4 font-sans font-medium text-ink-primary">
+                            {rec.monthName}
+                          </td>
+                          <td className="py-3 px-3 text-right tabular-nums text-ink-secondary">
+                            {rec.scheduled}
+                          </td>
+                          <td className="py-3 px-3 text-right tabular-nums text-ink-primary font-semibold">
+                            {rec.eaten}
+                          </td>
+                          <td className="py-3 px-3 text-right tabular-nums text-amber-700">
+                            {rec.missed}
+                          </td>
+                          <td className="py-3 px-3 text-right tabular-nums text-ink-muted">
+                            {rec.freeSkips}
+                          </td>
+                          <td className="py-3 px-3 text-right tabular-nums font-bold text-ink-primary">
+                            {formatCurrencyINR(rec.attendanceRefund)}
+                          </td>
+                          <td className="py-3 px-3 text-right tabular-nums text-ink-muted">
+                            {formatCurrencyINR(rec.flatRefund)}
+                          </td>
+                          <td className="py-3 px-3 text-right tabular-nums font-semibold">
+                            <span className={isPositiveDiff ? 'text-emerald-700' : 'text-amber-700'}>
+                              {isPositiveDiff ? '+' : ''}{formatCurrencyINR(rec.difference)}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-center font-sans">
+                            {rec.status === 'FINAL' ? (
+                              <StatusTag status="success" label="FINAL" size="sm" />
+                            ) : rec.status === 'PREVIEW' ? (
+                              <StatusTag status="primary" label="PREVIEW" size="sm" />
+                            ) : (
+                              <StatusTag status="warning" label="IN PROGRESS" size="sm" />
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Current-Month Projection Panel with Real Numbers Spelled Out */}
+          {projection && (
+            <div className="p-5 bg-surface border border-border rounded-lg space-y-4">
+              <div>
+                <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
+                  Rebate Formula Walkthrough • {MONTH_NAMES[projection.month]} {projection.year}
+                </span>
+                <h3 className="text-base font-serif font-bold text-ink-primary mt-0.5">
+                  Institutional Attendance-Based Rebate Formula
+                </h3>
+                <p className="text-xs text-ink-secondary mt-1">
+                  Rebate calculation verified per institutional dining statutes with real parameters:
+                </p>
+              </div>
+
+              {/* Formula Mathematical Display */}
+              <div className="p-4 bg-surface-subtle border border-border rounded text-xs font-mono space-y-2 text-ink-primary">
+                <div>
+                  <strong>Eligible Missed Meals:</strong>{' '}
+                  <span className="text-emerald-700 font-bold">
+                    MAX(0, Scheduled ({projection.scheduled}) - Eaten ({projection.eaten}) - Free Skips ({projection.free_skips})) = {projection.eligible_missed} meals
+                  </span>
+                </div>
+                <div>
+                  <strong>Raw Calculated Refund:</strong>{' '}
+                  <span>
+                    {projection.eligible_missed} meals × ₹{projection.per_meal_rate}.00/meal = ₹{(projection.eligible_missed * projection.per_meal_rate).toFixed(2)}
+                  </span>
+                </div>
+                <div>
+                  <strong>Policy Ceiling Cap (60% of Food Component):</strong>{' '}
+                  <span>
+                    60% of ₹{projection.food_component}.00 = ₹{projection.cap_amount}.00
+                  </span>
+                </div>
+                <div className="pt-2 border-t border-border flex justify-between font-semibold">
+                  <span>Final Calculated Rebate:</span>
+                  <span className="text-emerald-700 text-sm">
+                    {formatCurrencyINR(projection.attendance_refund)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Comparison vs Flat Refund */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div className="p-3 rounded bg-surface-subtle border border-border">
+                  <div className="text-[10px] font-semibold text-ink-muted uppercase">Attendance Refund</div>
+                  <div className="text-lg font-bold font-mono text-ink-primary mt-1">
+                    {formatCurrencyINR(projection.attendance_refund)}
+                  </div>
+                  <div className="text-[10px] text-ink-muted">Formulated credit</div>
+                </div>
+
+                <div className="p-3 rounded bg-surface-subtle border border-border">
+                  <div className="text-[10px] font-semibold text-ink-muted uppercase">Historical Flat Benchmark</div>
+                  <div className="text-lg font-bold font-mono text-ink-secondary mt-1">
+                    {formatCurrencyINR(projection.flat_refund)}
+                  </div>
+                  <div className="text-[10px] text-ink-muted">Uniform legacy rate</div>
+                </div>
+
+                <div className="p-3 rounded bg-surface-subtle border border-border">
+                  <div className="text-[10px] font-semibold text-ink-muted uppercase">Net Variance</div>
+                  <div className={`text-lg font-bold font-mono mt-1 ${projection.difference >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                    {projection.difference >= 0 ? '+' : ''}{formatCurrencyINR(projection.difference)}
+                  </div>
+                  <div className="text-[10px] text-ink-muted">
+                    {projection.difference >= 0 ? 'Higher rebate for absence' : 'Reflects frequent dining'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </section>
       )}
     </div>

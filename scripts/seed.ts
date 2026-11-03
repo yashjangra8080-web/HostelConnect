@@ -2,6 +2,7 @@ import path from 'path';
 import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
 import { seedNotifications } from './seed-notifications.js';
+import { seedMess } from './seed-mess.js';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 dotenv.config({ path: path.resolve(process.cwd(), 'server/.env') });
@@ -648,89 +649,8 @@ async function seedDatabase() {
       LEFT JOIN allotments alt ON ra.student_id = alt.student_id AND ra.cycle_id = alt.cycle_id;
     `);
 
-    console.log('[Seed Runner] 8. Populating Meal Types, Meals, and 30 Days of Attendance...');
-    const mealTypesData = [
-      [1, 'BREAKFAST', '07:30:00', '09:30:00'],
-      [2, 'LUNCH', '12:30:00', '14:30:00'],
-      [3, 'SNACKS', '17:00:00', '18:30:00'],
-      [4, 'DINNER', '20:00:00', '22:00:00']
-    ];
-    await conn.query(
-      'INSERT INTO meal_types (meal_type_id, type_name, start_time, end_time) VALUES ?',
-      [mealTypesData]
-    );
-
-    const mealsData: any[] = [];
-    let mealId = 1;
-    for (let h = 1; h <= 4; h++) {
-      for (let day = 1; day <= 30; day++) {
-        const dateStr = `2026-10-${String(day).padStart(2, '0')}`;
-        for (let mt = 1; mt <= 4; mt++) {
-          const isClosed = (day === 2 && mt === 3) ? 1 : 0;
-          mealsData.push([
-            mealId++,
-            mt,
-            h,
-            dateStr,
-            `Menu for ${dateStr} slot ${mt}`,
-            isClosed
-          ]);
-        }
-      }
-    }
-    await conn.query(
-      'INSERT INTO meals (meal_id, meal_type_id, hostel_id, meal_date, menu, is_closed) VALUES ?',
-      [mealsData]
-    );
-
-    const messConfigData: any[] = [];
-    let cfgId = 1;
-    for (let h = 1; h <= 4; h++) {
-      messConfigData.push([cfgId++, h, 10, 2026, 4500.00, 3600.00, 40.00, 15, 60.00]);
-      messConfigData.push([cfgId++, h, 11, 2026, 4500.00, 3600.00, 40.00, 15, 60.00]);
-    }
-    await conn.query(
-      'INSERT INTO mess_config (config_id, hostel_id, month, year, monthly_fee, food_component, per_meal_refund_rate, free_skips, cap_pct) VALUES ?',
-      [messConfigData]
-    );
-
-    const acceptedResidents = allotmentsData
-      .filter((a) => a[5] === 'ACCEPTED')
-      .map((a) => ({
-        studentId: a[2],
-        roomId: a[4],
-        hostelId: roomsData[a[4] - 1][1] as number
-      }));
-
-    console.log(`[Seed Runner] Generating mess attendance for ${acceptedResidents.length} accepted residents...`);
-    const attendanceData: any[] = [];
-    let attId = 1;
-
-    for (const res of acceptedResidents) {
-      const resMeals = mealsData.filter((m) => m[2] === res.hostelId && m[5] === 0);
-      for (const meal of resMeals) {
-        if (rand() < 0.65) {
-          const markedVia = rand() > 0.4 ? 'QR' : 'COUNTER';
-          const markedTime = `${meal[3]} 13:00:00`;
-          attendanceData.push([
-            attId++,
-            res.studentId,
-            meal[0],
-            markedVia,
-            markedTime,
-            8
-          ]);
-        }
-      }
-    }
-
-    console.log(`[Seed Runner] Batch inserting ${attendanceData.length} meal attendance rows...`);
-    for (let b = 0; b < attendanceData.length; b += 1000) {
-      await conn.query(
-        'INSERT INTO mess_attendance (att_id, student_id, meal_id, marked_via, marked_at, marked_by) VALUES ?',
-        [attendanceData.slice(b, b + 1000)]
-      );
-    }
+    console.log('[Seed Runner] 8. Populating Realistic Mess Data, Rotating Menus & Refunds (Task 3)...');
+    await seedMess(conn);
 
     console.log('[Seed Runner] 9. Populating 10 Weeks of Water Quality Reports (40 reports)...');
     const weekStarts = [

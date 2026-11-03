@@ -38,6 +38,7 @@ const TYPE_ICONS: Record<string, React.ComponentType<{ className?: string; strok
   NOTICE: Bell,
   COMPLAINT: ShieldAlert,
   REFUND: Receipt,
+  MESS_REFUND: Receipt,
   MAINTENANCE: Wrench,
   WATER: Droplets,
   LAUNDRY: Shirt,

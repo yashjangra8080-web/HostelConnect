@@ -14,6 +14,7 @@
     "db:routines": "tsx scripts/routine-loader.ts",
     "db:audit-triggers": "tsx scripts/generate-audit-triggers.ts",
     "db:seed": "tsx scripts/seed.ts",
+    "db:seed:mess": "tsx scripts/seed-mess.ts",
     "db:reset": "tsx scripts/reset-demo.ts",
     "show-grants": "tsx scripts/show-grants.ts",
     "test": "vitest run",

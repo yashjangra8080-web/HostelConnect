@@ -10,7 +10,7 @@ import {
   RefreshCw,
   Layers,
 } from 'lucide-react';
-import { AllotmentStatusResponse } from '../types';
+import { AllotmentStatusResponse } from '../types.js';
 
 interface ApplicantStatusProps {
   onRefresh?: () => void;
@@ -102,7 +102,7 @@ export const ApplicantStatus: React.FC<ApplicantStatusProps> = ({ onRefresh }) =
 
   if (loading && !data) {
     return (
-      <div className="bg-white border border-[#E2E8F0] rounded-lg p-12 text-center text-xs text-[#64748B]">
+      <div className="bg-surface border-2 border-black rounded-sm p-12 text-center text-xs font-bold text-ink-muted shadow-hard">
         Loading your allotment status...
       </div>
     );
@@ -114,38 +114,38 @@ export const ApplicantStatus: React.FC<ApplicantStatusProps> = ({ onRefresh }) =
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header Card */}
-      <div className="bg-white border border-[#E2E8F0] rounded-lg p-6 shadow-sm">
-        <div className="flex items-center justify-between pb-4 border-b border-[#E2E8F0]">
+      <div className="bg-surface border-2 border-black rounded-sm p-6 shadow-hard-lg">
+        <div className="flex items-center justify-between pb-4 border-b-2 border-black">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded bg-[#EEF2FF] flex items-center justify-center text-[#2F5BD6]">
-              <BedDouble className="w-5 h-5" strokeWidth={1.75} />
+            <div className="w-10 h-10 rounded-sm bg-paper border-2 border-black flex items-center justify-center text-ink-primary shadow-hard-sm">
+              <BedDouble className="w-5 h-5 text-ink-primary" strokeWidth={2} />
             </div>
             <div>
-              <h2 className="text-base font-bold font-heading text-[#0F172A]">Hostel Allotment Status</h2>
-              <p className="text-xs text-[#64748B]">Academic Year 2026-27 &bull; Cycle Status: {data?.cycle_status || 'UNKNOWN'}</p>
+              <h2 className="text-xl font-extrabold font-heading text-ink-primary tracking-tight">Hostel Allotment Status</h2>
+              <p className="text-xs font-medium text-ink-secondary">Academic Year 2026-27 &bull; Cycle Status: <span className="font-mono font-bold text-ink-primary">{data?.cycle_status || 'UNKNOWN'}</span></p>
             </div>
           </div>
 
           <button
             onClick={fetchStatus}
-            className="p-1.5 rounded text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] border border-[#E2E8F0] transition-colors"
+            className="p-2 rounded-sm text-ink-primary bg-surface hover:bg-paper border-2 border-black shadow-hard-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all"
             title="Refresh Status"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} strokeWidth={1.75} />
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} strokeWidth={2} />
           </button>
         </div>
 
         {/* Notifications / Alerts */}
         {error && (
-          <div className="mt-4 p-4 bg-[#FEF2F2] border border-[#FECACA] rounded-lg text-xs text-[#DC2626] flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={1.75} />
+          <div className="mt-4 p-4 bg-status-danger-subtle border-2 border-black rounded-sm text-xs font-bold text-status-danger-text flex items-center gap-2 shadow-hard-sm">
+            <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={2} />
             <span>{error}</span>
           </div>
         )}
 
         {successMessage && (
-          <div className="mt-4 p-4 bg-[#ECFDF5] border border-[#A7F3D0] rounded-lg text-xs text-[#059669] flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0" strokeWidth={1.75} />
+          <div className="mt-4 p-4 bg-status-success-subtle border-2 border-black rounded-sm text-xs font-bold text-status-success-text flex items-center gap-2 shadow-hard-sm">
+            <CheckCircle2 className="w-4 h-4 shrink-0" strokeWidth={2} />
             <span>{successMessage}</span>
           </div>
         )}
@@ -153,40 +153,40 @@ export const ApplicantStatus: React.FC<ApplicantStatusProps> = ({ onRefresh }) =
         {/* Allotted Case */}
         {data?.has_allotment && allotment ? (
           <div className="mt-6 space-y-6">
-            <div className="p-5 bg-[#F0FDF4] border border-[#BBF7D0] rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="p-5 bg-status-success-subtle border-2 border-black rounded-sm shadow-hard flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-[#DCFCE7] flex items-center justify-center text-[#15803D] shrink-0">
-                  <CheckCircle2 className="w-6 h-6" strokeWidth={2} />
+                <div className="w-12 h-12 rounded-sm bg-surface border-2 border-black flex items-center justify-center text-status-success-text shadow-hard-sm shrink-0">
+                  <CheckCircle2 className="w-6 h-6" strokeWidth={2.5} />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-heading font-bold text-base text-[#15803D]">
+                    <span className="font-heading font-extrabold text-base text-ink-primary tracking-tight">
                       Hostel Accommodation Allotted!
                     </span>
                     <span
-                      className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
+                      className={`text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-sm border-2 border-black shadow-hard-sm ${
                         allotment.response_status === 'ACCEPTED'
-                          ? 'bg-[#15803D] text-white'
+                          ? 'bg-status-success-subtle text-status-success-text'
                           : allotment.response_status === 'DECLINED'
-                          ? 'bg-[#DC2626] text-white'
-                          : 'bg-[#F59E0B] text-white'
+                          ? 'bg-status-danger-subtle text-status-danger-text'
+                          : 'bg-saffron text-black'
                       }`}
                     >
                       {allotment.response_status}
                     </span>
                   </div>
-                  <p className="text-xs text-[#166534] mt-1">
+                  <p className="text-xs font-medium text-ink-secondary mt-1">
                     You have been provisionally allotted a room in the NSUT Dwarka campus hostel complex.
                   </p>
                 </div>
               </div>
 
               {allotment.response_status === 'AWAITING' && allotment.response_deadline && (
-                <div className="text-right shrink-0 bg-white/80 px-3.5 py-2 rounded-lg border border-[#BBF7D0]">
-                  <span className="text-[10px] uppercase tracking-wider text-[#64748B] block font-semibold">
+                <div className="text-right shrink-0 bg-surface px-4 py-2 rounded-sm border-2 border-black shadow-hard-sm">
+                  <span className="text-[10px] uppercase tracking-wider text-ink-muted block font-extrabold">
                     Response Deadline
                   </span>
-                  <span className="text-xs font-bold text-[#DC2626] tabular-nums">
+                  <span className="text-xs font-mono font-bold text-status-danger-text tabular-nums">
                     {new Date(allotment.response_deadline).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
                   </span>
                 </div>
@@ -195,32 +195,32 @@ export const ApplicantStatus: React.FC<ApplicantStatusProps> = ({ onRefresh }) =
 
             {/* Allotment Details Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg">
-                <div className="flex items-center gap-2 text-xs text-[#64748B] mb-1">
-                  <Building2 className="w-4 h-4 text-[#2F5BD6]" strokeWidth={1.75} />
+              <div className="p-4 bg-surface border-2 border-black rounded-sm shadow-hard">
+                <div className="flex items-center gap-2 text-xs font-bold text-ink-secondary mb-1">
+                  <Building2 className="w-4 h-4 text-ink-primary" strokeWidth={2} />
                   <span>Hostel Block</span>
                 </div>
-                <div className="text-base font-bold font-heading text-[#0F172A]">
+                <div className="text-base font-extrabold font-heading text-ink-primary">
                   {allotment.hostel_name}
                 </div>
               </div>
 
-              <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg">
-                <div className="flex items-center gap-2 text-xs text-[#64748B] mb-1">
-                  <Layers className="w-4 h-4 text-[#2F5BD6]" strokeWidth={1.75} />
+              <div className="p-4 bg-surface border-2 border-black rounded-sm shadow-hard">
+                <div className="flex items-center gap-2 text-xs font-bold text-ink-secondary mb-1">
+                  <Layers className="w-4 h-4 text-ink-primary" strokeWidth={2} />
                   <span>Room & Floor</span>
                 </div>
-                <div className="text-base font-bold font-heading text-[#0F172A]">
+                <div className="text-base font-extrabold font-heading text-ink-primary">
                   Room {allotment.room_no} &bull; Floor {allotment.floor_no}
                 </div>
               </div>
 
-              <div className="p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg">
-                <div className="flex items-center gap-2 text-xs text-[#64748B] mb-1">
-                  <Clock className="w-4 h-4 text-[#2F5BD6]" strokeWidth={1.75} />
+              <div className="p-4 bg-surface border-2 border-black rounded-sm shadow-hard">
+                <div className="flex items-center gap-2 text-xs font-bold text-ink-secondary mb-1">
+                  <Clock className="w-4 h-4 text-ink-primary" strokeWidth={2} />
                   <span>Allotted Timestamp (IST)</span>
                 </div>
-                <div className="text-xs font-semibold text-[#0F172A] tabular-nums mt-1">
+                <div className="text-xs font-mono font-bold text-ink-primary tabular-nums mt-1">
                   {new Date(allotment.allotted_on).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
                 </div>
               </div>
@@ -228,10 +228,10 @@ export const ApplicantStatus: React.FC<ApplicantStatusProps> = ({ onRefresh }) =
 
             {/* Action Buttons if Awaiting Response */}
             {allotment.response_status === 'AWAITING' && (
-              <div className="p-5 bg-white border border-[#CBD5E1] rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="p-5 bg-surface border-2 border-black rounded-sm shadow-hard flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
-                  <h4 className="text-sm font-bold font-heading text-[#0F172A]">Submit Allotment Response</h4>
-                  <p className="text-xs text-[#64748B] mt-0.5">
+                  <h4 className="text-sm font-extrabold font-heading text-ink-primary tracking-tight">Submit Allotment Response</h4>
+                  <p className="text-xs font-medium text-ink-secondary mt-0.5">
                     Please confirm whether you accept or decline this allotment before the deadline.
                   </p>
                 </div>
@@ -239,17 +239,17 @@ export const ApplicantStatus: React.FC<ApplicantStatusProps> = ({ onRefresh }) =
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                   <button
                     onClick={() => setConfirmAction('ACCEPT')}
-                    className="flex-1 sm:flex-none px-4 py-2 text-xs font-semibold rounded bg-[#059669] text-white hover:bg-[#047857] transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                    className="flex-1 sm:flex-none px-4 py-2 text-xs font-extrabold rounded-sm bg-status-success-subtle border-2 border-black text-status-success-text shadow-hard hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-hard-sm active:translate-x-1 active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-1.5"
                   >
-                    <CheckCircle2 className="w-4 h-4" strokeWidth={1.75} />
+                    <CheckCircle2 className="w-4 h-4" strokeWidth={2} />
                     <span>Accept Seat</span>
                   </button>
 
                   <button
                     onClick={() => setConfirmAction('DECLINE')}
-                    className="flex-1 sm:flex-none px-4 py-2 text-xs font-semibold rounded bg-white border border-[#FECACA] text-[#DC2626] hover:bg-[#FEF2F2] transition-colors flex items-center justify-center gap-1.5"
+                    className="flex-1 sm:flex-none px-4 py-2 text-xs font-extrabold rounded-sm bg-surface border-2 border-black text-status-danger-text shadow-hard hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-hard-sm active:translate-x-1 active:translate-y-1 active:shadow-none transition-all flex items-center justify-center gap-1.5"
                   >
-                    <XCircle className="w-4 h-4" strokeWidth={1.75} />
+                    <XCircle className="w-4 h-4" strokeWidth={2} />
                     <span>Decline Seat</span>
                   </button>
                 </div>
@@ -260,33 +260,33 @@ export const ApplicantStatus: React.FC<ApplicantStatusProps> = ({ onRefresh }) =
           /* Application exists but not allotted (Waitlisted or Pending) */
           <div className="mt-6 space-y-6">
             <div
-              className={`p-5 rounded-xl border flex items-start gap-4 ${
+              className={`p-5 rounded-sm border-2 border-black shadow-hard flex items-start gap-4 ${
                 application.status === 'WAITLISTED'
-                  ? 'bg-[#FFFBEB] border-[#FDE68A] text-[#92400E]'
+                  ? 'bg-status-warning-subtle text-status-warning-text'
                   : application.status === 'WITHDRAWN'
-                  ? 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B]'
-                  : 'bg-[#EEF2FF] border-[#CBD5E1] text-[#1E3A8A]'
+                  ? 'bg-surface-subtle text-ink-secondary'
+                  : 'bg-paper text-ink-primary'
               }`}
             >
               <div className="mt-0.5">
                 {application.status === 'WAITLISTED' ? (
-                  <Clock className="w-5 h-5 text-[#D97706]" strokeWidth={1.75} />
+                  <Clock className="w-5 h-5 text-status-warning-text" strokeWidth={2} />
                 ) : application.status === 'WITHDRAWN' ? (
-                  <XCircle className="w-5 h-5 text-[#64748B]" strokeWidth={1.75} />
+                  <XCircle className="w-5 h-5 text-ink-muted" strokeWidth={2} />
                 ) : (
-                  <AlertCircle className="w-5 h-5 text-[#2F5BD6]" strokeWidth={1.75} />
+                  <AlertCircle className="w-5 h-5 text-ink-primary" strokeWidth={2} />
                 )}
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-heading font-bold text-base">
+                  <span className="font-heading font-extrabold text-base tracking-tight text-ink-primary">
                     Application Status: {application.status}
                   </span>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-white/80 border border-current">
+                  <span className="text-xs font-extrabold px-2 py-0.5 rounded-sm bg-surface border-2 border-black shadow-hard-sm text-ink-primary">
                     Verification: {application.verification_status}
                   </span>
                 </div>
-                <p className="text-xs mt-1 opacity-90">
+                <p className="text-xs font-medium mt-1 text-ink-secondary">
                   {application.status === 'WAITLISTED'
                     ? 'You are currently on the waitlist. If an allotted student of your gender declines their room or vacates, candidates on the waitlist with matching study habits will be automatically promoted.'
                     : application.status === 'WITHDRAWN'
@@ -301,7 +301,7 @@ export const ApplicantStatus: React.FC<ApplicantStatusProps> = ({ onRefresh }) =
               <div className="flex justify-end pt-2">
                 <button
                   onClick={() => setConfirmAction('WITHDRAW')}
-                  className="px-3 py-1.5 text-xs font-semibold text-[#DC2626] hover:bg-[#FEF2F2] border border-transparent hover:border-[#FECACA] rounded transition-colors"
+                  className="px-3 py-1.5 text-xs font-extrabold text-status-danger-text bg-surface hover:bg-status-danger-subtle border-2 border-black rounded-sm shadow-hard-sm hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
                 >
                   Withdraw My Application
                 </button>
@@ -310,7 +310,7 @@ export const ApplicantStatus: React.FC<ApplicantStatusProps> = ({ onRefresh }) =
           </div>
         ) : (
           /* No application */
-          <div className="mt-6 py-12 text-center text-xs text-[#64748B]">
+          <div className="mt-6 py-12 text-center text-xs font-bold text-ink-muted">
             No application found for your student profile in the active cycle.
           </div>
         )}
@@ -319,32 +319,32 @@ export const ApplicantStatus: React.FC<ApplicantStatusProps> = ({ onRefresh }) =
       {/* Confirmation Dialogs */}
       {confirmAction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-xl max-w-md w-full p-6 space-y-4">
+          <div className="bg-surface border-2 border-black rounded-sm shadow-hard-xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-start gap-3">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                className={`w-9 h-9 rounded-sm border-2 border-black shadow-hard-sm flex items-center justify-center shrink-0 ${
                   confirmAction === 'ACCEPT'
-                    ? 'bg-[#DCFCE7] text-[#15803D]'
+                    ? 'bg-status-success-subtle text-status-success-text'
                     : confirmAction === 'DECLINE'
-                    ? 'bg-[#FEE2E2] text-[#DC2626]'
-                    : 'bg-[#FEF3C7] text-[#D97706]'
+                    ? 'bg-status-danger-subtle text-status-danger-text'
+                    : 'bg-saffron text-black'
                 }`}
               >
                 {confirmAction === 'ACCEPT' ? (
-                  <CheckCircle2 className="w-5 h-5" strokeWidth={2} />
+                  <CheckCircle2 className="w-5 h-5" strokeWidth={2.5} />
                 ) : (
-                  <AlertTriangle className="w-5 h-5" strokeWidth={2} />
+                  <AlertTriangle className="w-5 h-5" strokeWidth={2.5} />
                 )}
               </div>
               <div>
-                <h3 className="font-heading font-bold text-sm text-[#0F172A]">
+                <h3 className="font-heading font-extrabold text-sm text-ink-primary tracking-tight">
                   {confirmAction === 'ACCEPT'
                     ? 'Confirm Allotment Acceptance'
                     : confirmAction === 'DECLINE'
                     ? 'Confirm Allotment Decline'
                     : 'Confirm Application Withdrawal'}
                 </h3>
-                <p className="text-xs text-[#64748B] mt-1 leading-relaxed">
+                <p className="text-xs font-medium text-ink-secondary mt-1 leading-relaxed">
                   {confirmAction === 'ACCEPT'
                     ? `You are confirming your allotment in Room ${allotment?.room_no}, ${allotment?.hostel_name}. Your seat will be secured.`
                     : confirmAction === 'DECLINE'
@@ -354,11 +354,11 @@ export const ApplicantStatus: React.FC<ApplicantStatusProps> = ({ onRefresh }) =
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E2E8F0]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t-2 border-black">
               <button
                 disabled={submitting}
                 onClick={() => setConfirmAction(null)}
-                className="px-3.5 py-1.5 text-xs font-semibold rounded bg-white border border-[#CBD5E1] text-[#0F172A] hover:bg-[#F8FAFC]"
+                className="px-4 py-2 text-xs font-extrabold rounded-sm bg-surface border-2 border-black text-ink-primary shadow-hard hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-hard-sm active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
               >
                 Cancel
               </button>
@@ -370,13 +370,13 @@ export const ApplicantStatus: React.FC<ApplicantStatusProps> = ({ onRefresh }) =
                   else if (confirmAction === 'DECLINE') handleRespond('DECLINED');
                   else if (confirmAction === 'WITHDRAW') handleWithdraw();
                 }}
-                className={`px-4 py-1.5 text-xs font-semibold rounded text-white shadow-sm flex items-center gap-1.5 ${
+                className={`px-4 py-2 text-xs font-extrabold rounded-sm border-2 border-black shadow-hard hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-hard-sm active:translate-x-1 active:translate-y-1 active:shadow-none transition-all flex items-center gap-1.5 ${
                   confirmAction === 'ACCEPT'
-                    ? 'bg-[#059669] hover:bg-[#047857]'
-                    : 'bg-[#DC2626] hover:bg-[#B91C1C]'
+                    ? 'bg-status-success-subtle text-status-success-text'
+                    : 'bg-status-danger-subtle text-status-danger-text'
                 }`}
               >
-                {submitting && <RefreshCw className="w-3.5 h-3.5 animate-spin" strokeWidth={1.75} />}
+                {submitting && <RefreshCw className="w-3.5 h-3.5 animate-spin" strokeWidth={2} />}
                 <span>
                   {confirmAction === 'ACCEPT'
                     ? 'Accept Room'

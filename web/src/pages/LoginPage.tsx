@@ -71,145 +71,162 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen bg-paper flex flex-col justify-between items-center py-12 px-4 selection:bg-primary-subtle">
-      {/* Top Header / University Identity */}
-      <div className="w-full max-w-md text-center space-y-2">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-navy-sidebar text-white font-serif font-bold text-lg mb-1 border border-border">
-          HC
-        </div>
-        <h1 className="text-2xl font-serif font-bold tracking-tight text-ink-primary">
-          HostelConnect
-        </h1>
-        <p className="text-xs text-ink-secondary max-w-xs mx-auto leading-relaxed">
-          Netaji Subhas University of Technology, Sector 3, Dwarka, New Delhi
-        </p>
-      </div>
-
-      {/* Login Card Panel */}
-      <div className="w-full max-w-md bg-surface border border-border rounded-lg p-8 my-6 shadow-none">
-        <div className="mb-6 pb-4 border-b border-border">
-          <h2 className="text-base font-semibold text-ink-primary">Account Sign In</h2>
-          <p className="text-xs text-ink-muted mt-0.5">
-            Enter institutional credentials or student roll number
+    <div className="min-h-screen flex flex-col justify-between selection:bg-saffron">
+      {/* Band 1: Yellow Hero Band with Dot Pattern & Login Card */}
+      <section className="bg-dots border-b-2 border-black flex flex-col items-center justify-center py-12 px-4 flex-1">
+        <div className="w-full max-w-md text-center space-y-2 mb-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-[4px] bg-saffron text-black font-heading font-extrabold text-xl mb-1 border-2 border-black shadow-hard-sm">
+            HC
+          </div>
+          <h1 className="text-3xl font-heading font-extrabold tracking-tight text-black">
+            HostelConnect
+          </h1>
+          <p className="text-xs text-black font-bold max-w-xs mx-auto leading-relaxed">
+            Netaji Subhas University of Technology, Sector 3, Dwarka, New Delhi
           </p>
         </div>
 
-        {error && (
-          <div
-            role="alert"
-            className="mb-5 p-3 rounded bg-status-danger-bg/50 border border-status-danger-border flex items-start gap-2.5 text-xs text-status-danger-text"
-          >
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.75} />
-            <span>{error}</span>
+        {/* Login Card Panel */}
+        <div className="w-full max-w-md bg-white border-2 border-black rounded-[4px] p-8 my-4 shadow-hard-lg">
+          <div className="mb-6 pb-4 border-b-2 border-black">
+            <h2 className="text-lg font-heading font-extrabold text-black">Account Sign In</h2>
+            <p className="text-xs text-black/70 font-medium mt-0.5">
+              Enter institutional credentials or student roll number
+            </p>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Login ID or Roll Number"
-            type="text"
-            value={loginId}
-            onChange={(e) => setLoginId(e.target.value)}
-            placeholder="e.g. admin, office, or 2026UCS0001"
-            leftIcon={<User className="w-4 h-4 text-ink-muted" strokeWidth={1.75} />}
-            disabled={isLoading}
-            autoFocus
-            required
-          />
+          {error && (
+            <div
+              role="alert"
+              className="mb-5 p-3 rounded-[4px] bg-status-danger-bg border-2 border-black flex items-start gap-2.5 text-xs text-status-danger-text font-bold"
+            >
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={2.5} />
+              <span>{error}</span>
+            </div>
+          )}
 
-          <Input
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••••••"
-            leftIcon={<Lock className="w-4 h-4 text-ink-muted" strokeWidth={1.75} />}
-            disabled={isLoading}
-            required
-          />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              label="Login ID or Roll Number"
+              type="text"
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
+              placeholder="e.g. admin, office, or 2026UCS0001"
+              leftIcon={<User className="w-4 h-4 text-black" strokeWidth={2} />}
+              disabled={isLoading}
+              autoFocus
+              required
+            />
 
-          <Button type="submit" variant="primary" size="md" isLoading={isLoading} className="w-full mt-2">
-            Sign In to HostelConnect
-          </Button>
-        </form>
+            <Input
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••••••"
+              leftIcon={<Lock className="w-4 h-4 text-black" strokeWidth={2} />}
+              disabled={isLoading}
+              required
+            />
 
-        {/* Quick Demo Credentials Helpers */}
-        <div className="mt-6 pt-5 border-t border-border">
-          <p className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider mb-2">
-            Quick Test Accounts (Password: Password@123)
-          </p>
-          <div className="grid grid-cols-2 gap-1.5 text-xs">
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('admin')}
-              className="text-left px-2 py-1.5 rounded bg-surface-subtle border border-border hover:border-primary hover:text-primary transition-colors text-[11px]"
-            >
-              <strong className="font-semibold block text-ink-primary">ADMIN</strong>
-              <span className="text-ink-muted">admin</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('warden_bh1')}
-              className="text-left px-2 py-1.5 rounded bg-surface-subtle border border-border hover:border-primary hover:text-primary transition-colors text-[11px]"
-            >
-              <strong className="font-semibold block text-ink-primary">WARDEN</strong>
-              <span className="text-ink-muted">warden_bh1</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('office')}
-              className="text-left px-2 py-1.5 rounded bg-surface-subtle border border-border hover:border-primary hover:text-primary transition-colors text-[11px]"
-            >
-              <strong className="font-semibold block text-ink-primary">OFFICE</strong>
-              <span className="text-ink-muted">office</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('2026UCSDS0001')}
-              className="text-left px-2 py-1.5 rounded bg-surface-subtle border border-border hover:border-primary hover:text-primary transition-colors text-[11px]"
-            >
-              <strong className="font-semibold block text-ink-primary">STUDENT</strong>
-              <span className="text-ink-muted">2026UCSDS0001</span>
-            </button>
+            <Button type="submit" variant="primary" size="md" isLoading={isLoading} className="w-full mt-2">
+              Sign In to HostelConnect
+            </Button>
+          </form>
+
+          {/* Quick Demo Credentials Helpers */}
+          <div className="mt-6 pt-5 border-t-2 border-black">
+            <p className="text-[11px] font-heading font-extrabold text-black uppercase tracking-wider mb-2">
+              Quick Test Accounts (Password: Password@123)
+            </p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('admin')}
+                className="text-left px-2.5 py-2 rounded-[8px] bg-white border-2 border-black text-black hover:bg-saffron shadow-hard-sm transition-colors text-[11px]"
+              >
+                <strong className="font-heading font-extrabold block text-black">ADMIN</strong>
+                <span className="text-black/70 font-mono font-medium">admin</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('warden_bh1')}
+                className="text-left px-2.5 py-2 rounded-[8px] bg-white border-2 border-black text-black hover:bg-saffron shadow-hard-sm transition-colors text-[11px]"
+              >
+                <strong className="font-heading font-extrabold block text-black">WARDEN</strong>
+                <span className="text-black/70 font-mono font-medium">warden_bh1</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('office')}
+                className="text-left px-2.5 py-2 rounded-[8px] bg-white border-2 border-black text-black hover:bg-saffron shadow-hard-sm transition-colors text-[11px]"
+              >
+                <strong className="font-heading font-extrabold block text-black">OFFICE</strong>
+                <span className="text-black/70 font-mono font-medium">office</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('2026UCSDS0001')}
+                className="text-left px-2.5 py-2 rounded-[8px] bg-white border-2 border-black text-black hover:bg-saffron shadow-hard-sm transition-colors text-[11px]"
+              >
+                <strong className="font-heading font-extrabold block text-black">STUDENT</strong>
+                <span className="text-black/70 font-mono font-medium">2026UCSDS0001</span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* One Quiet Line of Live Facts from /api/public/stats */}
-      <div className="w-full max-w-xl text-center text-xs text-ink-muted border-t border-border pt-4">
-        {stats ? (
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-            <span className="inline-flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5 text-primary shrink-0" strokeWidth={1.75} />
-              <span>
-                Campus Capacity:{' '}
-                <strong className="font-semibold text-ink-secondary tabular-nums">
-                  {stats.beds.total} beds
-                </strong>{' '}
-                ({stats.beds.occupied} occupied)
+      {/* Band 2: White Band with Live Statistics Strip */}
+      <section className="bg-white border-b-2 border-black py-5 px-4 text-center text-xs text-black font-bold">
+        <div className="max-w-4xl mx-auto">
+          {stats ? (
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border-2 border-black rounded-[4px] shadow-hard-sm">
+                <Building2 className="w-4 h-4 text-black shrink-0" strokeWidth={2} />
+                <span>
+                  Campus Capacity:{' '}
+                  <strong className="font-extrabold text-black tabular-nums">
+                    {stats.beds.total} beds
+                  </strong>{' '}
+                  ({stats.beds.occupied} occupied)
+                </span>
               </span>
-            </span>
-            <span className="text-border-strong">•</span>
-            <span>
-              Total Applicants:{' '}
-              <strong className="font-semibold text-ink-secondary tabular-nums">
-                {stats.applications.total}
-              </strong>
-            </span>
-            <span className="text-border-strong">•</span>
-            <span className="inline-flex items-center gap-1 text-status-success-text">
-              <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={1.75} />
-              <span>Cycle {stats.currentCycle?.academic_year || '2026-27'} Active</span>
-            </span>
-            <span className="text-border-strong">•</span>
-            <span className="font-mono text-[11px]">IST (UTC+05:30)</span>
-          </div>
-        ) : (
-          <p className="text-ink-muted">
-            Hostel Allocation & Residence Operations System • NSUT Dwarka (IST)
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border-2 border-black rounded-[4px] shadow-hard-sm">
+                <span>
+                  Total Applicants:{' '}
+                  <strong className="font-extrabold text-black tabular-nums">
+                    {stats.applications.total}
+                  </strong>
+                </span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-paper border-2 border-black rounded-[4px] shadow-hard-sm text-black">
+                <CheckCircle2 className="w-4 h-4 text-status-success-text" strokeWidth={2.5} />
+                <span>Cycle {stats.currentCycle?.academic_year || '2026-27'} Active</span>
+              </span>
+              <span className="px-3 py-1 bg-white border-2 border-black rounded-[4px] shadow-hard-sm font-mono text-[11px]">
+                IST (UTC+05:30)
+              </span>
+            </div>
+          ) : (
+            <p className="text-black font-bold">
+              Hostel Allocation & Residence Operations System • Netaji Subhas University of Technology (IST)
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* Band 3: Dark Band Footer */}
+      <footer className="bg-navy-sidebar text-white py-6 px-4 text-center text-xs font-medium">
+        <div className="max-w-4xl mx-auto space-y-1">
+          <p className="font-heading font-bold text-sm text-white">
+            HostelConnect • Netaji Subhas University of Technology, Dwarka
           </p>
-        )}
-      </div>
+          <p className="text-surface-subtle text-[11px]">
+            Strictly operating in Indian Standard Time (IST, UTC+05:30) • WCAG 2.1 AA Compliant Institutional Architecture
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };

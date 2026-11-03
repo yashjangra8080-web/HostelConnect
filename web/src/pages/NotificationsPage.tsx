@@ -107,25 +107,32 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
     fetchNotifications();
   }, [page, unreadOnly, typeFilter]);
 
-  const handleToggleRead = async (notifId: number, currentReadState: boolean) => {
-    const endpoint = currentReadState
-      ? `/api/notifications/${notifId}/unread`
-      : `/api/notifications/${notifId}/read`;
-
-    // Optimistic local update
-    setNotifications((prev) =>
-      prev.map((n) => (n.notif_id === notifId ? { ...n, is_read: !currentReadState } : n))
-    );
-    setUnreadCount((prev) => (currentReadState ? prev + 1 : Math.max(0, prev - 1)));
-
+  const handleToggleRead = async (notifId: number, currentReadStatus: boolean) => {
     try {
-      const res = await fetch(endpoint, { method: 'PATCH', credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to update notification state.');
-      if (onNotificationsChanged) onNotificationsChanged();
+      const endpoint = currentReadStatus
+        ? `/api/notifications/${notifId}/unread`
+        : `/api/notifications/${notifId}/read`;
+      const res = await fetch(endpoint, {
+        method: 'PATCH',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to update notification status.');
+
+      // Update state locally
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.notif_id === notifId ? { ...n, is_read: !currentReadStatus } : n
+        )
+      );
+
+      // Adjust counts
+      setUnreadCount((c) => (currentReadStatus ? c + 1 : Math.max(0, c - 1)));
+
+      if (onNotificationsChanged) {
+        onNotificationsChanged();
+      }
     } catch (err: any) {
-      toast.error(err.message || 'Action failed');
-      // Revert on error
-      fetchNotifications();
+      toast.error(err.message || 'Failed to update notification.');
     }
   };
 
@@ -137,12 +144,15 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
       });
       if (!res.ok) throw new Error('Failed to mark all as read.');
 
-      toast.success('All notifications marked as read.');
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
       setUnreadCount(0);
-      if (onNotificationsChanged) onNotificationsChanged();
+      toast.success('All notifications marked as read.');
+
+      if (onNotificationsChanged) {
+        onNotificationsChanged();
+      }
     } catch (err: any) {
-      toast.error(err.message || 'Action failed');
+      toast.error(err.message || 'Failed to mark all as read.');
     }
   };
 
@@ -150,7 +160,15 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
     const rawLink = notif.link?.trim() || '';
     if (isAllowedInAppRoute(rawLink)) {
       if (notif.notif_type === 'ALLOTMENT') {
-        return user?.role === 'STUDENT' ? '/student/allotment' : '/office/ranking';
+        if (user?.role === 'STUDENT') {
+          return '/student/allotment';
+        } else if (
+          ['ADMIN', 'HOSTEL_OFFICE', 'CHIEF_WARDEN', 'WARDEN'].includes(
+            user?.role || ''
+          )
+        ) {
+          return '/office/ranking';
+        }
       }
       return rawLink;
     }
@@ -198,13 +216,13 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border pb-4">
+      {/* Page Header Block: White card, 2px border, shadow-hard-lg */}
+      <div className="bg-white border-2 border-black rounded-[4px] p-6 shadow-hard-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold font-serif text-ink-primary tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-heading font-extrabold text-black tracking-tight">
             Notifications & Alerts
           </h1>
-          <p className="text-xs text-ink-secondary mt-0.5">
+          <p className="text-xs text-black/75 font-medium mt-1">
             Real-time transactional updates, circular dispatches, and institutional alerts in Indian Standard Time (IST).
           </p>
         </div>
@@ -215,27 +233,27 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
             size="sm"
             onClick={handleMarkAllRead}
             disabled={unreadCount === 0}
-            leftIcon={<CheckCheck className="w-4 h-4" strokeWidth={1.75} />}
+            leftIcon={<CheckCheck className="w-4 h-4" strokeWidth={2} />}
           >
             Mark all read
           </Button>
         </div>
       </div>
 
-      {/* Filter Toolbar */}
-      <div className="p-3 bg-surface border border-border rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+      {/* Filter Toolbar: White panel, 2px border, shadow-hard */}
+      <div className="p-3 bg-white border-2 border-black rounded-[4px] shadow-hard flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
         {/* Toggle: All vs Unread */}
-        <div className="flex items-center gap-1.5 p-1 bg-surface-subtle border border-border rounded">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => {
               setUnreadOnly(false);
               setPage(1);
             }}
-            className={`px-3 py-1 rounded font-medium transition-colors focus:outline-none ${
+            className={`px-3 py-1.5 rounded-[8px] font-heading font-bold border-2 border-black transition-colors focus:outline-none ${
               !unreadOnly
-                ? 'bg-surface text-ink-primary shadow-xs font-semibold'
-                : 'text-ink-secondary hover:text-ink-primary'
+                ? 'bg-black text-white shadow-hard-sm'
+                : 'bg-white text-black hover:bg-saffron'
             }`}
           >
             All Notifications
@@ -246,15 +264,15 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
               setUnreadOnly(true);
               setPage(1);
             }}
-            className={`px-3 py-1 rounded font-medium transition-colors flex items-center gap-1.5 focus:outline-none ${
+            className={`px-3 py-1.5 rounded-[8px] font-heading font-bold border-2 border-black transition-colors flex items-center gap-1.5 focus:outline-none ${
               unreadOnly
-                ? 'bg-surface text-ink-primary shadow-xs font-semibold'
-                : 'text-ink-secondary hover:text-ink-primary'
+                ? 'bg-black text-white shadow-hard-sm'
+                : 'bg-white text-black hover:bg-saffron'
             }`}
           >
             <span>Unread</span>
             {unreadCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-saffron text-white tabular-nums">
+              <span className="px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold bg-saffron text-black border border-black tabular-nums">
                 {unreadCount}
               </span>
             )}
@@ -263,15 +281,15 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
 
         {/* Category Dropdown & Active counts */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 text-ink-secondary">
-            <Filter className="w-3.5 h-3.5 text-ink-muted" strokeWidth={1.75} />
+          <div className="flex items-center gap-1.5 text-black">
+            <Filter className="w-4 h-4 text-black shrink-0" strokeWidth={2} />
             <select
               value={typeFilter}
               onChange={(e) => {
                 setTypeFilter(e.target.value);
                 setPage(1);
               }}
-              className="px-2.5 py-1.5 bg-surface border border-border rounded text-xs text-ink-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="px-2.5 py-1.5 bg-white border-2 border-black rounded-[8px] text-xs font-bold text-black focus:outline-none focus:shadow-hard"
             >
               {typesList.map((t) => (
                 <option key={t.value} value={t.value}>
@@ -281,22 +299,22 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
             </select>
           </div>
 
-          <span className="text-[11px] text-ink-muted font-mono tabular-nums pl-2">
+          <span className="text-[11px] text-black/70 font-mono font-bold tabular-nums pl-2">
             Showing {notifications.length} of {totalCount} records
           </span>
         </div>
       </div>
 
       {/* Notifications List */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         {loading ? (
           <div className="space-y-2">
             <Skeleton variant="row" count={4} />
           </div>
         ) : notifications.length === 0 ? (
-          <div className="p-12 bg-surface border border-border rounded-lg">
+          <div className="p-12 bg-white border-2 border-black rounded-[4px] shadow-hard">
             <EmptyState
-              icon={<Bell className="w-8 h-8 text-ink-muted" strokeWidth={1.5} />}
+              icon={<Bell className="w-8 h-8 text-black" strokeWidth={2} />}
               title="No Notifications Found"
               description={
                 unreadOnly
@@ -323,44 +341,44 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
             return (
               <div
                 key={notif.notif_id}
-                className={`p-4 bg-surface border rounded-lg transition-colors flex flex-col sm:flex-row sm:items-start justify-between gap-4 ${
+                className={`p-4 bg-white border-2 border-black rounded-[4px] shadow-hard transition-colors flex flex-col sm:flex-row sm:items-start justify-between gap-4 ${
                   !notif.is_read
-                    ? 'border-primary/40 bg-primary-subtle/10'
-                    : 'border-border text-ink-secondary'
+                    ? 'bg-paper/25'
+                    : 'bg-white'
                 }`}
               >
                 {/* Left: Icon & Info */}
                 <div className="flex items-start gap-3.5 flex-1 min-w-0">
                   <div
-                    className={`p-2 rounded shrink-0 border mt-0.5 ${
+                    className={`p-2 rounded-[4px] shrink-0 border-2 border-black mt-0.5 ${
                       !notif.is_read
-                        ? 'bg-primary text-white border-primary'
-                        : 'bg-surface-subtle text-ink-secondary border-border'
+                        ? 'bg-saffron text-black'
+                        : 'bg-white text-black'
                     }`}
                   >
-                    <Icon className="w-4 h-4" strokeWidth={1.75} />
+                    <Icon className="w-4 h-4" strokeWidth={2} />
                   </div>
 
                   <div className="space-y-1 flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span
-                        className={`text-sm leading-tight ${
-                          !notif.is_read ? 'font-bold text-ink-primary' : 'font-medium text-ink-secondary'
+                        className={`text-sm leading-tight font-heading ${
+                          !notif.is_read ? 'font-extrabold text-black' : 'font-bold text-black/80'
                         }`}
                       >
                         {notif.title}
                       </span>
                       <StatusTag status={tagStatus} label={notif.notif_type} size="sm" />
                       {!notif.is_read && (
-                        <span className="w-2 h-2 rounded-full bg-saffron shrink-0" title="Unread" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-saffron border border-black shrink-0" title="Unread" />
                       )}
                     </div>
 
-                    <p className="text-xs text-ink-secondary leading-relaxed">
+                    <p className="text-xs text-black/80 font-medium leading-relaxed">
                       {notif.body}
                     </p>
 
-                    <div className="flex items-center gap-3 text-[11px] text-ink-muted font-mono pt-1">
+                    <div className="flex items-center gap-3 text-[11px] text-black/70 font-mono font-bold pt-1">
                       <span className="tabular-nums">{formatDateTimeIST(notif.created_at)}</span>
                       <span>•</span>
                       <span className="tabular-nums">{formatRelativeTime(notif.created_at)}</span>
@@ -377,9 +395,9 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
                     title={notif.is_read ? 'Mark unread' : 'Mark read'}
                     leftIcon={
                       notif.is_read ? (
-                        <RotateCcw className="w-3.5 h-3.5" strokeWidth={1.75} />
+                        <RotateCcw className="w-3.5 h-3.5" strokeWidth={2} />
                       ) : (
-                        <Check className="w-3.5 h-3.5 text-status-success-text" strokeWidth={2} />
+                        <Check className="w-3.5 h-3.5 text-status-success-text" strokeWidth={2.5} />
                       )
                     }
                   >
@@ -390,7 +408,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
                     variant="primary"
                     size="sm"
                     onClick={() => handleNavigateTarget(notif)}
-                    rightIcon={<ExternalLink className="w-3 h-3" strokeWidth={1.75} />}
+                    rightIcon={<ExternalLink className="w-3 h-3" strokeWidth={2} />}
                   >
                     Open
                   </Button>
@@ -403,7 +421,7 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({
 
       {/* Pagination Bar */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-2 border-t border-border text-xs text-ink-secondary">
+        <div className="flex items-center justify-between pt-4 border-t-2 border-black text-xs text-black font-bold">
           <span className="tabular-nums">
             Page {page} of {totalPages}
           </span>

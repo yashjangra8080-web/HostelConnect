@@ -1,197 +1,202 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search,
-  Download,
   CheckCircle2,
   XCircle,
-  ChevronLeft,
-  ChevronRight,
   AlertTriangle,
+  Download,
   RotateCcw,
   Check,
   X,
+  ChevronLeft,
+  ChevronRight,
   MapPin,
 } from 'lucide-react';
-import { Application, KeysetResponse } from '../types';
+import { Application, KeysetResponse } from '../types.js';
 
 interface VerificationQueueProps {
-  onRefreshKpis?: () => void;
+  onRefreshKPIs?: () => void;
 }
 
-export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshKpis }) => {
-  // Read initial filters from URL search params
-  const getInitialFilters = () => {
-    const params = new URLSearchParams(window.location.search);
-    return {
-      status: params.get('status') || 'PENDING', // Default to PENDING for the queue
-      band: params.get('band') || '',
-      gender: params.get('gender') || '',
-      schooling: params.get('schooling') || '',
-      branch: params.get('branch') || '',
-      search: params.get('search') || '',
-      sortBy: params.get('sort_by') || 'distance_km',
-      sortOrder: params.get('sort_order') || 'desc',
-    };
-  };
+export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshKPIs }) => {
+  // Query parameters state
+  const [filters, setFilters] = useState({
+    status: 'ALL',
+    band: '',
+    gender: '',
+    schooling: '',
+    branch: '',
+    search: '',
+  });
 
-  const [filters, setFilters] = useState(getInitialFilters);
-  const [searchInput, setSearchInput] = useState(filters.search);
+  const [searchInput, setSearchInput] = useState('');
 
-  // Pagination & Keyset state
-  const [data, setData] = useState<KeysetResponse<Application> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [cursorStack, setCursorStack] = useState<string[]>([]);
+  // Keyset Pagination state
   const [currentCursor, setCurrentCursor] = useState<string | null>(null);
+  const [cursorStack, setCursorStack] = useState<string[]>([]);
 
-  // Selection & Bulk actions
+  // Queue Data
+  const [data, setData] = useState<KeysetResponse<Application> | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Bulk Selection State
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  // Audit Confirmation Dialog State
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     decision: 'VERIFIED' | 'REJECTED';
     ids: number[];
   } | null>(null);
+
   const [actionLoading, setActionLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  // Sync state changes to browser URL search params
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (filters.status) params.set('status', filters.status);
-    if (filters.band) params.set('band', filters.band);
-    if (filters.gender) params.set('gender', filters.gender);
-    if (filters.schooling) params.set('schooling', filters.schooling);
-    if (filters.branch) params.set('branch', filters.branch);
-    if (filters.search) params.set('search', filters.search);
-    if (filters.sortBy !== 'distance_km') params.set('sort_by', filters.sortBy);
-    if (filters.sortOrder !== 'desc') params.set('sort_order', filters.sortOrder);
-
-    const newUrl = `${window.location.pathname}?${params.toString()}`;
-    window.history.replaceState({}, '', newUrl);
-  }, [filters]);
-
-  // Fetch applications whenever filters or cursor change
-  const fetchApplications = async () => {
+  // Fetch Queue Data
+  const fetchQueue = useCallback(async () => {
     setLoading(true);
     try {
-      const q = new URLSearchParams();
-      q.set('cycle_id', '1');
-      q.set('limit', '50');
-      q.set('sort_by', filters.sortBy);
-      q.set('sort_order', filters.sortOrder);
+      const params = new URLSearchParams({
+        limit: '50',
+      });
 
-      if (filters.status && filters.status !== 'ALL') {
-        q.set('verification_status', filters.status);
-      }
-      if (filters.band) {
-        q.set('distance_band', filters.band);
-      }
-      if (filters.gender) {
-        q.set('gender', filters.gender);
-      }
-      if (filters.schooling) {
-        q.set('schooling_state', filters.schooling);
-      }
-      if (filters.branch) {
-        q.set('branch', filters.branch);
-      }
-      if (filters.search) {
-        q.set('search', filters.search);
-      }
-      if (currentCursor) {
-        q.set('cursor', currentCursor);
-      }
+      if (filters.status && filters.status !== 'ALL') params.append('status', filters.status);
+      if (filters.band) params.append('band', filters.band);
+      if (filters.gender) params.append('gender', filters.gender);
+      if (filters.schooling) params.append('schooling', filters.schooling);
+      if (filters.branch) params.append('branch', filters.branch);
+      if (filters.search.trim()) params.append('search', filters.search.trim());
+      if (currentCursor) params.append('cursor', currentCursor);
 
-      const res = await fetch(`/api/applications?${q.toString()}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const res = await fetch(`/api/allotment/verification-queue?${params.toString()}`);
+      if (!res.ok) {
+        throw new Error('Failed to load verification queue.');
+      }
       const json: KeysetResponse<Application> = await res.json();
       setData(json);
-      setSelectedIds([]);
     } catch (err: any) {
-      console.error('Failed fetching applications:', err);
+      console.error(err);
+      setStatusMessage({ text: err.message || 'Error fetching queue', type: 'error' });
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchApplications();
   }, [filters, currentCursor]);
 
-  // Handle single and bulk verify/reject
-  const handleVerifyDecision = async (decision: 'VERIFIED' | 'REJECTED', ids: number[]) => {
+  useEffect(() => {
+    fetchQueue();
+  }, [fetchQueue]);
+
+  // Handle Verify/Reject Action (Atomic API)
+  const handleVerifyDecision = async (
+    decision: 'VERIFIED' | 'REJECTED',
+    applicationIds: number[]
+  ) => {
     setActionLoading(true);
     setStatusMessage(null);
     try {
-      let res;
-      if (ids.length === 1) {
-        res = await fetch('/api/applications/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ application_id: ids[0], decision }),
-        });
-      } else {
-        res = await fetch('/api/applications/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ application_ids: ids, decision }),
-        });
-      }
+      const res = await fetch('/api/allotment/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          application_ids: applicationIds,
+          decision,
+        }),
+      });
 
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Verification failed');
+      if (!res.ok) {
+        throw new Error(result.message || 'Verification update failed.');
+      }
 
       setStatusMessage({
-        text: result.message || `Successfully marked as ${decision}.`,
+        text: `Successfully updated ${result.updated} application(s) to ${decision}.`,
         type: 'success',
       });
+
+      // Clear selections & close dialog
+      setSelectedIds((prev) => prev.filter((id) => !applicationIds.includes(id)));
       setConfirmDialog(null);
-      fetchApplications();
-      if (onRefreshKpis) onRefreshKpis();
+
+      // Refresh Queue
+      fetchQueue();
+      if (onRefreshKPIs) onRefreshKPIs();
     } catch (err: any) {
-      setStatusMessage({
-        text: err.message || 'Error occurred while verifying.',
-        type: 'error',
-      });
+      setStatusMessage({ text: err.message, type: 'error' });
     } finally {
       setActionLoading(false);
     }
   };
 
-  // CSV Export
-  const handleExportCsv = () => {
-    const q = new URLSearchParams();
-    q.set('cycle_id', '1');
-    if (filters.status && filters.status !== 'ALL') q.set('verification_status', filters.status);
-    if (filters.band) q.set('distance_band', filters.band);
-    if (filters.gender) q.set('gender', filters.gender);
-    if (filters.schooling) q.set('schooling_state', filters.schooling);
-    if (filters.branch) q.set('branch', filters.branch);
-    if (filters.search) q.set('search', filters.search);
-    q.set('sort_by', filters.sortBy);
-    q.set('sort_order', filters.sortOrder);
-
-    window.open(`/api/applications/export?${q.toString()}`, '_blank');
+  // Row Selection Helpers
+  const toggleSelectRow = (appId: number) => {
+    setSelectedIds((prev) =>
+      prev.includes(appId) ? prev.filter((id) => id !== appId) : [...prev, appId]
+    );
   };
 
-  // Checkbox helpers
-  const allCurrentPageSelected = useMemo(() => {
-    if (!data?.items || data.items.length === 0) return false;
-    return data.items.every((a) => selectedIds.includes(a.application_id));
-  }, [data, selectedIds]);
+  const allCurrentPageSelected =
+    data?.items &&
+    data.items.length > 0 &&
+    data.items.every((item) => selectedIds.includes(item.application_id));
 
   const toggleSelectAll = () => {
     if (!data?.items) return;
     if (allCurrentPageSelected) {
-      setSelectedIds([]);
+      const currentIds = data.items.map((i) => i.application_id);
+      setSelectedIds((prev) => prev.filter((id) => !currentIds.includes(id)));
     } else {
-      setSelectedIds(data.items.map((a) => a.application_id));
+      const currentIds = data.items.map((i) => i.application_id);
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...currentIds])));
     }
   };
 
-  const toggleSelectRow = (id: number) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
+  // CSV Export Action
+  const handleExportCsv = () => {
+    if (!data?.items || data.items.length === 0) return;
+    const headers = [
+      'Application ID',
+      'Roll Number',
+      'Student Name',
+      'Gender',
+      'Branch',
+      'Merit Rank',
+      'Schooling State',
+      'Priority Group',
+      'Home City',
+      'Home State',
+      'Distance KM',
+      'Distance Band',
+      'Status',
+    ];
+
+    const rows = data.items.map((app) => [
+      app.application_id,
+      app.roll_no,
+      `"${app.full_name}"`,
+      app.gender,
+      app.branch,
+      app.merit_rank,
+      `"${app.schooling_state}"`,
+      app.is_delhi_candidate ? 'Delhi' : 'Non-Delhi',
+      `"${app.home_city}"`,
+      `"${app.home_state}"`,
+      app.distance_km,
+      app.distance_band,
+      app.verification_status,
+    ]);
+
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map((e: (string | number)[]) => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `hostel_verification_queue_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Clear filters
@@ -203,8 +208,6 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
       schooling: '',
       branch: '',
       search: '',
-      sortBy: 'distance_km',
-      sortOrder: 'desc',
     });
     setSearchInput('');
     setCurrentCursor(null);
@@ -216,28 +219,28 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
       {/* Notifications banner */}
       {statusMessage && (
         <div
-          className={`px-4 py-2.5 rounded text-xs font-medium border flex items-center justify-between ${
+          className={`px-4 py-2.5 rounded-[4px] text-xs font-medium border-2 border-black flex items-center justify-between shadow-hard-sm ${
             statusMessage.type === 'success'
-              ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]'
-              : 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]'
+              ? 'bg-status-success-bg text-black'
+              : 'bg-status-danger-bg text-black'
           }`}
         >
           <span>{statusMessage.text}</span>
-          <button onClick={() => setStatusMessage(null)}>
-            <X className="w-3.5 h-3.5" />
+          <button onClick={() => setStatusMessage(null)} className="font-bold ml-2">
+            <X className="w-4 h-4 text-black" strokeWidth={2} />
           </button>
         </div>
       )}
 
       {/* FilterBar & URL Chips */}
-      <div className="bg-white border border-[#E2E8F0] rounded p-4 shadow-sm space-y-3">
+      <div className="bg-white border-2 border-black rounded-[4px] p-4 shadow-hard space-y-3">
         {/* Top search & quick actions row */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 flex-1 min-w-[280px]">
             <div className="relative flex-1">
               <Search
-                className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]"
-                strokeWidth={1.75}
+                className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-black/60"
+                strokeWidth={2}
               />
               <input
                 type="text"
@@ -251,7 +254,7 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                     setCursorStack([]);
                   }
                 }}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#F8FAFC] border border-[#CBD5E1] rounded text-[#0F172A] placeholder-[#94A3B8] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2F5BD6]"
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border-2 border-black rounded-[8px] text-black placeholder-black/50 font-sans focus:outline-none focus:shadow-hard"
               />
             </div>
             <button
@@ -260,7 +263,7 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                 setCurrentCursor(null);
                 setCursorStack([]);
               }}
-              className="px-3 py-1.5 text-xs font-semibold bg-[#2F5BD6] text-white rounded hover:bg-[#1B43A6] transition-colors"
+              className="px-3 py-1.5 text-xs font-heading font-bold bg-black text-white rounded-[8px] border-2 border-black hover:bg-black/80 transition-all shadow-hard-sm active:translate-x-[2px] active:translate-y-[2px]"
             >
               Search
             </button>
@@ -269,10 +272,10 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
           <div className="flex items-center gap-2">
             <button
               onClick={handleExportCsv}
-              className="px-3 py-1.5 text-xs font-medium bg-white border border-[#CBD5E1] text-[#0F172A] rounded hover:bg-[#F8FAFC] flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 text-xs font-heading font-bold bg-white border-2 border-black text-black rounded-[8px] hover:bg-paper flex items-center gap-1.5 transition-all shadow-hard-sm"
               title="Export current filtered view to CSV"
             >
-              <Download className="w-3.5 h-3.5 text-[#2F5BD6]" strokeWidth={1.75} />
+              <Download className="w-3.5 h-3.5 text-black" strokeWidth={2} />
               <span>Export CSV</span>
             </button>
             {(filters.status !== 'ALL' ||
@@ -283,9 +286,9 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
               filters.search) && (
               <button
                 onClick={handleClearFilters}
-                className="px-2.5 py-1.5 text-xs text-[#DC2626] hover:bg-[#FEF2F2] rounded flex items-center gap-1 transition-colors"
+                className="px-2.5 py-1.5 text-xs text-black hover:bg-status-danger-bg rounded-[8px] border-2 border-black font-heading font-bold flex items-center gap-1 transition-colors shadow-hard-sm"
               >
-                <RotateCcw className="w-3 h-3" />
+                <RotateCcw className="w-3 h-3 text-black" strokeWidth={2} />
                 <span>Reset</span>
               </button>
             )}
@@ -293,10 +296,10 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
         </div>
 
         {/* FilterBar Chips Rows */}
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 border-t border-[#E2E8F0] text-xs">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 border-t-2 border-black text-xs">
           {/* Status chips */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[#64748B] font-medium text-[11px] uppercase tracking-wider">Status:</span>
+            <span className="text-black/70 font-heading font-bold text-[11px] uppercase tracking-wider">Status:</span>
             {[
               { id: 'ALL', label: 'All' },
               { id: 'PENDING', label: 'Pending' },
@@ -310,10 +313,10 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                   setCurrentCursor(null);
                   setCursorStack([]);
                 }}
-                className={`px-2.5 py-1 rounded text-xs font-semibold transition-colors ${
+                className={`px-2.5 py-1 rounded-[8px] text-xs font-heading font-bold border-2 border-black transition-colors ${
                   filters.status === st.id
-                    ? 'bg-[#1E3A8A] text-white'
-                    : 'bg-[#F8FAFC] text-[#475569] border border-[#E2E8F0] hover:bg-[#EEF2FF]'
+                    ? 'bg-black text-white shadow-hard-sm'
+                    : 'bg-white text-black hover:bg-saffron'
                 }`}
               >
                 {st.label}
@@ -323,7 +326,7 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
 
           {/* Distance Band chips */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[#64748B] font-medium text-[11px] uppercase tracking-wider">Band:</span>
+            <span className="text-black/70 font-heading font-bold text-[11px] uppercase tracking-wider">Band:</span>
             {[
               { id: '', label: 'All Bands' },
               { id: '1', label: 'Band 1 (<200km)' },
@@ -338,10 +341,10 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                   setCurrentCursor(null);
                   setCursorStack([]);
                 }}
-                className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-colors ${
+                className={`px-2 py-0.5 rounded-[8px] text-[11px] font-heading font-bold border-2 border-black transition-colors ${
                   filters.band === bd.id
-                    ? 'bg-[#2F5BD6] text-white'
-                    : 'bg-[#F8FAFC] text-[#475569] border border-[#E2E8F0] hover:bg-[#EEF2FF]'
+                    ? 'bg-black text-white shadow-hard-sm'
+                    : 'bg-white text-black hover:bg-saffron'
                 }`}
               >
                 {bd.label}
@@ -351,7 +354,7 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
 
           {/* Delhi Priority chips */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[#64748B] font-medium text-[11px] uppercase tracking-wider">Priority:</span>
+            <span className="text-black/70 font-heading font-bold text-[11px] uppercase tracking-wider">Priority:</span>
             {[
               { id: '', label: 'All' },
               { id: 'outside_delhi', label: 'Non-Delhi (Priority)' },
@@ -364,10 +367,10 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                   setCurrentCursor(null);
                   setCursorStack([]);
                 }}
-                className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-colors ${
+                className={`px-2 py-0.5 rounded-[8px] text-[11px] font-heading font-bold border-2 border-black transition-colors ${
                   filters.schooling === pr.id
-                    ? 'bg-[#2F5BD6] text-white'
-                    : 'bg-[#F8FAFC] text-[#475569] border border-[#E2E8F0] hover:bg-[#EEF2FF]'
+                    ? 'bg-black text-white shadow-hard-sm'
+                    : 'bg-white text-black hover:bg-saffron'
                 }`}
               >
                 {pr.label}
@@ -377,7 +380,7 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
 
           {/* Gender filter */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[#64748B] font-medium text-[11px] uppercase tracking-wider">Gender:</span>
+            <span className="text-black/70 font-heading font-bold text-[11px] uppercase tracking-wider">Gender:</span>
             {[
               { id: '', label: 'All' },
               { id: 'M', label: 'Male' },
@@ -390,10 +393,10 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                   setCurrentCursor(null);
                   setCursorStack([]);
                 }}
-                className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-colors ${
+                className={`px-2 py-0.5 rounded-[8px] text-[11px] font-heading font-bold border-2 border-black transition-colors ${
                   filters.gender === g.id
-                    ? 'bg-[#2F5BD6] text-white'
-                    : 'bg-[#F8FAFC] text-[#475569] border border-[#E2E8F0] hover:bg-[#EEF2FF]'
+                    ? 'bg-black text-white shadow-hard-sm'
+                    : 'bg-white text-black hover:bg-saffron'
                 }`}
               >
                 {g.label}
@@ -403,7 +406,7 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
 
           {/* Branch dropdown */}
           <div className="flex items-center gap-1.5">
-            <span className="text-[#64748B] font-medium text-[11px] uppercase tracking-wider">Branch:</span>
+            <span className="text-black/70 font-heading font-bold text-[11px] uppercase tracking-wider">Branch:</span>
             <select
               value={filters.branch}
               onChange={(e) => {
@@ -411,7 +414,7 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                 setCurrentCursor(null);
                 setCursorStack([]);
               }}
-              className="bg-[#F8FAFC] border border-[#CBD5E1] rounded px-2 py-0.5 text-[11px] font-semibold text-[#0F172A] focus:outline-none"
+              className="bg-white border-2 border-black rounded-[8px] px-2 py-0.5 text-[11px] font-heading font-bold text-black focus:outline-none shadow-hard-sm"
             >
               <option value="">All Branches</option>
               {['CSE', 'CSDS', 'IT', 'ECE', 'EE', 'ME', 'ICE', 'BT', 'MAC', 'EIOT'].map((b) => (
@@ -426,10 +429,10 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
 
       {/* Bulk Action Bar (Visible when rows are selected) */}
       {selectedIds.length > 0 && (
-        <div className="bg-[#1E3A8A] text-white px-4 py-2.5 rounded shadow flex items-center justify-between text-xs animate-in fade-in">
+        <div className="bg-saffron text-black border-2 border-black px-4 py-2.5 rounded-[4px] shadow-hard-lg flex items-center justify-between text-xs animate-in fade-in">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span className="font-semibold tabular-nums">{selectedIds.length} application(s) selected</span>
+            <CheckCircle2 className="w-4 h-4 text-black" strokeWidth={2.5} />
+            <span className="font-heading font-extrabold text-sm text-black tabular-nums">{selectedIds.length} application(s) selected</span>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -440,9 +443,9 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                   ids: selectedIds,
                 })
               }
-              className="px-3 py-1 bg-[#059669] hover:bg-[#047857] text-white font-semibold rounded transition-colors flex items-center gap-1"
+              className="px-3 py-1 bg-black hover:bg-black/80 text-white font-heading font-bold rounded-[8px] border-2 border-black transition-all flex items-center gap-1 shadow-hard-sm active:translate-x-[2px] active:translate-y-[2px]"
             >
-              <Check className="w-3.5 h-3.5" />
+              <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
               <span>Bulk Verify ({selectedIds.length})</span>
             </button>
             <button
@@ -453,14 +456,14 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                   ids: selectedIds,
                 })
               }
-              className="px-3 py-1 bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold rounded transition-colors flex items-center gap-1"
+              className="px-3 py-1 bg-white hover:bg-status-danger-bg text-black font-heading font-bold rounded-[8px] border-2 border-black transition-all flex items-center gap-1 shadow-hard-sm active:translate-x-[2px] active:translate-y-[2px]"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3.5 h-3.5" strokeWidth={2.5} />
               <span>Bulk Reject ({selectedIds.length})</span>
             </button>
             <button
               onClick={() => setSelectedIds([])}
-              className="px-2 py-1 text-slate-300 hover:text-white"
+              className="px-2 py-1 text-black font-heading font-bold underline hover:no-underline ml-2"
             >
               Deselect All
             </button>
@@ -469,17 +472,17 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
       )}
 
       {/* TanStack Table Container */}
-      <div className="bg-white border border-[#E2E8F0] rounded shadow-sm overflow-hidden">
+      <div className="bg-white border-2 border-black rounded-[4px] shadow-hard-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#475569] font-semibold text-[11px] uppercase tracking-wider">
+              <tr className="bg-surface-subtle border-b-2 border-black text-black font-heading font-extrabold text-[11px] uppercase tracking-wider">
                 <th className="py-2.5 px-3 w-10 text-center">
                   <input
                     type="checkbox"
                     checked={allCurrentPageSelected}
                     onChange={toggleSelectAll}
-                    className="rounded border-[#CBD5E1] text-[#2F5BD6] focus:ring-0 cursor-pointer"
+                    className="rounded-[4px] border-2 border-black text-black focus:ring-0 cursor-pointer"
                   />
                 </th>
                 <th className="py-2.5 px-3">Roll Number</th>
@@ -495,16 +498,16 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                 <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E2E8F0]">
+            <tbody className="divide-y divide-black">
               {loading ? (
                 <tr>
-                  <td colSpan={12} className="py-12 text-center text-[#64748B]">
+                  <td colSpan={12} className="py-12 text-center text-black/70 font-sans">
                     Loading verification queue...
                   </td>
                 </tr>
               ) : !data?.items || data.items.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="py-12 text-center text-[#64748B]">
+                  <td colSpan={12} className="py-12 text-center text-black/70 font-sans">
                     No applications match the selected filter criteria.
                   </td>
                 </tr>
@@ -514,8 +517,8 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                   return (
                     <tr
                       key={app.application_id}
-                      className={`hover:bg-[#F8FAFC] transition-colors ${
-                        isSelected ? 'bg-[#EEF2FF]' : ''
+                      className={`hover:bg-paper transition-colors text-black ${
+                        isSelected ? 'bg-saffron font-bold' : ''
                       }`}
                     >
                       {/* Checkbox */}
@@ -524,27 +527,27 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleSelectRow(app.application_id)}
-                          className="rounded border-[#CBD5E1] text-[#2F5BD6] focus:ring-0 cursor-pointer"
+                          className="rounded-[4px] border-2 border-black text-black focus:ring-0 cursor-pointer"
                         />
                       </td>
 
                       {/* Roll Number */}
-                      <td className="py-2.5 px-3 font-mono font-medium text-[#0F172A]">
+                      <td className="py-2.5 px-3 font-mono font-bold text-black">
                         {app.roll_no}
                       </td>
 
                       {/* Full Name */}
-                      <td className="py-2.5 px-3 font-semibold text-[#0F172A]">
+                      <td className="py-2.5 px-3 font-heading font-bold text-black">
                         {app.full_name}
                       </td>
 
                       {/* Gender */}
                       <td className="py-2.5 px-2 text-center">
                         <span
-                          className={`inline-block px-1.5 py-0.2 text-[10px] font-bold rounded ${
+                          className={`inline-block px-1.5 py-0.2 text-[10px] font-heading font-bold rounded-[4px] border-2 border-black ${
                             app.gender === 'M'
-                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                              : 'bg-rose-50 text-rose-700 border border-rose-200'
+                              ? 'bg-surface-subtle text-black'
+                              : 'bg-saffron text-black'
                           }`}
                         >
                           {app.gender}
@@ -552,27 +555,27 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                       </td>
 
                       {/* Branch */}
-                      <td className="py-2.5 px-2 text-center font-mono font-semibold text-[#475569]">
+                      <td className="py-2.5 px-2 text-center font-mono font-bold text-black">
                         {app.branch}
                       </td>
 
                       {/* Schooling Priority */}
                       <td className="py-2.5 px-3">
                         {app.is_delhi_candidate ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-[#F3F4F6] text-[#4B5563] border border-[#E5E7EB]">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-heading font-bold bg-white text-black border-2 border-black">
                             Delhi
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#EEF2FF] text-[#2F5BD6] border border-[#CBD5E1]">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-heading font-bold bg-saffron text-black border-2 border-black">
                             Non-Delhi ({app.schooling_state})
                           </span>
                         )}
                       </td>
 
                       {/* Home Location */}
-                      <td className="py-2.5 px-3 text-[#475569]">
+                      <td className="py-2.5 px-3 text-black font-medium">
                         <div className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-[#64748B]" />
+                          <MapPin className="w-3 h-3 text-black" strokeWidth={2} />
                           <span>
                             {app.home_city}, {app.home_state}
                           </span>
@@ -580,21 +583,21 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                       </td>
 
                       {/* Distance km */}
-                      <td className="py-2.5 px-3 text-right font-mono font-semibold tabular-nums text-[#0F172A]">
+                      <td className="py-2.5 px-3 text-right font-mono font-bold tabular-nums text-black">
                         {Number(app.distance_km).toFixed(2)}
                       </td>
 
                       {/* Band */}
                       <td className="py-2.5 px-2 text-center">
                         <span
-                          className={`inline-block px-1.5 py-0.2 text-[10px] font-bold rounded ${
+                          className={`inline-block px-1.5 py-0.2 text-[10px] font-mono font-bold rounded-[4px] border-2 border-black ${
                             app.distance_band === 4
-                              ? 'bg-purple-100 text-purple-800'
+                              ? 'bg-saffron text-black'
                               : app.distance_band === 3
-                              ? 'bg-blue-100 text-blue-800'
+                              ? 'bg-paper text-black'
                               : app.distance_band === 2
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-slate-100 text-slate-800'
+                              ? 'bg-surface-subtle text-black'
+                              : 'bg-white text-black'
                           }`}
                         >
                           B{app.distance_band}
@@ -602,41 +605,41 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                       </td>
 
                       {/* Merit Rank */}
-                      <td className="py-2.5 px-2 text-right font-mono tabular-nums text-[#475569]">
+                      <td className="py-2.5 px-2 text-right font-mono tabular-nums font-bold text-black">
                         #{app.merit_rank}
                       </td>
 
                       {/* Verification Status */}
                       <td className="py-2.5 px-3 text-center">
                         {app.verification_status === 'VERIFIED' ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
-                            <CheckCircle2 className="w-3 h-3" />
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[6px] text-[10px] font-heading font-bold bg-status-success-bg text-black border-2 border-black">
+                            <CheckCircle2 className="w-3 h-3 text-black" strokeWidth={2.5} />
                             Verified
                           </span>
                         ) : app.verification_status === 'REJECTED' ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]">
-                            <XCircle className="w-3 h-3" />
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[6px] text-[10px] font-heading font-bold bg-status-danger-bg text-black border-2 border-black">
+                            <XCircle className="w-3 h-3 text-black" strokeWidth={2.5} />
                             Rejected
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[6px] text-[10px] font-heading font-bold bg-paper text-black border-2 border-black">
                             Pending
                           </span>
                         )}
                       </td>
 
                       {/* Inline Actions */}
-                      <td className="py-2.5 px-3 text-right space-x-1">
+                      <td className="py-2.5 px-3 text-right space-x-1.5">
                         <button
                           onClick={() => handleVerifyDecision('VERIFIED', [app.application_id])}
-                          className="px-2 py-1 text-[11px] font-semibold bg-[#ECFDF5] hover:bg-[#059669] text-[#059669] hover:text-white border border-[#A7F3D0] rounded transition-colors"
+                          className="px-2 py-1 text-[11px] font-heading font-bold bg-status-success-bg hover:bg-black hover:text-white text-black border-2 border-black rounded-[6px] transition-colors shadow-hard-sm"
                           title="Verify candidate distance & documents"
                         >
                           Verify
                         </button>
                         <button
                           onClick={() => handleVerifyDecision('REJECTED', [app.application_id])}
-                          className="px-2 py-1 text-[11px] font-semibold bg-[#FEF2F2] hover:bg-[#DC2626] text-[#DC2626] hover:text-white border border-[#FECACA] rounded transition-colors"
+                          className="px-2 py-1 text-[11px] font-heading font-bold bg-status-danger-bg hover:bg-black hover:text-white text-black border-2 border-black rounded-[6px] transition-colors shadow-hard-sm"
                           title="Reject candidate"
                         >
                           Reject
@@ -651,15 +654,15 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
         </div>
 
         {/* Keyset Pagination Toolbar */}
-        <div className="bg-[#F8FAFC] border-t border-[#E2E8F0] px-4 py-3 flex items-center justify-between text-xs text-[#475569]">
+        <div className="bg-surface-subtle/20 border-t-2 border-black px-4 py-3 flex items-center justify-between text-xs text-black">
           <div className="flex items-center gap-2">
             <span>
               Showing{' '}
-              <strong className="font-semibold text-[#0F172A] tabular-nums">
+              <strong className="font-bold text-black tabular-nums">
                 {data?.items ? data.items.length : 0}
               </strong>{' '}
               of{' '}
-              <strong className="font-semibold text-[#0F172A] tabular-nums">
+              <strong className="font-bold text-black tabular-nums">
                 {data?.total ?? 0}
               </strong>{' '}
               total applications (Keyset Window: 50 rows)
@@ -678,9 +681,9 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                 }
               }}
               disabled={cursorStack.length === 0 || loading}
-              className="px-2.5 py-1.5 border border-[#CBD5E1] rounded bg-white font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F8FAFC] flex items-center gap-1 transition-colors"
+              className="px-2.5 py-1.5 border-2 border-black rounded-[8px] bg-white font-heading font-bold text-black disabled:opacity-40 disabled:cursor-not-allowed hover:bg-saffron flex items-center gap-1 transition-colors shadow-hard-sm"
             >
-              <ChevronLeft className="w-3.5 h-3.5" />
+              <ChevronLeft className="w-3.5 h-3.5" strokeWidth={2} />
               <span>Previous</span>
             </button>
 
@@ -692,10 +695,10 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
                 }
               }}
               disabled={!data?.hasMore || loading}
-              className="px-2.5 py-1.5 border border-[#CBD5E1] rounded bg-white font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F8FAFC] flex items-center gap-1 transition-colors"
+              className="px-2.5 py-1.5 border-2 border-black rounded-[8px] bg-white font-heading font-bold text-black disabled:opacity-40 disabled:cursor-not-allowed hover:bg-saffron flex items-center gap-1 transition-colors shadow-hard-sm"
             >
               <span>Next</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
             </button>
           </div>
         </div>
@@ -703,57 +706,53 @@ export const VerificationQueue: React.FC<VerificationQueueProps> = ({ onRefreshK
 
       {/* Confirmation Modal for Bulk Verification */}
       {confirmDialog?.open && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg border border-[#E2E8F0] max-w-md w-full p-6 shadow-xl space-y-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-[4px] border-2 border-black max-w-md w-full p-6 shadow-hard-xl space-y-4">
             <div className="flex items-center gap-3">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                className={`w-10 h-10 rounded-full border-2 border-black flex items-center justify-center shadow-hard-sm ${
                   confirmDialog.decision === 'VERIFIED'
-                    ? 'bg-[#ECFDF5] text-[#059669]'
-                    : 'bg-[#FEF2F2] text-[#DC2626]'
+                    ? 'bg-status-success-bg text-black'
+                    : 'bg-status-danger-bg text-black'
                 }`}
               >
-                <AlertTriangle className="w-5 h-5" strokeWidth={1.75} />
+                <AlertTriangle className="w-5 h-5 text-black" strokeWidth={2} />
               </div>
               <div>
-                <h3 className="text-base font-bold font-heading text-[#0F172A]">
+                <h3 className="text-base font-heading font-extrabold text-black">
                   Confirm Bulk {confirmDialog.decision}
                 </h3>
-                <p className="text-xs text-[#64748B]">Audited Institutional Action</p>
+                <p className="text-xs text-black/70 font-sans">Audited Institutional Action</p>
               </div>
             </div>
 
-            <p className="text-sm text-[#475569]">
+            <p className="text-xs text-black font-sans leading-relaxed">
               You are about to mark{' '}
-              <strong className="font-semibold text-[#0F172A] tabular-nums">
+              <strong className="font-bold text-black tabular-nums">
                 {confirmDialog.ids.length}
               </strong>{' '}
               application(s) as{' '}
-              <strong
-                className={
-                  confirmDialog.decision === 'VERIFIED' ? 'text-[#059669]' : 'text-[#DC2626]'
-                }
-              >
+              <strong className="font-heading font-bold uppercase underline">
                 {confirmDialog.decision}
               </strong>
               . This operation executes in an atomic database transaction and will be permanently recorded in the institutional audit log.
             </p>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#E2E8F0]">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t-2 border-black">
               <button
                 onClick={() => setConfirmDialog(null)}
                 disabled={actionLoading}
-                className="px-3 py-1.5 text-xs font-semibold text-[#475569] hover:bg-[#F8FAFC] rounded border border-[#CBD5E1]"
+                className="px-3 py-1.5 text-xs font-heading font-bold text-black hover:bg-paper rounded-[8px] border-2 border-black shadow-hard-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleVerifyDecision(confirmDialog.decision, confirmDialog.ids)}
                 disabled={actionLoading}
-                className={`px-4 py-1.5 text-xs font-semibold text-white rounded transition-colors ${
+                className={`px-4 py-1.5 text-xs font-heading font-bold rounded-[8px] border-2 border-black shadow-hard-sm transition-all active:translate-x-[2px] active:translate-y-[2px] ${
                   confirmDialog.decision === 'VERIFIED'
-                    ? 'bg-[#059669] hover:bg-[#047857]'
-                    : 'bg-[#DC2626] hover:bg-[#B91C1C]'
+                    ? 'bg-black text-white hover:bg-black/80'
+                    : 'bg-white text-black hover:bg-status-danger-bg'
                 }`}
               >
                 {actionLoading ? 'Processing...' : `Confirm (${confirmDialog.ids.length})`}

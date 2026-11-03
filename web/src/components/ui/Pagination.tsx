@@ -58,26 +58,26 @@ export const Pagination: React.FC<PaginationProps> = ({
 
   return (
     <div
-      className={`w-full flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-surface border-t border-border text-xs text-ink-secondary ${className}`}
+      className={`w-full flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-white border-t-2 border-black text-xs text-black font-medium ${className}`}
     >
       {/* Total & Current Range */}
       <div className="flex items-center gap-3">
         <span>
           Showing{' '}
-          <strong className="font-semibold text-ink-primary tabular-nums">{startRecord}</strong>{' '}
+          <strong className="font-bold text-black tabular-nums">{startRecord}</strong>{' '}
           to{' '}
-          <strong className="font-semibold text-ink-primary tabular-nums">{endRecord}</strong> of{' '}
-          <strong className="font-semibold text-ink-primary tabular-nums">{total}</strong> entries
+          <strong className="font-bold text-black tabular-nums">{endRecord}</strong> of{' '}
+          <strong className="font-bold text-black tabular-nums">{total}</strong> entries
         </span>
 
         {onPageSizeChange && (
-          <div className="flex items-center gap-1.5 ml-2 pl-3 border-l border-border">
+          <div className="flex items-center gap-1.5 ml-2 pl-3 border-l-2 border-black">
             <span>Show</span>
             <select
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
               aria-label="Rows per page"
-              className="h-7 px-2 bg-surface-subtle border border-border rounded text-xs text-ink-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="h-7 px-2 bg-white border-2 border-black rounded-[8px] text-xs text-black font-bold focus:outline-none focus:shadow-hard"
             >
               {pageSizeOptions.map((opt) => (
                 <option key={opt} value={opt}>
@@ -91,16 +91,16 @@ export const Pagination: React.FC<PaginationProps> = ({
       </div>
 
       {/* Navigation Controls */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <Button
           variant="outline"
           size="sm"
           onClick={() => onPageChange(1)}
           disabled={page <= 1}
           aria-label="First page"
-          className="w-7 h-7 p-0"
+          className="w-8 h-8 p-0"
         >
-          <ChevronsLeft className="w-4 h-4" strokeWidth={1.75} />
+          <ChevronsLeft className="w-4 h-4" strokeWidth={2} />
         </Button>
 
         <Button
@@ -109,9 +109,9 @@ export const Pagination: React.FC<PaginationProps> = ({
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
           aria-label="Previous page"
-          className="w-7 h-7 p-0"
+          className="w-8 h-8 p-0"
         >
-          <ChevronLeft className="w-4 h-4" strokeWidth={1.75} />
+          <ChevronLeft className="w-4 h-4" strokeWidth={2} />
         </Button>
 
         {/* Page number buttons */}
@@ -122,10 +122,10 @@ export const Pagination: React.FC<PaginationProps> = ({
                   key={p}
                   type="button"
                   onClick={() => onPageChange(p)}
-                  className={`w-7 h-7 rounded text-xs font-medium tabular-nums transition-colors ${
+                  className={`w-8 h-8 rounded-[8px] text-xs font-bold tabular-nums border-2 border-black transition-colors ${
                     p === page
-                      ? 'bg-primary text-ink-onDark font-semibold'
-                      : 'text-ink-secondary hover:bg-surface-subtle hover:text-ink-primary'
+                      ? 'bg-black text-white shadow-hard-sm'
+                      : 'bg-white text-black hover:bg-saffron'
                   }`}
                 >
                   {p}
@@ -137,16 +137,16 @@ export const Pagination: React.FC<PaginationProps> = ({
                     key={item}
                     type="button"
                     onClick={() => onPageChange(item)}
-                    className={`w-7 h-7 rounded text-xs font-medium tabular-nums transition-colors ${
+                    className={`w-8 h-8 rounded-[8px] text-xs font-bold tabular-nums border-2 border-black transition-colors ${
                       item === page
-                        ? 'bg-primary text-ink-onDark font-semibold'
-                        : 'text-ink-secondary hover:bg-surface-subtle hover:text-ink-primary'
+                        ? 'bg-black text-white shadow-hard-sm'
+                        : 'bg-white text-black hover:bg-saffron'
                     }`}
                   >
                     {item}
                   </button>
                 ) : (
-                  <span key={`dots-${idx}`} className="w-5 text-center text-ink-muted">
+                  <span key={`dots-${idx}`} className="w-5 text-center text-black font-bold">
                     {item}
                   </span>
                 )
@@ -159,9 +159,9 @@ export const Pagination: React.FC<PaginationProps> = ({
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
           aria-label="Next page"
-          className="w-7 h-7 p-0"
+          className="w-8 h-8 p-0"
         >
-          <ChevronRight className="w-4 h-4" strokeWidth={1.75} />
+          <ChevronRight className="w-4 h-4" strokeWidth={2} />
         </Button>
 
         <Button
@@ -170,9 +170,9 @@ export const Pagination: React.FC<PaginationProps> = ({
           onClick={() => onPageChange(totalPages)}
           disabled={page >= totalPages}
           aria-label="Last page"
-          className="w-7 h-7 p-0"
+          className="w-8 h-8 p-0"
         >
-          <ChevronsRight className="w-4 h-4" strokeWidth={1.75} />
+          <ChevronsRight className="w-4 h-4" strokeWidth={2} />
         </Button>
       </div>
     </div>

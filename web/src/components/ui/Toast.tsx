@@ -69,35 +69,35 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           <div
             key={t.id}
             role="status"
-            className={`pointer-events-auto w-full p-3.5 rounded bg-surface border flex items-start gap-3 transition-all duration-200 ${
+            className={`pointer-events-auto w-full p-3.5 rounded-[4px] bg-white border-2 border-black shadow-hard flex items-start gap-3 transition-all duration-200 ${
               t.type === 'success'
-                ? 'border-status-success-border bg-status-success-bg/30 text-ink-primary'
+                ? 'bg-status-success-bg/80 text-black'
                 : t.type === 'warning'
-                ? 'border-status-warning-border bg-status-warning-bg/30 text-ink-primary'
+                ? 'bg-status-warning-bg/80 text-black'
                 : t.type === 'danger'
-                ? 'border-status-danger-border bg-status-danger-bg/30 text-ink-primary'
-                : 'border-primary-border bg-primary-subtle/30 text-ink-primary'
+                ? 'bg-status-danger-bg/80 text-black'
+                : 'bg-white text-black'
             }`}
           >
             <div className="shrink-0 mt-0.5">
               {t.type === 'success' && (
-                <CheckCircle2 className="w-4 h-4 text-status-success-text" strokeWidth={2} />
+                <CheckCircle2 className="w-4 h-4 text-status-success-text" strokeWidth={2.5} />
               )}
               {t.type === 'warning' && (
-                <AlertTriangle className="w-4 h-4 text-status-warning-text" strokeWidth={2} />
+                <AlertTriangle className="w-4 h-4 text-status-warning-text" strokeWidth={2.5} />
               )}
               {t.type === 'danger' && (
-                <AlertCircle className="w-4 h-4 text-status-danger-text" strokeWidth={2} />
+                <AlertCircle className="w-4 h-4 text-status-danger-text" strokeWidth={2.5} />
               )}
               {t.type === 'info' && (
-                <Info className="w-4 h-4 text-primary" strokeWidth={2} />
+                <Info className="w-4 h-4 text-black" strokeWidth={2.5} />
               )}
             </div>
 
             <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-semibold text-ink-primary leading-tight">{t.title}</h4>
+              <h4 className="text-sm font-heading font-bold text-black leading-tight">{t.title}</h4>
               {t.description && (
-                <p className="text-xs text-ink-secondary mt-1 leading-snug">{t.description}</p>
+                <p className="text-xs text-black/80 mt-1 leading-snug font-medium">{t.description}</p>
               )}
             </div>
 
@@ -105,9 +105,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               type="button"
               onClick={() => removeToast(t.id)}
               aria-label="Dismiss notification"
-              className="shrink-0 text-ink-muted hover:text-ink-primary p-0.5 rounded"
+              className="shrink-0 text-black hover:text-status-danger-text p-0.5 rounded-[4px] focus:outline-none"
             >
-              <X className="w-4 h-4" strokeWidth={1.75} />
+              <X className="w-4 h-4" strokeWidth={2.5} />
             </button>
           </div>
         ))}
@@ -116,10 +116,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   );
 };
 
-export function useToast() {
+export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
     throw new Error('useToast must be used within a ToastProvider');
   }
   return context;
-}
+};

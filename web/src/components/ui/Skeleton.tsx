@@ -20,16 +20,16 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   const getVariantStyles = () => {
     switch (variant) {
       case 'circle':
-        return 'rounded-full w-9 h-9';
+        return 'rounded-full w-9 h-9 border-2 border-black';
       case 'button':
-        return 'rounded h-9 w-24';
+        return 'rounded-[8px] h-9 w-24 border-2 border-black';
       case 'row':
-        return 'rounded h-11 w-full';
+        return 'rounded-[4px] h-11 w-full border border-black';
       case 'rect':
-        return 'rounded h-24 w-full';
+        return 'rounded-[4px] h-24 w-full border-2 border-black';
       case 'text':
       default:
-        return 'rounded h-4 w-full';
+        return 'rounded-[4px] h-4 w-full border border-black';
     }
   };
 
@@ -40,7 +40,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
         width: typeof width === 'number' ? `${width}px` : width,
         height: typeof height === 'number' ? `${height}px` : height,
       }}
-      className={`bg-border/70 animate-pulse ${getVariantStyles()} ${className}`}
+      className={`bg-surface-subtle animate-pulse ${getVariantStyles()} ${className}`}
       aria-hidden="true"
     />
   ));
@@ -49,5 +49,5 @@ export const Skeleton: React.FC<SkeletonProps> = ({
     return items[0];
   }
 
-  return <div className="space-y-2 w-full">{items}</div>;
+  return <div className="space-y-2">{items}</div>;
 };

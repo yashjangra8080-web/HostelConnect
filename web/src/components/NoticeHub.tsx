@@ -9,8 +9,8 @@ import {
   FileText,
   ChevronRight,
 } from 'lucide-react';
-import { NoticeItem, NoticeCategory, Role } from '../types';
-import { ViewTab } from './Topbar';
+import { NoticeItem, NoticeCategory, Role } from '../types.js';
+import { ViewTab } from './Topbar.js';
 import { Button } from './ui/Button.js';
 import { Input } from './ui/Input.js';
 import { StatusTag, StatusType } from './ui/StatusTag.js';
@@ -182,39 +182,47 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Header and Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-border">
-        <div>
-          <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-navy" strokeWidth={1.75} />
-            <h1 className="text-2xl font-serif font-bold text-ink-primary">Campus Notice Hub</h1>
-            <span className="text-xs px-2 py-0.5 rounded bg-surface-subtle border border-border text-ink-secondary font-mono tabular-nums">
-              {totalNotices} notices
-            </span>
+      <div className="bg-surface border-2 border-black rounded-sm p-6 shadow-hard-lg">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-sm bg-paper border-2 border-black flex items-center justify-center text-ink-primary shadow-hard-sm">
+                <FileText className="w-5 h-5 text-ink-primary" strokeWidth={2} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h1 className="text-xl font-extrabold font-heading text-ink-primary tracking-tight">Campus Notice Hub</h1>
+                  <span className="text-xs px-2.5 py-0.5 rounded-sm bg-paper border-2 border-black text-ink-primary font-mono font-bold shadow-hard-sm tabular-nums">
+                    {totalNotices} notices
+                  </span>
+                </div>
+                <p className="text-xs font-medium text-ink-secondary mt-1">
+                  Official institutional circulars, maintenance schedules, and administrative notifications for campus residents.
+                </p>
+              </div>
+            </div>
           </div>
-          <p className="text-xs text-ink-secondary mt-1">
-            Official institutional circulars, maintenance schedules, and administrative notifications for campus residents.
-          </p>
-        </div>
 
-        {canPublish && (
-          <Button variant="primary" size="sm" onClick={() => setShowPublishModal(true)}>
-            <Plus className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.75} />
-            Publish Notice
-          </Button>
-        )}
+          {canPublish && (
+            <Button variant="primary" size="sm" onClick={() => setShowPublishModal(true)}>
+              <Plus className="w-4 h-4 mr-1.5" strokeWidth={2} />
+              Publish Notice
+            </Button>
+          )}
+        </div>
       </div>
 
       {userRole === 'STUDENT' && (
-        <div className="p-3 bg-surface border border-border rounded-lg text-xs text-ink-secondary flex items-center gap-2">
-          <Building className="w-4 h-4 text-ink-muted shrink-0" strokeWidth={1.75} />
+        <div className="p-3.5 bg-paper border-2 border-black rounded-sm shadow-hard-sm text-xs text-ink-primary flex items-center gap-2.5">
+          <Building className="w-4 h-4 text-ink-primary shrink-0" strokeWidth={2} />
           <span>
-            <strong className="text-ink-primary">Residence Scoping:</strong> Showing notices addressed to your allotted hostel and campus-wide announcements.
+            <strong className="text-ink-primary font-extrabold">Residence Scoping:</strong> Showing notices addressed to your allotted hostel and campus-wide announcements.
           </span>
         </div>
       )}
 
       {/* Filter & Search Bar */}
-      <div className="p-4 bg-surface border border-border rounded-lg grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="p-4 bg-surface border-2 border-black rounded-sm shadow-hard grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         <div className="relative sm:col-span-2">
           <Input
             placeholder="Search circulars by keyword..."
@@ -234,7 +242,7 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
               setCategory(e.target.value);
               setPage(1);
             }}
-            className="w-full px-3 py-2 text-xs border border-border rounded bg-surface text-ink-primary focus:outline-none cursor-pointer"
+            className="w-full px-3 py-2 text-xs border-2 border-black rounded-sm bg-surface text-ink-primary font-bold shadow-hard-sm focus:outline-none cursor-pointer"
           >
             <option value="">All Categories</option>
             <option value="CIRCULAR">Circulars</option>
@@ -255,20 +263,20 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
                 setActiveNow(e.target.checked);
                 setPage(1);
               }}
-              className="rounded border-border text-navy focus:ring-navy"
+              className="w-4 h-4 rounded-sm border-2 border-black text-black focus:ring-0 cursor-pointer"
             />
-            <span className="font-medium text-ink-primary">Active Window Only</span>
+            <span className="font-extrabold text-ink-primary">Active Window Only</span>
           </label>
         </div>
       </div>
 
       {/* Compact Dated Ledger Table */}
-      <div className="bg-surface border border-border rounded-lg overflow-hidden">
-        <div className="px-5 py-3 bg-surface-subtle border-b border-border flex items-center justify-between text-xs">
-          <span className="font-semibold text-ink-secondary uppercase tracking-wider text-[11px]">
+      <div className="bg-surface border-2 border-black rounded-sm shadow-hard-xl overflow-hidden">
+        <div className="px-5 py-3 bg-surface-subtle border-b-2 border-black flex items-center justify-between text-xs">
+          <span className="font-extrabold text-ink-primary uppercase tracking-wider text-[11px]">
             Notice Ledger (Dated Registry)
           </span>
-          <span className="text-ink-muted font-mono tabular-nums">
+          <span className="text-ink-secondary font-mono font-bold tabular-nums">
             Showing {notices.length} of {totalNotices} records
           </span>
         </div>
@@ -276,7 +284,7 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-surface-subtle/50 border-b border-border text-ink-muted uppercase font-semibold text-[11px] select-none">
+              <tr className="bg-paper border-b-2 border-black text-ink-primary uppercase font-extrabold text-[11px] select-none">
                 <th className="py-3 px-4 w-28 whitespace-nowrap">Date</th>
                 <th className="py-3 px-4 w-44">Category / Hostel</th>
                 <th className="py-3 px-4">Title & Excerpt</th>
@@ -284,25 +292,25 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
                 <th className="py-3 px-4 w-20 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y-2 divide-black">
               {loading ? (
                 Array.from({ length: 6 }).map((_, idx) => (
                   <tr key={idx} className="animate-pulse">
                     <td className="py-3 px-4">
-                      <div className="h-4 bg-border/50 rounded w-20" />
+                      <div className="h-4 bg-surface-muted rounded-sm w-20 border border-black" />
                     </td>
                     <td className="py-3 px-4">
-                      <div className="h-4 bg-border/50 rounded w-28" />
+                      <div className="h-4 bg-surface-muted rounded-sm w-28 border border-black" />
                     </td>
                     <td className="py-3 px-4">
-                      <div className="h-4 bg-border/50 rounded w-3/4 mb-1" />
-                      <div className="h-3 bg-border/30 rounded w-1/2" />
+                      <div className="h-4 bg-surface-muted rounded-sm w-3/4 mb-1 border border-black" />
+                      <div className="h-3 bg-surface-muted rounded-sm w-1/2" />
                     </td>
                     <td className="py-3 px-4">
-                      <div className="h-4 bg-border/50 rounded w-24" />
+                      <div className="h-4 bg-surface-muted rounded-sm w-24 border border-black" />
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <div className="h-6 bg-border/50 rounded w-12 ml-auto" />
+                      <div className="h-6 bg-surface-muted rounded-sm w-12 ml-auto border border-black" />
                     </td>
                   </tr>
                 ))
@@ -310,7 +318,7 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
                 <tr>
                   <td colSpan={5} className="py-12 px-4">
                     <EmptyState
-                      icon={<FileText className="w-5 h-5 text-ink-muted" strokeWidth={1.75} />}
+                      icon={<FileText className="w-6 h-6 text-ink-muted" strokeWidth={2} />}
                       title="No notices found"
                       description="No official circulars or maintenance announcements match your current filter criteria."
                       actionLabel={search || category || activeNow ? 'Clear Filters' : undefined}
@@ -333,12 +341,12 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
                     <tr
                       key={n.notice_id}
                       onClick={() => handleOpenNotice(n)}
-                      className={`hover:bg-surface-subtle/60 cursor-pointer transition-colors ${
-                        isPinned ? 'bg-navy/5 border-l-2 border-l-navy' : ''
+                      className={`hover:bg-paper/30 cursor-pointer transition-colors ${
+                        isPinned ? 'bg-saffron/20 border-l-4 border-l-black font-medium' : ''
                       }`}
                     >
                       {/* Date */}
-                      <td className="py-3 px-4 font-mono tabular-nums text-ink-secondary whitespace-nowrap">
+                      <td className="py-3 px-4 font-mono font-bold tabular-nums text-ink-primary whitespace-nowrap">
                         {dateFormatted}
                       </td>
 
@@ -346,13 +354,13 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
                       <td className="py-3 px-4">
                         <div className="flex flex-wrap items-center gap-1.5">
                           {isPinned && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-navy text-white">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[10px] font-extrabold bg-black text-white border border-black shadow-hard-sm">
                               <Pin className="w-2.5 h-2.5 fill-current" strokeWidth={2} />
                               PIN
                             </span>
                           )}
                           <StatusTag status={statusType} label={n.category.replace('_', ' ')} size="sm" />
-                          <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-surface-subtle border border-border text-ink-muted">
+                          <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-sm bg-surface-subtle border-2 border-black text-ink-primary">
                             {n.hostel_name || 'All'}
                           </span>
                         </div>
@@ -361,20 +369,20 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
                       {/* Title & Preview Excerpt */}
                       <td className="py-3 px-4">
                         <div className="space-y-0.5">
-                          <h4 className="font-semibold text-ink-primary text-xs leading-snug">
+                          <h4 className="font-extrabold text-ink-primary text-xs leading-snug">
                             {n.title}
                           </h4>
-                          <p className="text-[11px] text-ink-muted truncate max-w-xl">
+                          <p className="text-[11px] font-medium text-ink-secondary truncate max-w-xl">
                             {n.body || 'No additional directives.'}
                           </p>
                         </div>
                       </td>
 
                       {/* Issued By */}
-                      <td className="py-3 px-4 text-ink-secondary whitespace-nowrap text-xs">
+                      <td className="py-3 px-4 text-ink-primary whitespace-nowrap text-xs">
                         <div className="flex items-center gap-1.5">
-                          <User className="w-3.5 h-3.5 text-ink-muted shrink-0" strokeWidth={1.75} />
-                          <span className="truncate max-w-[140px]" title={n.posted_by_name || 'Administration'}>
+                          <User className="w-3.5 h-3.5 text-ink-muted shrink-0" strokeWidth={2} />
+                          <span className="truncate max-w-[140px] font-bold" title={n.posted_by_name || 'Administration'}>
                             {n.posted_by_name || 'Administration'}
                           </span>
                         </div>
@@ -392,7 +400,7 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
                           className="h-7 px-2 text-xs"
                         >
                           View
-                          <ChevronRight className="w-3 h-3 ml-0.5" strokeWidth={1.75} />
+                          <ChevronRight className="w-3 h-3 ml-0.5" strokeWidth={2} />
                         </Button>
                       </td>
                     </tr>
@@ -405,10 +413,10 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
 
         {/* Pagination Toolbar */}
         {totalPages > 1 && (
-          <div className="px-5 py-3 bg-surface-subtle border-t border-border flex items-center justify-between text-xs">
-            <span className="text-ink-secondary">
-              Page <strong className="text-ink-primary font-mono tabular-nums">{page}</strong> of{' '}
-              <strong className="text-ink-primary font-mono tabular-nums">{totalPages}</strong>
+          <div className="px-5 py-3 bg-surface-subtle border-t-2 border-black flex items-center justify-between text-xs">
+            <span className="font-medium text-ink-secondary">
+              Page <strong className="text-ink-primary font-mono font-extrabold tabular-nums">{page}</strong> of{' '}
+              <strong className="text-ink-primary font-mono font-extrabold tabular-nums">{totalPages}</strong>
             </span>
 
             <div className="flex items-center gap-2">
@@ -440,8 +448,8 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
         title={
           drawerNotice ? (
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-navy shrink-0" strokeWidth={1.75} />
-              <span className="truncate text-sm font-semibold">{drawerNotice.title}</span>
+              <FileText className="w-4 h-4 text-ink-primary shrink-0" strokeWidth={2} />
+              <span className="truncate text-sm font-extrabold">{drawerNotice.title}</span>
             </div>
           ) : (
             'Notice Detail'
@@ -455,11 +463,11 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
                 label={drawerNotice.category.replace('_', ' ')}
                 size="sm"
               />
-              <span className="text-xs font-mono text-ink-secondary">
+              <span className="text-xs font-mono font-bold text-ink-primary">
                 {drawerNotice.hostel_name || 'All Hostels (Campus Wide)'}
               </span>
               {drawerNotice.is_pinned ? (
-                <span className="text-[10px] font-semibold text-navy bg-navy/10 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] font-extrabold text-black bg-saffron border border-black px-1.5 py-0.5 rounded-sm">
                   PINNED
                 </span>
               ) : null}
@@ -476,40 +484,40 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
       >
         {drawerLoading ? (
           <div className="py-12 flex flex-col items-center justify-center text-ink-muted">
-            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mb-2" />
-            <span className="text-xs">Loading notice details...</span>
+            <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin mb-2" />
+            <span className="text-xs font-bold">Loading notice details...</span>
           </div>
         ) : drawerNotice ? (
           <div className="space-y-6 text-xs text-ink-secondary">
             {/* Metadata Card */}
-            <div className="p-4 bg-surface-subtle border border-border rounded-lg space-y-2.5 font-mono text-[11px]">
+            <div className="p-4 bg-surface border-2 border-black rounded-sm shadow-hard space-y-2.5 font-mono text-[11px]">
               <div className="flex justify-between items-center">
-                <span className="text-ink-muted">Notice ID:</span>
-                <span className="font-semibold text-ink-primary">#{drawerNotice.notice_id}</span>
+                <span className="text-ink-secondary font-bold">Notice ID:</span>
+                <span className="font-extrabold text-ink-primary">#{drawerNotice.notice_id}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-ink-muted">Issued By:</span>
-                <span className="font-semibold text-ink-primary">
+                <span className="text-ink-secondary font-bold">Issued By:</span>
+                <span className="font-extrabold text-ink-primary">
                   {drawerNotice.posted_by_name || 'Hostel Administration'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-ink-muted">Effective Date:</span>
-                <span className="text-ink-primary tabular-nums">
+                <span className="text-ink-secondary font-bold">Effective Date:</span>
+                <span className="text-ink-primary font-bold tabular-nums">
                   {drawerNotice.starts_at ? formatDateIST(drawerNotice.starts_at) : 'Immediate'}
                 </span>
               </div>
               {drawerNotice.ends_at && (
                 <div className="flex justify-between items-center">
-                  <span className="text-ink-muted">Valid Until:</span>
-                  <span className="text-ink-primary tabular-nums">
+                  <span className="text-ink-secondary font-bold">Valid Until:</span>
+                  <span className="text-ink-primary font-bold tabular-nums">
                     {formatDateIST(drawerNotice.ends_at)}
                   </span>
                 </div>
               )}
               <div className="flex justify-between items-center">
-                <span className="text-ink-muted">Hostel Scope:</span>
-                <span className="text-ink-primary">
+                <span className="text-ink-secondary font-bold">Hostel Scope:</span>
+                <span className="text-ink-primary font-bold">
                   {drawerNotice.hostel_name || 'Campus Wide (All Hostels)'}
                 </span>
               </div>
@@ -517,10 +525,10 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
 
             {/* Notice Directives / Body */}
             <div className="space-y-2">
-              <h4 className="font-semibold text-ink-primary text-xs uppercase tracking-wider">
+              <h4 className="font-extrabold text-ink-primary text-xs uppercase tracking-wider">
                 Directives & Details
               </h4>
-              <div className="p-4 bg-surface border border-border rounded-lg leading-relaxed text-ink-primary whitespace-pre-line text-xs font-sans">
+              <div className="p-4 bg-surface border-2 border-black rounded-sm shadow-hard leading-relaxed text-ink-primary whitespace-pre-line text-xs font-sans">
                 {drawerNotice.body || 'No additional directives provided in this official notice.'}
               </div>
             </div>
@@ -530,29 +538,29 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
 
       {/* Publish Modal */}
       {showPublishModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-primary/50 p-4">
-          <div className="bg-surface border border-border rounded-lg max-w-lg w-full p-6 shadow-xl">
-            <div className="flex items-center justify-between pb-3 border-b border-border mb-4">
-              <h3 className="font-bold text-base text-ink-primary font-serif">Publish Official Circular</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-surface border-2 border-black rounded-sm max-w-lg w-full p-6 shadow-hard-xl">
+            <div className="flex items-center justify-between pb-3 border-b-2 border-black mb-4">
+              <h3 className="font-extrabold text-base text-ink-primary font-heading">Publish Official Circular</h3>
               <button
                 onClick={() => setShowPublishModal(false)}
-                className="text-ink-muted hover:text-ink-primary p-1 rounded"
+                className="text-ink-primary hover:bg-paper p-1.5 border-2 border-black rounded-sm shadow-hard-sm"
               >
-                <X className="w-4 h-4" strokeWidth={1.75} />
+                <X className="w-4 h-4" strokeWidth={2} />
               </button>
             </div>
 
             {submitError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-xs text-red-700 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={1.75} />
+              <div className="mb-4 p-3 bg-status-danger-subtle border-2 border-black rounded-sm text-xs text-status-danger-text font-bold flex items-center gap-2 shadow-hard-sm">
+                <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={2} />
                 <span>{submitError}</span>
               </div>
             )}
 
             <form onSubmit={handlePublishSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="block font-semibold text-ink-primary mb-1">
-                  Notice Title <span className="text-red-600">*</span>
+                <label className="block font-bold text-ink-primary mb-1">
+                  Notice Title <span className="text-status-danger-text">*</span>
                 </label>
                 <Input
                   required
@@ -566,11 +574,11 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-ink-primary mb-1">Category</label>
+                  <label className="block font-bold text-ink-primary mb-1">Category</label>
                   <select
                     value={pubCategory}
                     onChange={(e) => setPubCategory(e.target.value as NoticeCategory)}
-                    className="w-full px-3 py-2 border border-border rounded bg-surface text-ink-primary focus:outline-none text-xs"
+                    className="w-full px-3 py-2 border-2 border-black rounded-sm bg-surface text-ink-primary font-bold shadow-hard-sm focus:outline-none text-xs"
                   >
                     <option value="CIRCULAR">CIRCULAR</option>
                     <option value="WATER_QUALITY">WATER_QUALITY</option>
@@ -582,11 +590,11 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-ink-primary mb-1">Hostel Scope</label>
+                  <label className="block font-bold text-ink-primary mb-1">Hostel Scope</label>
                   <select
                     value={pubHostelId}
                     onChange={(e) => setPubHostelId(e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded bg-surface text-ink-primary focus:outline-none text-xs"
+                    className="w-full px-3 py-2 border-2 border-black rounded-sm bg-surface text-ink-primary font-bold shadow-hard-sm focus:outline-none text-xs"
                   >
                     <option value="">Campus Wide (All Hostels)</option>
                     <option value="1">Hostel 1 (BH1 - Boys)</option>
@@ -599,7 +607,7 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-ink-primary mb-1">Starts At (Date)</label>
+                  <label className="block font-bold text-ink-primary mb-1">Starts At (Date)</label>
                   <Input
                     type="date"
                     value={pubStartsAt}
@@ -609,7 +617,7 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-ink-primary mb-1">Ends At (Date)</label>
+                  <label className="block font-bold text-ink-primary mb-1">Ends At (Date)</label>
                   <Input
                     type="date"
                     value={pubEndsAt}
@@ -620,13 +628,13 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
               </div>
 
               <div>
-                <label className="block font-semibold text-ink-primary mb-1">Notice Body / Directives</label>
+                <label className="block font-bold text-ink-primary mb-1">Notice Body / Directives</label>
                 <textarea
                   rows={4}
                   value={pubBody}
                   onChange={(e) => setPubBody(e.target.value)}
                   placeholder="Enter detailed directives or instructions..."
-                  className="w-full px-3 py-2 border border-border rounded bg-surface text-ink-primary focus:outline-none text-xs leading-relaxed"
+                  className="w-full px-3 py-2 border-2 border-black rounded-sm bg-surface text-ink-primary shadow-hard-sm focus:outline-none text-xs font-medium leading-relaxed"
                 />
               </div>
 
@@ -636,14 +644,14 @@ export const NoticeHub: React.FC<NoticeHubProps> = ({ userRole, csrfToken }) => 
                   id="pinNotice"
                   checked={pubIsPinned}
                   onChange={(e) => setPubIsPinned(e.target.checked)}
-                  className="rounded border-border text-navy focus:ring-navy"
+                  className="w-4 h-4 rounded-sm border-2 border-black text-black focus:ring-0 cursor-pointer"
                 />
-                <label htmlFor="pinNotice" className="font-semibold text-ink-primary cursor-pointer select-none">
+                <label htmlFor="pinNotice" className="font-extrabold text-ink-primary cursor-pointer select-none">
                   Pin to Top of Registry (High Priority)
                 </label>
               </div>
 
-              <div className="pt-3 border-t border-border flex items-center justify-end gap-2">
+              <div className="pt-3 border-t-2 border-black flex items-center justify-end gap-2">
                 <Button
                   type="button"
                   variant="outline"

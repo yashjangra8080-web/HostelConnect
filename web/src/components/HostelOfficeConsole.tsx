@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react';
-import { RoomOccupancyBoard } from './RoomOccupancyBoard';
+import { RoomOccupancyBoard } from './RoomOccupancyBoard.js';
 import { ConfirmDialog } from './ui/ConfirmDialog.js';
 
 interface CycleData {
@@ -168,17 +168,17 @@ export const HostelOfficeConsole: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Console Header & Stepper Card */}
-      <div className="bg-white border border-[#E2E8F0] rounded-lg p-6 shadow-sm space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
+      <div className="bg-surface border-2 border-black rounded-sm p-6 shadow-hard-lg space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b-2 border-black">
           <div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded bg-[#0C2054] text-white flex items-center justify-center font-bold text-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-sm bg-navy-sidebar text-saffron border-2 border-black shadow-hard-sm flex items-center justify-center font-extrabold font-heading text-sm">
                 HC
               </div>
               <div>
-                <h2 className="text-base font-bold font-heading text-[#0F172A]">Hostel Office Allotment Console</h2>
-                <p className="text-xs text-[#64748B]">
-                  Academic Year: {cycleData?.cycle?.academic_year || '2026-27'} &bull; Cycle ID: #{cycleData?.cycle?.cycle_id || 1}
+                <h2 className="text-xl font-extrabold font-heading text-ink-primary tracking-tight">Hostel Office Allotment Console</h2>
+                <p className="text-xs font-medium text-ink-secondary">
+                  Academic Year: <span className="font-mono font-bold text-ink-primary">{cycleData?.cycle?.academic_year || '2026-27'}</span> &bull; Cycle ID: <span className="font-mono font-bold text-ink-primary">#{cycleData?.cycle?.cycle_id || 1}</span>
                 </p>
               </div>
             </div>
@@ -186,10 +186,10 @@ export const HostelOfficeConsole: React.FC = () => {
 
           <button
             onClick={fetchCycle}
-            className="p-1.5 rounded text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] border border-[#E2E8F0] transition-colors self-end md:self-auto"
+            className="p-2 rounded-sm text-ink-primary bg-surface hover:bg-paper border-2 border-black shadow-hard-sm active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all self-end md:self-auto"
             title="Refresh Cycle"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} strokeWidth={1.75} />
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} strokeWidth={2} />
           </button>
         </div>
 
@@ -201,25 +201,25 @@ export const HostelOfficeConsole: React.FC = () => {
               return (
                 <div
                   key={st.id}
-                  className={`p-3.5 rounded-lg border transition-colors ${
+                  className={`p-3.5 rounded-sm border-2 border-black transition-all ${
                     state === 'current'
-                      ? 'bg-[#EEF2FF] border-[#2F5BD6] text-[#1E3A8A] ring-1 ring-[#2F5BD6]'
+                      ? 'bg-saffron text-black shadow-hard-sm'
                       : state === 'completed'
-                      ? 'bg-[#F0FDF4] border-[#BBF7D0] text-[#166534]'
-                      : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B]'
+                      ? 'bg-status-success-subtle text-status-success-text shadow-hard-sm'
+                      : 'bg-surface text-ink-muted'
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     {state === 'completed' ? (
-                      <CheckCircle2 className="w-4 h-4 text-[#059669]" strokeWidth={2} />
+                      <CheckCircle2 className="w-4 h-4 text-status-success-text" strokeWidth={2.5} />
                     ) : state === 'current' ? (
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#2F5BD6] animate-pulse" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-black animate-pulse" />
                     ) : (
-                      <div className="w-2 h-2 rounded-full bg-slate-300" />
+                      <div className="w-2 h-2 rounded-full bg-surface-muted border border-black" />
                     )}
-                    <span className="font-heading font-bold text-xs">{st.label}</span>
+                    <span className="font-heading font-extrabold text-xs text-ink-primary">{st.label}</span>
                   </div>
-                  <p className="text-[11px] mt-1 opacity-80 pl-4">{st.desc}</p>
+                  <p className="text-[11px] font-medium mt-1 pl-4 text-ink-secondary">{st.desc}</p>
                 </div>
               );
             })}
@@ -228,15 +228,15 @@ export const HostelOfficeConsole: React.FC = () => {
 
         {/* Alerts */}
         {error && (
-          <div className="p-4 bg-[#FEF2F2] border border-[#FECACA] rounded-lg text-xs text-[#DC2626] flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0" strokeWidth={1.75} />
+          <div className="p-4 bg-status-danger-subtle border-2 border-black rounded-sm text-xs font-bold text-status-danger-text flex items-center gap-2 shadow-hard-sm">
+            <AlertTriangle className="w-4 h-4 shrink-0" strokeWidth={2} />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="p-4 bg-[#ECFDF5] border border-[#A7F3D0] rounded-lg text-xs text-[#059669] flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0" strokeWidth={1.75} />
+          <div className="p-4 bg-status-success-subtle border-2 border-black rounded-sm text-xs font-bold text-status-success-text flex items-center gap-2 shadow-hard-sm">
+            <CheckCircle2 className="w-4 h-4 shrink-0" strokeWidth={2} />
             <span>{success}</span>
           </div>
         )}
@@ -247,9 +247,9 @@ export const HostelOfficeConsole: React.FC = () => {
           <button
             onClick={handleDryRun}
             disabled={actionLoading}
-            className="px-4 py-2 text-xs font-semibold rounded bg-[#F8FAFC] border border-[#CBD5E1] text-[#0F172A] hover:bg-[#F1F5F9] transition-colors flex items-center gap-2 disabled:opacity-50"
+            className="px-4 py-2 text-xs font-extrabold rounded-sm bg-surface border-2 border-black text-ink-primary shadow-hard hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-hard-sm active:translate-x-1 active:translate-y-1 active:shadow-none transition-all flex items-center gap-2 disabled:opacity-50"
           >
-            <Eye className="w-4 h-4 text-[#2F5BD6]" strokeWidth={1.75} />
+            <Eye className="w-4 h-4 text-ink-primary" strokeWidth={2} />
             <span>Preview Dry-Run Allotment</span>
           </button>
 
@@ -257,9 +257,9 @@ export const HostelOfficeConsole: React.FC = () => {
           <button
             onClick={() => setIsRunConfirmOpen(true)}
             disabled={actionLoading || (cycleStatus !== 'CLOSED' && cycleStatus !== 'OPEN')}
-            className="px-4 py-2 text-xs font-semibold rounded bg-[#2F5BD6] text-white hover:bg-[#1B43A6] transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+            className="px-4 py-2 text-xs font-extrabold rounded-sm bg-black text-white border-2 border-black shadow-hard hover:bg-neutral-800 hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-hard-sm active:translate-x-1 active:translate-y-1 active:shadow-none transition-all flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <Play className="w-4 h-4" strokeWidth={1.75} />
+            <Play className="w-4 h-4" strokeWidth={2} />
             <span>Execute Authoritative Allotment Engine</span>
           </button>
 
@@ -267,9 +267,9 @@ export const HostelOfficeConsole: React.FC = () => {
           <button
             onClick={() => setIsPublishConfirmOpen(true)}
             disabled={actionLoading || cycleStatus !== 'ALLOTTED'}
-            className="px-4 py-2 text-xs font-semibold rounded bg-[#059669] text-white hover:bg-[#047857] transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+            className="px-4 py-2 text-xs font-extrabold rounded-sm bg-saffron text-black border-2 border-black shadow-hard hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-hard-sm active:translate-x-1 active:translate-y-1 active:shadow-none transition-all flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <Send className="w-4 h-4" strokeWidth={1.75} />
+            <Send className="w-4 h-4" strokeWidth={2} />
             <span>Publish Results to Public Pool</span>
           </button>
         </div>
@@ -280,20 +280,20 @@ export const HostelOfficeConsole: React.FC = () => {
 
       {/* Dry Run Preview Modal */}
       {dryRunResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white border border-[#E2E8F0] rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-surface border-2 border-black rounded-sm shadow-hard-xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
+            <div className="px-6 py-4 border-b-2 border-black flex items-center justify-between bg-paper">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded bg-[#EEF2FF] flex items-center justify-center text-[#2F5BD6]">
-                  <Eye className="w-4 h-4" strokeWidth={1.75} />
+                <div className="w-8 h-8 rounded-sm bg-surface border-2 border-black flex items-center justify-center text-ink-primary shadow-hard-sm">
+                  <Eye className="w-4 h-4" strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="font-heading font-semibold text-sm text-[#0F172A]">
+                  <h3 className="font-heading font-extrabold text-sm text-ink-primary">
                     Dry-Run Allotment Simulation Preview
                   </h3>
-                  <p className="text-xs text-[#059669] flex items-center gap-1 font-medium">
-                    <ShieldCheck className="w-3.5 h-3.5" strokeWidth={1.75} />
+                  <p className="text-xs text-status-success-text flex items-center gap-1 font-bold">
+                    <ShieldCheck className="w-3.5 h-3.5" strokeWidth={2} />
                     Database rolled back & untouched
                   </p>
                 </div>
@@ -301,9 +301,9 @@ export const HostelOfficeConsole: React.FC = () => {
 
               <button
                 onClick={() => setDryRunResult(null)}
-                className="p-1 rounded text-[#64748B] hover:text-[#0F172A] hover:bg-[#E2E8F0]"
+                className="p-1 rounded-sm text-ink-primary hover:bg-surface border-2 border-black shadow-hard-sm active:translate-x-0.5 active:translate-y-0.5"
               >
-                <X className="w-4 h-4" strokeWidth={1.75} />
+                <X className="w-4 h-4" strokeWidth={2} />
               </button>
             </div>
 
@@ -311,33 +311,33 @@ export const HostelOfficeConsole: React.FC = () => {
             <div className="p-6 overflow-y-auto space-y-5">
               {/* Summary Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded">
-                  <span className="text-[10px] uppercase font-bold text-[#64748B] block">Total Evaluated</span>
-                  <span className="text-base font-bold text-[#0F172A] tabular-nums mt-0.5 block">
+                <div className="p-3 bg-surface border-2 border-black rounded-sm shadow-hard-sm">
+                  <span className="text-[10px] uppercase font-extrabold text-ink-secondary block">Total Evaluated</span>
+                  <span className="text-base font-extrabold font-mono text-ink-primary tabular-nums mt-0.5 block">
                     {dryRunResult.summary.total_planned}
                   </span>
                 </div>
 
-                <div className="p-3 bg-[#F0FDF4] border border-[#BBF7D0] rounded">
-                  <span className="text-[10px] uppercase font-bold text-[#15803D] block">Allotted Beds</span>
-                  <span className="text-base font-bold text-[#15803D] tabular-nums mt-0.5 block">
+                <div className="p-3 bg-status-success-subtle border-2 border-black rounded-sm shadow-hard-sm">
+                  <span className="text-[10px] uppercase font-extrabold text-status-success-text block">Allotted Beds</span>
+                  <span className="text-base font-extrabold font-mono text-status-success-text tabular-nums mt-0.5 block">
                     {dryRunResult.summary.allotted_count}
                   </span>
-                  <span className="text-[10px] text-[#166534]">
+                  <span className="text-[10px] font-bold text-status-success-text">
                     ({dryRunResult.summary.allotted_by_gender.M} Boys &bull; {dryRunResult.summary.allotted_by_gender.F} Girls)
                   </span>
                 </div>
 
-                <div className="p-3 bg-[#FFFBEB] border border-[#FDE68A] rounded">
-                  <span className="text-[10px] uppercase font-bold text-[#B45309] block">Waitlisted</span>
-                  <span className="text-base font-bold text-[#B45309] tabular-nums mt-0.5 block">
+                <div className="p-3 bg-status-warning-subtle border-2 border-black rounded-sm shadow-hard-sm">
+                  <span className="text-[10px] uppercase font-extrabold text-status-warning-text block">Waitlisted</span>
+                  <span className="text-base font-extrabold font-mono text-status-warning-text tabular-nums mt-0.5 block">
                     {dryRunResult.summary.waitlisted_count}
                   </span>
                 </div>
 
-                <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded">
-                  <span className="text-[10px] uppercase font-bold text-[#64748B] block">Habits Allotted</span>
-                  <span className="text-xs font-semibold text-[#0F172A] mt-1 block">
+                <div className="p-3 bg-surface border-2 border-black rounded-sm shadow-hard-sm">
+                  <span className="text-[10px] uppercase font-extrabold text-ink-secondary block">Habits Allotted</span>
+                  <span className="text-xs font-bold text-ink-primary mt-1 block">
                     {dryRunResult.summary.allotted_by_habit.DAY} Day &bull; {dryRunResult.summary.allotted_by_habit.NIGHT} Night
                   </span>
                 </div>
@@ -345,40 +345,40 @@ export const HostelOfficeConsole: React.FC = () => {
 
               {/* Sample Planned Allocation Table */}
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-2">
+                <h4 className="text-xs font-extrabold uppercase tracking-wider text-ink-secondary mb-2">
                   Sample Planned Allotments (First 20 Records)
                 </h4>
-                <div className="border border-[#E2E8F0] rounded overflow-hidden">
+                <div className="border-2 border-black rounded-sm overflow-hidden shadow-hard-sm">
                   <table className="w-full text-left border-collapse text-xs">
-                    <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[10px] font-bold uppercase text-[#475569]">
+                    <thead className="bg-surface-subtle border-b-2 border-black text-[10px] font-extrabold uppercase text-ink-primary">
                       <tr>
-                        <th className="p-2">Rank</th>
-                        <th className="p-2">Student</th>
-                        <th className="p-2">Gender</th>
-                        <th className="p-2">Habit</th>
-                        <th className="p-2">Status</th>
-                        <th className="p-2">Assigned Room</th>
+                        <th className="p-2.5">Rank</th>
+                        <th className="p-2.5">Student</th>
+                        <th className="p-2.5">Gender</th>
+                        <th className="p-2.5">Habit</th>
+                        <th className="p-2.5">Status</th>
+                        <th className="p-2.5">Assigned Room</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#E2E8F0]">
+                    <tbody className="divide-y-2 divide-black">
                       {dryRunResult.plan.slice(0, 20).map((p: any, idx: number) => (
-                        <tr key={idx} className="hover:bg-[#F8FAFC]">
-                          <td className="p-2 font-bold tabular-nums">#{p.rank_no}</td>
-                          <td className="p-2 font-mono">{p.roll_no}</td>
-                          <td className="p-2">{p.gender}</td>
-                          <td className="p-2">{p.study_habit}</td>
-                          <td className="p-2">
+                        <tr key={idx} className="hover:bg-paper/30 transition-colors">
+                          <td className="p-2.5 font-extrabold tabular-nums font-mono">#{p.rank_no}</td>
+                          <td className="p-2.5 font-mono font-bold text-ink-primary">{p.roll_no}</td>
+                          <td className="p-2.5 font-medium">{p.gender}</td>
+                          <td className="p-2.5 font-medium">{p.study_habit}</td>
+                          <td className="p-2.5">
                             <span
-                              className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                              className={`px-2 py-0.5 rounded-sm text-[10px] font-extrabold border border-black ${
                                 p.status === 'ALLOTTED'
-                                  ? 'bg-[#DCFCE7] text-[#15803D]'
-                                  : 'bg-[#FEF3C7] text-[#B45309]'
+                                  ? 'bg-status-success-subtle text-status-success-text'
+                                  : 'bg-status-warning-subtle text-status-warning-text'
                               }`}
                             >
                               {p.status}
                             </span>
                           </td>
-                          <td className="p-2 font-medium">
+                          <td className="p-2.5 font-bold font-mono">
                             {p.room_id ? `Room #${p.room_id}` : '—'}
                           </td>
                         </tr>
@@ -390,10 +390,10 @@ export const HostelOfficeConsole: React.FC = () => {
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-3 border-t border-[#E2E8F0] bg-[#F8FAFC] flex justify-end">
+            <div className="px-6 py-3 border-t-2 border-black bg-surface-subtle flex justify-end">
               <button
                 onClick={() => setDryRunResult(null)}
-                className="px-4 py-1.5 text-xs font-semibold rounded bg-white border border-[#CBD5E1] text-[#0F172A] hover:bg-[#F1F5F9]"
+                className="px-4 py-1.5 text-xs font-extrabold rounded-sm bg-surface border-2 border-black text-ink-primary shadow-hard-sm hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 transition-all"
               >
                 Close Preview
               </button>
@@ -412,7 +412,7 @@ export const HostelOfficeConsole: React.FC = () => {
         isLoading={actionLoading}
         confirmLabel="Execute Engine"
         description={
-          <div className="space-y-2 text-xs text-ink-muted">
+          <div className="space-y-2 text-xs text-ink-secondary">
             <p>
               Are you sure you want to execute the authoritative allotment engine for <strong>Cycle 1</strong>?
             </p>
@@ -433,7 +433,7 @@ export const HostelOfficeConsole: React.FC = () => {
         isLoading={actionLoading}
         confirmLabel="Publish Results"
         description={
-          <div className="space-y-2 text-xs text-ink-muted">
+          <div className="space-y-2 text-xs text-ink-secondary">
             <p>
               Are you sure you want to publish Cycle 1 allotment results?
             </p>

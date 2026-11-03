@@ -98,14 +98,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const getResultIcon = (type: CommandPaletteResult['type']) => {
     switch (type) {
       case 'student':
-        return <User className="w-4 h-4 text-primary" strokeWidth={1.75} />;
+        return <User className="w-4 h-4 text-black" strokeWidth={2} />;
       case 'complaint':
-        return <ShieldAlert className="w-4 h-4 text-status-warning-text" strokeWidth={1.75} />;
+        return <ShieldAlert className="w-4 h-4 text-status-warning-text" strokeWidth={2} />;
       case 'notice':
-        return <Bell className="w-4 h-4 text-saffron" strokeWidth={1.75} />;
+        return <Bell className="w-4 h-4 text-black" strokeWidth={2} />;
       case 'page':
       default:
-        return <FileText className="w-4 h-4 text-ink-muted" strokeWidth={1.75} />;
+        return <FileText className="w-4 h-4 text-black" strokeWidth={2} />;
     }
   };
 
@@ -113,60 +113,60 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 p-4">
-      {/* Solid flat backdrop (NO blur/glass) */}
+      {/* Solid flat backdrop: rgba(0,0,0,0.6), NO blur */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-ink-primary/50 transition-opacity"
+        className="fixed inset-0 bg-black/60 transition-opacity"
         aria-hidden="true"
       />
 
-      {/* Palette Container */}
+      {/* Palette Container: white, border-2 border-black, shadow-hard-lg, 4px radius */}
       <div
         role="dialog"
         aria-modal="true"
         onKeyDown={handleKeyDown}
-        className="relative z-10 w-full max-w-xl bg-surface border border-border rounded-lg overflow-hidden flex flex-col shadow-none"
+        className="relative z-10 w-full max-w-xl bg-white border-2 border-black rounded-[4px] shadow-hard-lg overflow-hidden flex flex-col"
       >
         {/* Search Input Bar */}
-        <div className="px-4 py-3 border-b border-border flex items-center gap-3 bg-surface">
-          <Search className="w-4 h-4 text-ink-muted shrink-0" strokeWidth={1.75} />
+        <div className="px-4 py-3 border-b-2 border-black flex items-center gap-3 bg-white">
+          <Search className="w-4 h-4 text-black shrink-0" strokeWidth={2} />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search students, roll numbers, pages, or records..."
-            className="w-full text-sm text-ink-primary placeholder:text-ink-muted bg-transparent focus:outline-none"
+            className="w-full text-base sm:text-sm text-black placeholder:text-ink-light bg-transparent focus:outline-none"
           />
           {isLoading ? (
-            <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" strokeWidth={1.75} />
+            <Loader2 className="w-4 h-4 text-black animate-spin shrink-0" strokeWidth={2} />
           ) : query ? (
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="text-ink-muted hover:text-ink-primary p-0.5"
+              className="text-black hover:text-status-danger-text p-0.5"
             >
-              <X className="w-4 h-4" strokeWidth={1.75} />
+              <X className="w-4 h-4" strokeWidth={2} />
             </button>
           ) : (
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-subtle border border-border text-ink-muted">
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-[4px] bg-white border-2 border-black text-black font-bold">
               ESC
             </span>
           )}
         </div>
 
         {/* Results List */}
-        <div className="max-h-80 overflow-y-auto p-2 divide-y divide-border/40">
+        <div className="max-h-80 overflow-y-auto p-2 divide-y divide-black/20">
           {!query.trim() ? (
-            <div className="py-8 text-center text-xs text-ink-muted">
+            <div className="py-8 text-center text-xs text-black font-medium">
               <p>Type to search across HostelConnect records and navigation.</p>
-              <p className="mt-1 text-[11px] text-ink-secondary">
+              <p className="mt-1 text-[11px] text-ink-muted">
                 Staff: search student names or roll numbers. Students: search pages and grievances.
               </p>
             </div>
           ) : results.length === 0 && !isLoading ? (
-            <div className="py-8 text-center text-xs text-ink-muted">
-              No matching results found for &ldquo;<span className="text-ink-primary">{query}</span>&rdquo;
+            <div className="py-8 text-center text-xs text-black font-medium">
+              No matching results found for &ldquo;<span className="font-bold text-black">{query}</span>&rdquo;
             </div>
           ) : (
             results.map((res, idx) => {
@@ -176,34 +176,34 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                   key={`${res.type}-${res.id}-${idx}`}
                   onClick={() => handleSelect(res)}
                   onMouseEnter={() => setSelectedIndex(idx)}
-                  className={`px-3 py-2.5 rounded flex items-center justify-between cursor-pointer transition-colors ${
-                    isSelected ? 'bg-primary-subtle text-primary' : 'hover:bg-surface-subtle'
+                  className={`px-3 py-2.5 rounded-[4px] flex items-center justify-between cursor-pointer transition-colors border-2 ${
+                    isSelected ? 'bg-saffron text-black border-black shadow-hard-sm' : 'border-transparent hover:bg-paper'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="shrink-0 p-1 rounded bg-surface border border-border flex items-center justify-center">
+                    <div className="shrink-0 p-1.5 rounded-[4px] bg-white border-2 border-black flex items-center justify-center">
                       {getResultIcon(res.type)}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-ink-primary truncate">
+                        <span className="text-sm font-heading font-bold text-black truncate">
                           {res.title}
                         </span>
                         {res.meta && (
-                          <span className="text-[11px] text-ink-muted truncate font-mono">
+                          <span className="text-[11px] text-black/70 truncate font-mono font-bold">
                             {res.meta}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-ink-secondary truncate">{res.subtitle}</p>
+                      <p className="text-xs text-black/80 truncate font-medium">{res.subtitle}</p>
                     </div>
                   </div>
 
                   <div className="shrink-0 ml-3 flex items-center">
                     {isSelected && (
-                      <span className="text-[11px] text-primary flex items-center gap-1 font-medium">
+                      <span className="text-[11px] text-black flex items-center gap-1 font-bold">
                         <span>Select</span>
-                        <CornerDownLeft className="w-3 h-3" strokeWidth={2} />
+                        <CornerDownLeft className="w-3.5 h-3.5" strokeWidth={2.5} />
                       </span>
                     )}
                   </div>
@@ -214,25 +214,25 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         {/* Footer shortcuts */}
-        <div className="px-4 py-2 border-t border-border bg-surface-subtle flex items-center justify-between text-[11px] text-ink-muted">
+        <div className="px-4 py-2 border-t-2 border-black bg-white flex items-center justify-between text-[11px] text-black font-bold">
           <div className="flex items-center gap-3">
             <span>
-              <kbd className="px-1 py-0.5 bg-surface border border-border rounded font-mono text-[10px]">
+              <kbd className="px-1.5 py-0.5 bg-white border-2 border-black rounded-[4px] font-mono text-[10px]">
                 ↑
               </kbd>{' '}
-              <kbd className="px-1 py-0.5 bg-surface border border-border rounded font-mono text-[10px]">
+              <kbd className="px-1.5 py-0.5 bg-white border-2 border-black rounded-[4px] font-mono text-[10px]">
                 ↓
               </kbd>{' '}
               Navigate
             </span>
             <span>
-              <kbd className="px-1 py-0.5 bg-surface border border-border rounded font-mono text-[10px]">
+              <kbd className="px-1.5 py-0.5 bg-white border-2 border-black rounded-[4px] font-mono text-[10px]">
                 ↵
               </kbd>{' '}
               Select
             </span>
             <span>
-              <kbd className="px-1 py-0.5 bg-surface border border-border rounded font-mono text-[10px]">
+              <kbd className="px-1.5 py-0.5 bg-white border-2 border-black rounded-[4px] font-mono text-[10px]">
                 ESC
               </kbd>{' '}
               Close

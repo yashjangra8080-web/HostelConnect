@@ -55,13 +55,13 @@ function AppContent() {
   // 1. Initial auth loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-paper flex flex-col items-center justify-center p-4">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-navy-sidebar text-white flex items-center justify-center font-serif font-bold text-base">
+      <div className="min-h-screen bg-dots bg-paper flex flex-col items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 rounded-sm bg-navy-sidebar border-2 border-black shadow-hard text-saffron flex items-center justify-center font-heading font-extrabold text-lg tracking-tight">
             HC
           </div>
-          <div className="flex items-center gap-2 text-ink-secondary text-sm">
-            <Loader2 className="w-4 h-4 animate-spin text-primary" strokeWidth={1.75} />
+          <div className="flex items-center gap-2.5 text-ink-primary font-bold text-sm bg-surface border-2 border-black shadow-hard px-4 py-2 rounded-sm">
+            <Loader2 className="w-4 h-4 animate-spin text-ink-primary" strokeWidth={2.5} />
             <span>Initializing HostelConnect session...</span>
           </div>
         </div>
@@ -160,7 +160,7 @@ function AppContent() {
       case '/student/laundry':
       case '/caretaker/laundry':
       case '/laundry':
-        return <LaundryStatus userRole={user.role} csrfToken={csrfToken || ''} />;
+        return <LaundryStatus />;
 
       // Institutional Mess & Dining
       case '/mess':
@@ -200,14 +200,14 @@ function AppContent() {
       default:
         return (
           <div className="py-20 flex flex-col items-center justify-center text-center px-4">
-            <div className="w-14 h-14 rounded-full bg-surface-subtle border border-border flex items-center justify-center text-ink-muted mb-4 font-mono font-bold text-lg">
+            <div className="w-16 h-16 rounded-sm bg-surface border-2 border-black shadow-hard flex items-center justify-center text-ink-primary mb-4 font-mono font-bold text-lg">
               404
             </div>
-            <h1 className="text-xl font-bold font-serif text-ink-primary mb-1">Page Not Found</h1>
-            <p className="text-xs text-ink-muted mb-6 max-w-sm">
-              The requested path <code className="px-1.5 py-0.5 rounded bg-surface-subtle border border-border font-mono text-[11px] text-ink-primary">{currentPath}</code> does not exist or has been removed.
+            <h1 className="text-2xl font-extrabold font-heading text-ink-primary tracking-tight mb-2">Page Not Found</h1>
+            <p className="text-sm font-medium text-ink-secondary mb-6 max-w-sm">
+              The requested path <code className="px-2 py-0.5 rounded-sm bg-paper border-2 border-black font-mono text-xs text-ink-primary">{currentPath}</code> does not exist or has been removed.
             </p>
-            <Button variant="primary" size="sm" onClick={() => navigateTo('/')}>
+            <Button variant="primary" size="md" onClick={() => navigateTo('/')}>
               Return to Dashboard
             </Button>
           </div>

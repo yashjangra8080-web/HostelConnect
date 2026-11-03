@@ -41,41 +41,41 @@ export const Drawer: React.FC<DrawerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
-      {/* Solid flat backdrop (Strict: NO blur/glass) */}
+      {/* Solid flat backdrop: rgba(0,0,0,0.6), NO blur */}
       <div
         onClick={onClose}
         aria-hidden="true"
-        className="fixed inset-0 bg-ink-primary/50 transition-opacity"
+        className="fixed inset-0 bg-black/60 transition-opacity"
       />
 
-      {/* Right Drawer Panel with hairline left border */}
+      {/* Right Drawer Panel with 2px black border and hard shadow */}
       <div
         role="dialog"
         aria-modal="true"
-        className={`relative z-10 w-full ${width} h-full bg-surface border-l border-border flex flex-col focus:outline-none`}
+        className={`relative z-10 w-full ${width} h-full bg-white border-l-2 border-black shadow-hard-lg flex flex-col focus:outline-none`}
       >
-        {/* Drawer Header */}
-        <div className="px-6 py-4 border-b border-border flex items-start justify-between bg-surface-subtle">
+        {/* Drawer Header: weight 800 heading font, 2px bottom border */}
+        <div className="px-6 py-4 border-b-2 border-black flex items-start justify-between bg-white">
           <div>
-            <h3 className="text-base font-semibold text-ink-primary">{title}</h3>
+            <h3 className="text-base font-heading font-extrabold text-black">{title}</h3>
             {subtitle && <p className="text-xs text-ink-muted mt-0.5">{subtitle}</p>}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close drawer"
-            className="text-ink-muted hover:text-ink-primary p-1 rounded hover:bg-surface border border-transparent hover:border-border transition-colors"
+            className="text-black p-1 rounded-[8px] border-2 border-black hover:bg-saffron transition-colors"
           >
-            <X className="w-4 h-4" strokeWidth={1.75} />
+            <X className="w-4 h-4" strokeWidth={2.5} />
           </button>
         </div>
 
         {/* Drawer Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">{children}</div>
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white">{children}</div>
 
         {/* Drawer Footer */}
         {footer && (
-          <div className="px-6 py-3.5 border-t border-border bg-surface-subtle flex items-center justify-end gap-2">
+          <div className="px-6 py-3.5 border-t-2 border-black bg-white flex items-center justify-end gap-2">
             {footer}
           </div>
         )}

@@ -69,18 +69,18 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({ onSucces
   const isForced = Boolean(user?.mustChangePassword);
 
   return (
-    <div className="min-h-screen bg-paper flex flex-col justify-center items-center py-12 px-4">
-      <div className="w-full max-w-md bg-surface border border-border rounded-lg p-8 shadow-none">
+    <div className="min-h-screen bg-dots bg-paper flex flex-col justify-center items-center py-12 px-4">
+      <div className="w-full max-w-md bg-white border-2 border-black rounded-[4px] p-8 shadow-hard-lg">
         {/* Header with Key Icon */}
-        <div className="flex items-center gap-3 pb-4 mb-4 border-b border-border">
-          <div className="w-10 h-10 rounded-full bg-saffron-subtle border border-saffron-border text-saffron flex items-center justify-center shrink-0">
-            <KeyRound className="w-5 h-5" strokeWidth={1.75} />
+        <div className="flex items-center gap-3 pb-4 mb-4 border-b-2 border-black">
+          <div className="w-10 h-10 rounded-[4px] bg-saffron border-2 border-black text-black flex items-center justify-center shrink-0 shadow-hard-sm">
+            <KeyRound className="w-5 h-5 text-black" strokeWidth={2} />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-ink-primary">
+            <h2 className="text-lg font-heading font-extrabold text-black tracking-tight">
               {isForced ? 'Mandatory Password Update' : 'Change Account Password'}
             </h2>
-            <p className="text-xs text-ink-muted">
+            <p className="text-xs text-black/70 font-sans mt-0.5">
               {isForced
                 ? 'Your account requires an immediate password update.'
                 : 'Update your login password securely.'}
@@ -92,12 +92,12 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({ onSucces
         {isForced && (
           <div
             role="alert"
-            className="mb-5 p-3 rounded bg-status-warning-bg/60 border border-status-warning-border flex items-start gap-2.5 text-xs text-status-warning-text"
+            className="mb-5 p-3 rounded-[4px] bg-paper border-2 border-black flex items-start gap-2.5 text-xs text-black shadow-hard-sm"
           >
-            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.75} />
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-black" strokeWidth={2} />
             <div>
-              <p className="font-semibold leading-tight">First-time or reset credential detected</p>
-              <p className="mt-0.5 text-ink-secondary leading-normal">
+              <p className="font-heading font-bold text-black leading-tight">First-time or reset credential detected</p>
+              <p className="mt-0.5 text-black/80 font-sans leading-normal">
                 To protect institutional records, you must choose a new private password before accessing the platform.
               </p>
             </div>
@@ -107,7 +107,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({ onSucces
         {error && (
           <div
             role="alert"
-            className="mb-5 p-3 rounded bg-status-danger-bg/50 border border-status-danger-border text-xs text-status-danger-text font-medium"
+            className="mb-5 p-3 rounded-[4px] bg-status-danger-bg border-2 border-black text-xs text-black font-medium shadow-hard-sm"
           >
             {error}
           </div>
@@ -116,9 +116,9 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({ onSucces
         {success && (
           <div
             role="status"
-            className="mb-5 p-3 rounded bg-status-success-bg/50 border border-status-success-border flex items-center gap-2 text-xs text-status-success-text font-medium"
+            className="mb-5 p-3 rounded-[4px] bg-status-success-bg border-2 border-black flex items-center gap-2 text-xs text-black font-medium shadow-hard-sm"
           >
-            <CheckCircle2 className="w-4 h-4 shrink-0" strokeWidth={1.75} />
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-black" strokeWidth={2} />
             <span>{success}</span>
           </div>
         )}
@@ -130,7 +130,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({ onSucces
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             placeholder="Enter current password"
-            leftIcon={<Lock className="w-4 h-4 text-ink-muted" strokeWidth={1.75} />}
+            leftIcon={<Lock className="w-4 h-4 text-black/60" strokeWidth={2} />}
             disabled={isLoading}
             required
             autoFocus
@@ -143,7 +143,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({ onSucces
             onChange={(e) => setNewPassword(e.target.value)}
             placeholder="Minimum 8 characters"
             helperText="Must be at least 8 characters long."
-            leftIcon={<Lock className="w-4 h-4 text-ink-muted" strokeWidth={1.75} />}
+            leftIcon={<Lock className="w-4 h-4 text-black/60" strokeWidth={2} />}
             disabled={isLoading}
             required
           />
@@ -154,7 +154,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({ onSucces
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Re-type new password"
-            leftIcon={<Lock className="w-4 h-4 text-ink-muted" strokeWidth={1.75} />}
+            leftIcon={<Lock className="w-4 h-4 text-black/60" strokeWidth={2} />}
             disabled={isLoading}
             required
           />

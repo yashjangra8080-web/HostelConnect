@@ -1,42 +1,42 @@
-@import '@fontsource/source-serif-4/400.css';
-@import '@fontsource/source-serif-4/600.css';
-@import '@fontsource/source-serif-4/700.css';
-@import '@fontsource/ibm-plex-sans/400.css';
-@import '@fontsource/ibm-plex-sans/500.css';
-@import '@fontsource/ibm-plex-sans/600.css';
-@import '@fontsource/ibm-plex-sans/700.css';
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/500.css';
 @import '@fontsource/ibm-plex-mono/600.css';
+@import '@fontsource/space-grotesk/400.css';
+@import '@fontsource/space-grotesk/500.css';
+@import '@fontsource/space-grotesk/700.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/700.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --sidebar-bg: #0C2054;
-  --sidebar-active: #1E3A8A;
-  --primary: #2F5BD6;
-  --primary-hover: #1B43A6;
-  --primary-subtle: #EEF2FF;
-  --accent-saffron: #D95D0F;
-  --accent-saffron-subtle: #FFF7ED;
-  --accent-saffron-border: #FED7AA;
-  --bg: #F4F6FB;
-  --bg-surface: #FFFFFF;
-  --bg-subtle: #F8FAFC;
-  --border: #E2E8F0;
-  --border-strong: #CBD5E1;
-  --text-primary: #0F172A;
-  --text-secondary: #475569;
-  --text-muted: #64748B;
-  --text-on-dark: #FFFFFF;
+  --sidebar-bg: #171e19;
+  --sidebar-active: #ffbc2e;
+  --primary: #000000;
+  --primary-hover: #000000;
+  --primary-subtle: #ffe17c;
+  --accent-saffron: #ffbc2e;
+  --accent-saffron-subtle: #ffe17c;
+  --accent-saffron-border: #000000;
+  --bg: #ffe17c;
+  --bg-surface: #ffffff;
+  --bg-subtle: #b7c6c2;
+  --border: #000000;
+  --border-strong: #000000;
+  --text-primary: #000000;
+  --text-secondary: #171e19;
+  --text-muted: rgba(0, 0, 0, 0.65);
+  --text-on-dark: #ffffff;
 }
 
 body {
   margin: 0;
   padding: 0;
-  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Satoshi', 'Inter', system-ui, sans-serif;
+  font-weight: 500;
   background-color: var(--bg);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -48,9 +48,16 @@ body {
   font-feature-settings: "tnum";
 }
 
-/* Accessibility: Clear focus-visible ring for all interactive elements */
+/* Neo-Brutalist Dot Pattern on yellow canvas */
+.bg-dots {
+  background-color: #ffe17c;
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.10) 1.5px, transparent 1.5px);
+  background-size: 32px 32px;
+}
+
+/* Accessibility: Neo-Brutalist 3px solid black focus-visible ring */
 *:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 3px solid #000000;
   outline-offset: 2px;
 }
 
@@ -63,13 +70,14 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+    transform: none !important;
   }
 }
 
 /* Thin custom scrollbar for rails and panels */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  scrollbar-color: #000000 transparent;
 }
 .scrollbar-thin::-webkit-scrollbar {
   width: 4px;
@@ -78,9 +86,9 @@ body {
   background: transparent;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: #000000;
   border-radius: 4px;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: #171e19;
 }

@@ -238,7 +238,7 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
     return (
       <div className="max-w-4xl mx-auto py-12 px-4">
         <EmptyState
-          icon={<Utensils className="w-5 h-5 text-ink-muted" strokeWidth={1.75} />}
+          icon={<Utensils className="w-6 h-6 text-ink-muted" strokeWidth={2} />}
           title="Mess Facilities Reserved for Hostel Residents"
           description="Institutional dining facilities, daily meal attendance tracking, and mess rebate ledger calculations are available exclusively to registered hostel residents who hold an active room allotment."
           actionLabel="View Room Allotment Status"
@@ -254,68 +254,70 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-14 px-4 sm:px-6">
       {/* Top Banner and Navigation */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-border">
-        <div>
-          <h1 className="text-2xl font-serif font-bold text-ink-primary">
-            Mess Attendance & Refund Ledger
-          </h1>
-          <p className="text-xs text-ink-secondary mt-1">
-            {student ? (
-              <>
-                Resident: <strong className="font-semibold text-ink-primary">{student.full_name}</strong> ({student.roll_no}) • Room {student.room_no} ({student.hostel_name})
-              </>
-            ) : (
-              'Institutional daily dining verification and formulated rebate ledger in IST.'
-            )}
-          </p>
-        </div>
-
-        {/* View Tabs & Month Selector */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* View Toggle */}
-          <div className="inline-flex rounded-md border border-border p-0.5 bg-surface-subtle text-xs">
-            <button
-              type="button"
-              onClick={() => setActiveTab('ATTENDANCE')}
-              className={`px-3 py-1.5 font-medium rounded transition-colors ${
-                activeTab === 'ATTENDANCE'
-                  ? 'bg-surface text-ink-primary shadow-xs font-semibold'
-                  : 'text-ink-secondary hover:text-ink-primary'
-              }`}
-            >
-              Attendance Strip
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('LEDGER')}
-              className={`px-3 py-1.5 font-medium rounded transition-colors ${
-                activeTab === 'LEDGER'
-                  ? 'bg-surface text-ink-primary shadow-xs font-semibold'
-                  : 'text-ink-secondary hover:text-ink-primary'
-              }`}
-            >
-              Refund Ledger
-            </button>
+      <div className="bg-surface border-2 border-black rounded-sm p-6 shadow-hard-lg">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-extrabold font-heading text-ink-primary tracking-tight">
+              Mess Attendance & Refund Ledger
+            </h1>
+            <p className="text-xs font-medium text-ink-secondary mt-1">
+              {student ? (
+                <>
+                  Resident: <strong className="font-extrabold text-ink-primary">{student.full_name}</strong> ({student.roll_no}) • Room {student.room_no} ({student.hostel_name})
+                </>
+              ) : (
+                'Institutional daily dining verification and formulated rebate ledger in IST.'
+              )}
+            </p>
           </div>
 
-          {/* Month Selector (Listing only months with real data) */}
-          <div className="flex items-center gap-2 bg-surface border border-border rounded px-3 py-1.5 text-xs">
-            <Calendar className="w-3.5 h-3.5 text-ink-muted" strokeWidth={1.75} />
-            <select
-              value={month}
-              onChange={(e) => setMonth(Number(e.target.value))}
-              aria-label="Select mess attendance month"
-              className="bg-transparent font-medium text-ink-primary focus:outline-none cursor-pointer"
-            >
-              <option value={9}>September 2026</option>
-              <option value={10}>October 2026</option>
-              <option value={11}>November 2026</option>
-            </select>
-          </div>
+          {/* View Tabs & Month Selector */}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* View Toggle */}
+            <div className="inline-flex rounded-sm border-2 border-black p-0.5 bg-surface-subtle text-xs shadow-hard-sm">
+              <button
+                type="button"
+                onClick={() => setActiveTab('ATTENDANCE')}
+                className={`px-3.5 py-1.5 font-extrabold rounded-sm transition-all ${
+                  activeTab === 'ATTENDANCE'
+                    ? 'bg-saffron text-black border-2 border-black shadow-hard-sm'
+                    : 'text-ink-secondary hover:text-ink-primary'
+                }`}
+              >
+                Attendance Strip
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('LEDGER')}
+                className={`px-3.5 py-1.5 font-extrabold rounded-sm transition-all ${
+                  activeTab === 'LEDGER'
+                    ? 'bg-saffron text-black border-2 border-black shadow-hard-sm'
+                    : 'text-ink-secondary hover:text-ink-primary'
+                }`}
+              >
+                Refund Ledger
+              </button>
+            </div>
 
-          <Button variant="outline" size="sm" onClick={fetchMonthData} disabled={loading} aria-label="Refresh mess data">
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} strokeWidth={1.75} />
-          </Button>
+            {/* Month Selector */}
+            <div className="flex items-center gap-2 bg-surface border-2 border-black rounded-sm px-3 py-1.5 text-xs shadow-hard-sm">
+              <Calendar className="w-4 h-4 text-ink-primary" strokeWidth={2} />
+              <select
+                value={month}
+                onChange={(e) => setMonth(Number(e.target.value))}
+                aria-label="Select mess attendance month"
+                className="bg-transparent font-extrabold text-ink-primary focus:outline-none cursor-pointer"
+              >
+                <option value={9}>September 2026</option>
+                <option value={10}>October 2026</option>
+                <option value={11}>November 2026</option>
+              </select>
+            </div>
+
+            <Button variant="outline" size="sm" onClick={fetchMonthData} disabled={loading} aria-label="Refresh mess data">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} strokeWidth={2} />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -323,82 +325,82 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
           FLAT KPI STRIP (Eaten / Scheduled, %, Streak, Missed, Closed, Meters)
           ===================================================================== */}
       {summary && (
-        <section aria-label="Monthly Attendance Performance" className="space-y-3">
+        <section aria-label="Monthly Attendance Performance" className="space-y-4">
           {/* Main KPI Strip */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {/* 1. Meals Eaten / Scheduled */}
-            <div className="p-4 bg-surface border border-border rounded-lg space-y-1">
-              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">
+            <div className="p-4 bg-surface border-2 border-black rounded-sm space-y-1 shadow-hard">
+              <span className="text-[11px] font-extrabold text-ink-secondary uppercase tracking-wider">
                 Meals Eaten / Sched.
               </span>
-              <div className="text-2xl font-serif font-bold text-ink-primary tabular-nums">
-                {summary.eaten} <span className="text-sm font-sans font-normal text-ink-muted">/ {summary.scheduled}</span>
+              <div className="text-2xl font-heading font-black text-ink-primary tabular-nums">
+                {summary.eaten} <span className="text-sm font-sans font-bold text-ink-secondary">/ {summary.scheduled}</span>
               </div>
-              <div className="text-[11px] text-ink-secondary font-mono">
+              <div className="text-[11px] text-ink-secondary font-mono font-bold">
                 {summary.upcoming > 0 ? `${summary.upcoming} upcoming` : 'All slots served'}
               </div>
             </div>
 
             {/* 2. Attendance % */}
-            <div className="p-4 bg-surface border border-border rounded-lg space-y-1">
-              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">
+            <div className="p-4 bg-surface border-2 border-black rounded-sm space-y-1 shadow-hard">
+              <span className="text-[11px] font-extrabold text-ink-secondary uppercase tracking-wider">
                 Attendance Rate
               </span>
-              <div className="text-2xl font-serif font-bold text-ink-primary tabular-nums">
+              <div className="text-2xl font-heading font-black text-ink-primary tabular-nums">
                 {summary.attendance_pct}%
               </div>
-              <div className="w-full bg-surface-subtle border border-border h-1.5 rounded-full overflow-hidden mt-1">
+              <div className="w-full bg-surface-subtle border-2 border-black h-2 rounded-sm overflow-hidden mt-1 shadow-hard-sm">
                 <div
-                  className="bg-primary h-full rounded-full"
+                  className="bg-saffron h-full transition-all"
                   style={{ width: `${Math.min(100, summary.attendance_pct)}%` }}
                 />
               </div>
             </div>
 
             {/* 3. Current Streak */}
-            <div className="p-4 bg-surface border border-border rounded-lg space-y-1">
+            <div className="p-4 bg-surface border-2 border-black rounded-sm space-y-1 shadow-hard">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">
+                <span className="text-[11px] font-extrabold text-ink-secondary uppercase tracking-wider">
                   Current Streak
                 </span>
-                <Flame className="w-4 h-4 text-saffron shrink-0" />
+                <Flame className="w-4 h-4 text-black shrink-0" strokeWidth={2.5} />
               </div>
-              <div className="text-2xl font-serif font-bold text-ink-primary tabular-nums">
-                {summary.streak} <span className="text-xs font-sans font-normal text-ink-muted">meals</span>
+              <div className="text-2xl font-heading font-black text-ink-primary tabular-nums">
+                {summary.streak} <span className="text-xs font-sans font-bold text-ink-secondary">meals</span>
               </div>
-              <div className="text-[11px] text-ink-muted">Consecutive attended</div>
+              <div className="text-[11px] font-bold text-ink-secondary">Consecutive attended</div>
             </div>
 
             {/* 4. Missed Meals */}
-            <div className="p-4 bg-surface border border-border rounded-lg space-y-1">
-              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">
+            <div className="p-4 bg-surface border-2 border-black rounded-sm space-y-1 shadow-hard">
+              <span className="text-[11px] font-extrabold text-ink-secondary uppercase tracking-wider">
                 Missed Meals
               </span>
-              <div className="text-2xl font-serif font-bold text-amber-700 tabular-nums">
+              <div className="text-2xl font-heading font-black text-status-warning-text tabular-nums">
                 {summary.missed}
               </div>
-              <div className="text-[11px] text-ink-muted">
+              <div className="text-[11px] font-bold text-ink-secondary">
                 Free skip quota: {projection?.free_skips ?? 8}
               </div>
             </div>
 
             {/* 5. Closed Slots */}
-            <div className="p-4 bg-surface border border-border rounded-lg space-y-1 col-span-2 sm:col-span-1">
-              <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">
+            <div className="p-4 bg-surface border-2 border-black rounded-sm space-y-1 col-span-2 sm:col-span-1 shadow-hard">
+              <span className="text-[11px] font-extrabold text-ink-secondary uppercase tracking-wider">
                 Closed Slots
               </span>
-              <div className="text-2xl font-serif font-bold text-ink-secondary tabular-nums">
+              <div className="text-2xl font-heading font-black text-ink-primary tabular-nums">
                 {summary.closed}
               </div>
-              <div className="text-[11px] text-ink-muted">Maintenance & holidays</div>
+              <div className="text-[11px] font-bold text-ink-secondary">Maintenance & holidays</div>
             </div>
           </div>
 
           {/* Sub-Strip: 4 Per-Meal-Type Meters & Weekly Trend */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             {/* 4 Per-Meal-Type Meters (7 cols) */}
-            <div className="lg:col-span-7 p-3.5 bg-surface border border-border rounded-lg space-y-2.5">
-              <span className="text-[10px] font-semibold text-ink-muted uppercase tracking-wider">
+            <div className="lg:col-span-7 p-4 bg-surface border-2 border-black rounded-sm space-y-3 shadow-hard">
+              <span className="text-[10px] font-extrabold text-ink-secondary uppercase tracking-wider">
                 Turnout by Meal Type
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
@@ -406,18 +408,18 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
                   const meter = summary.mealTypeMeters?.[mt] || { name: '', scheduled: 0, eaten: 0 };
                   const pct = meter.scheduled > 0 ? Math.round((meter.eaten / meter.scheduled) * 100) : 0;
                   return (
-                    <div key={`meter-${mt}`} className="space-y-1 p-2 rounded bg-surface-subtle border border-border/60">
+                    <div key={`meter-${mt}`} className="space-y-1.5 p-2.5 rounded-sm bg-surface border-2 border-black shadow-hard-sm">
                       <div className="flex items-center justify-between text-[11px]">
-                        <span className="font-semibold text-ink-primary truncate">{meter.name}</span>
-                        <span className="font-mono tabular-nums text-ink-secondary">{pct}%</span>
+                        <span className="font-extrabold text-ink-primary truncate">{meter.name}</span>
+                        <span className="font-mono font-bold tabular-nums text-ink-primary">{pct}%</span>
                       </div>
-                      <div className="w-full bg-border h-1.5 rounded-full overflow-hidden">
+                      <div className="w-full bg-surface-subtle border border-black h-2 rounded-sm overflow-hidden">
                         <div
-                          className="bg-primary h-full rounded-full transition-all"
+                          className="bg-black h-full transition-all"
                           style={{ width: `${Math.min(100, pct)}%` }}
                         />
                       </div>
-                      <div className="text-[10px] text-ink-muted tabular-nums">
+                      <div className="text-[10px] font-bold text-ink-secondary tabular-nums">
                         {meter.eaten} / {meter.scheduled} eaten
                       </div>
                     </div>
@@ -427,18 +429,18 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
             </div>
 
             {/* Weekly Trend (5 cols) */}
-            <div className="lg:col-span-5 p-3.5 bg-surface border border-border rounded-lg space-y-2.5">
-              <span className="text-[10px] font-semibold text-ink-muted uppercase tracking-wider">
+            <div className="lg:col-span-5 p-4 bg-surface border-2 border-black rounded-sm space-y-3 shadow-hard">
+              <span className="text-[10px] font-extrabold text-ink-secondary uppercase tracking-wider">
                 Weekly Attendance Trend
               </span>
-              <div className="grid grid-cols-5 gap-1.5 text-xs">
+              <div className="grid grid-cols-5 gap-2 text-xs">
                 {summary.weeklyTrend?.map((wt) => (
-                  <div key={`wt-${wt.week}`} className="flex flex-col items-center p-1.5 rounded bg-surface-subtle border border-border/60 text-center">
-                    <span className="text-[10px] font-semibold text-ink-secondary">{wt.label}</span>
-                    <span className="text-xs font-mono font-bold text-ink-primary mt-0.5 tabular-nums">
+                  <div key={`wt-${wt.week}`} className="flex flex-col items-center p-2 rounded-sm bg-surface border-2 border-black shadow-hard-sm text-center">
+                    <span className="text-[10px] font-extrabold text-ink-secondary">{wt.label}</span>
+                    <span className="text-xs font-mono font-black text-ink-primary mt-1 tabular-nums">
                       {wt.attendancePct}%
                     </span>
-                    <span className="text-[9px] text-ink-muted tabular-nums mt-0.5">
+                    <span className="text-[9px] font-bold text-ink-secondary tabular-nums mt-0.5">
                       {wt.eaten}/{wt.scheduled}
                     </span>
                   </div>
@@ -453,45 +455,45 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
           TAB 1: DYNAMIC ATTENDANCE STRIP MATRIX
           ===================================================================== */}
       {activeTab === 'ATTENDANCE' && (
-        <section aria-label="Attendance Strip Matrix" className="space-y-3">
-          {/* Strip Header (Dynamic: "October 2026 — 31 days × 4 meals") */}
+        <section aria-label="Attendance Strip Matrix" className="space-y-4">
+          {/* Strip Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h2 className="text-base font-serif font-bold text-ink-primary">
+              <h2 className="text-base font-heading font-extrabold text-ink-primary">
                 {MONTH_NAMES[month] || `Month ${month}`} {year} — {daysInMonth} days × 4 meals
               </h2>
-              <p className="text-xs text-ink-muted">
+              <p className="text-xs font-medium text-ink-secondary">
                 Each cell is keyboard-focusable with interactive tooltips. Use Tab / arrow keys to inspect.
               </p>
             </div>
 
             {/* Cell Legend */}
             <div className="flex flex-wrap items-center gap-3 text-xs">
-              <span className="flex items-center gap-1.5 text-ink-secondary">
-                <span className="w-4 h-4 rounded bg-emerald-100 border border-emerald-400 flex items-center justify-center">
-                  <Check className="w-2.5 h-2.5 text-emerald-800" strokeWidth={2.5} />
+              <span className="flex items-center gap-1.5 text-ink-primary font-bold">
+                <span className="w-4 h-4 rounded-sm bg-status-success-subtle border-2 border-black flex items-center justify-center shadow-hard-sm">
+                  <Check className="w-2.5 h-2.5 text-status-success-text" strokeWidth={3} />
                 </span>
                 <span>Eaten</span>
               </span>
-              <span className="flex items-center gap-1.5 text-ink-secondary">
-                <span className="w-4 h-4 rounded bg-slate-100 border border-slate-300 flex items-center justify-center">
-                  <Minus className="w-2.5 h-2.5 text-slate-500" strokeWidth={2.5} />
+              <span className="flex items-center gap-1.5 text-ink-primary font-bold">
+                <span className="w-4 h-4 rounded-sm bg-surface border-2 border-black flex items-center justify-center shadow-hard-sm">
+                  <Minus className="w-2.5 h-2.5 text-ink-muted" strokeWidth={3} />
                 </span>
                 <span>Missed</span>
               </span>
-              <span className="flex items-center gap-1.5 text-ink-secondary">
+              <span className="flex items-center gap-1.5 text-ink-primary font-bold">
                 <span
-                  className="w-4 h-4 rounded border border-amber-300 flex items-center justify-center"
+                  className="w-4 h-4 rounded-sm border-2 border-black flex items-center justify-center shadow-hard-sm"
                   style={{
-                    background: 'repeating-linear-gradient(45deg, #fef3c7, #fef3c7 2px, #fde68a 2px, #fde68a 4px)',
+                    background: 'repeating-linear-gradient(45deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 2px, transparent 2px, transparent 4px)',
                   }}
                 >
-                  <Ban className="w-2.5 h-2.5 text-amber-800" strokeWidth={2.5} />
+                  <Ban className="w-2.5 h-2.5 text-ink-primary" strokeWidth={3} />
                 </span>
                 <span>Closed</span>
               </span>
-              <span className="flex items-center gap-1.5 text-ink-secondary">
-                <span className="w-4 h-4 rounded border border-dashed border-border flex items-center justify-center text-[9px] text-ink-muted">
+              <span className="flex items-center gap-1.5 text-ink-primary font-bold">
+                <span className="w-4 h-4 rounded-sm border-2 border-dashed border-black flex items-center justify-center text-[9px] font-bold text-ink-muted">
                   ○
                 </span>
                 <span>Upcoming</span>
@@ -499,17 +501,17 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
             </div>
           </div>
 
-          {/* Matrix Container: Horizontal scrolling with sticky meal labels */}
-          <div className="bg-surface border border-border rounded-lg overflow-x-auto shadow-none">
+          {/* Matrix Container */}
+          <div className="bg-surface border-2 border-black rounded-sm overflow-x-auto shadow-hard-xl">
             <div className="min-w-[860px] p-4">
               <div
-                className="grid gap-1 items-center"
+                className="grid gap-1.5 items-center"
                 style={{
-                  gridTemplateColumns: `125px repeat(${daysInMonth}, minmax(22px, 1fr))`,
+                  gridTemplateColumns: `135px repeat(${daysInMonth}, minmax(22px, 1fr))`,
                 }}
               >
                 {/* Day Header Row */}
-                <div className="text-[11px] font-semibold text-ink-muted uppercase sticky left-0 bg-surface z-10 pr-2">
+                <div className="text-[11px] font-extrabold text-ink-secondary uppercase sticky left-0 bg-surface z-10 pr-2 border-r-2 border-black">
                   Meal \ Day →
                 </div>
                 {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
@@ -517,8 +519,8 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
                   return (
                     <div
                       key={`day-head-${d}`}
-                      className={`text-center font-mono text-[10px] py-1 font-medium tabular-nums rounded ${
-                        isTodayCol ? 'bg-primary/10 text-primary font-bold ring-1 ring-primary' : 'text-ink-secondary'
+                      className={`text-center font-mono text-[10px] py-1 font-bold tabular-nums rounded-sm border-2 border-black ${
+                        isTodayCol ? 'bg-saffron text-black shadow-hard-sm' : 'bg-surface text-ink-primary'
                       }`}
                       title={isTodayCol ? 'Today (02 Nov 2026)' : undefined}
                     >
@@ -531,9 +533,9 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
                 {mealTypes.map((type) => (
                   <React.Fragment key={`meal-row-${type.id}`}>
                     {/* Left Sticky Label */}
-                    <div className="py-2.5 pr-2.5 text-xs font-semibold text-ink-primary flex flex-col justify-center border-t border-border/60 sticky left-0 bg-surface z-10">
+                    <div className="py-2.5 pr-2.5 text-xs font-extrabold text-ink-primary flex flex-col justify-center border-t-2 border-black border-r-2 border-black sticky left-0 bg-surface z-10">
                       <span className="truncate">{type.name}</span>
-                      <span className="text-[10px] text-ink-muted font-mono font-normal truncate">
+                      <span className="text-[10px] text-ink-secondary font-mono font-bold truncate">
                         {type.time}
                       </span>
                     </div>
@@ -547,7 +549,7 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
                         return (
                           <div
                             key={`cell-${type.id}-${d}`}
-                            className="h-8 rounded bg-surface-subtle border border-border/40 flex items-center justify-center text-[10px] text-ink-muted"
+                            className="h-8 rounded-sm bg-surface-subtle border-2 border-black flex items-center justify-center text-[10px] text-ink-muted"
                           >
                             •
                           </div>
@@ -558,24 +560,24 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
                       const isEaten = slot.status === 'EATEN';
                       const isUpcoming = slot.status === 'NOT_YET_SERVED';
 
-                      let cellClass = '';
+                      let cellClass = 'border-2 border-black shadow-hard-sm ';
                       let cellStyle: React.CSSProperties = {};
 
                       if (isClosed) {
                         cellStyle = {
-                          background: 'repeating-linear-gradient(45deg, #fef3c7, #fef3c7 3px, #fde68a 3px, #fde68a 6px)',
+                          background: 'repeating-linear-gradient(45deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 3px, transparent 3px, transparent 6px)',
                         };
-                        cellClass = 'border-amber-400 text-amber-800';
+                        cellClass += 'text-ink-primary';
                       } else if (isEaten) {
-                        cellClass = 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100';
+                        cellClass += 'bg-status-success-subtle text-status-success-text hover:translate-x-0.5 hover:translate-y-0.5';
                       } else if (isUpcoming) {
-                        cellClass = 'bg-surface border-dashed border-border text-ink-muted hover:border-ink-secondary';
+                        cellClass += 'bg-surface border-dashed text-ink-muted hover:border-black';
                       } else {
-                        cellClass = 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100';
+                        cellClass += 'bg-surface text-ink-muted hover:translate-x-0.5 hover:translate-y-0.5';
                       }
 
                       if (isTodayCol) {
-                        cellClass += ' ring-1 ring-primary';
+                        cellClass += ' ring-2 ring-black';
                       }
 
                       return (
@@ -586,20 +588,20 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
                           onClick={() => setActiveSlot(slot)}
                           onMouseEnter={() => setActiveSlot(slot)}
                           onFocus={() => setActiveSlot(slot)}
-                          className={`h-8 rounded flex items-center justify-center border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary ${cellClass}`}
+                          className={`h-8 rounded-sm flex items-center justify-center transition-all cursor-pointer focus:outline-none ${cellClass}`}
                           style={cellStyle}
                           aria-label={`Day ${d} ${type.name}: ${
                             isClosed ? `Closed (${slot.closure_reason || 'Maintenance'})` : isEaten ? 'Eaten' : isUpcoming ? 'Upcoming' : 'Missed'
                           }`}
                         >
                           {isClosed ? (
-                            <Ban className="w-3.5 h-3.5 text-amber-800" strokeWidth={2} />
+                            <Ban className="w-3.5 h-3.5 text-black" strokeWidth={2.5} />
                           ) : isEaten ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-700" strokeWidth={2.5} />
+                            <Check className="w-3.5 h-3.5 text-status-success-text" strokeWidth={3} />
                           ) : isUpcoming ? (
-                            <span className="text-[10px] text-ink-muted">○</span>
+                            <span className="text-[10px] font-bold text-ink-muted">○</span>
                           ) : (
-                            <Minus className="w-3 h-3 text-slate-400" strokeWidth={2} />
+                            <Minus className="w-3.5 h-3.5 text-ink-muted" strokeWidth={2.5} />
                           )}
                         </button>
                       );
@@ -610,17 +612,17 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
             </div>
 
             {/* Interactive Inspector Footer Bar */}
-            <div className="px-5 py-3.5 bg-surface-subtle border-t border-border text-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="px-5 py-3.5 bg-surface-subtle border-t-2 border-black text-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
               {activeSlot ? (
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="font-semibold text-ink-primary">
+                  <div className="font-extrabold text-ink-primary">
                     {activeSlot.type_name} • {formatDateIST(activeSlot.meal_date)}
                   </div>
-                  <div className="text-ink-secondary">
-                    Window: <span className="font-mono text-ink-primary">{activeSlot.start_time.slice(0, 5)} - {activeSlot.end_time.slice(0, 5)} IST</span>
+                  <div className="font-medium text-ink-secondary">
+                    Window: <span className="font-mono font-bold text-ink-primary">{activeSlot.start_time.slice(0, 5)} - {activeSlot.end_time.slice(0, 5)} IST</span>
                   </div>
-                  <div className="text-ink-secondary">
-                    Menu: <span className="text-ink-primary">{activeSlot.menu}</span>
+                  <div className="font-medium text-ink-secondary">
+                    Menu: <span className="font-bold text-ink-primary">{activeSlot.menu}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     {activeSlot.status === 'CLOSED' ? (
@@ -643,29 +645,29 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
                   </div>
                 </div>
               ) : (
-                <div className="text-ink-muted italic">
+                <div className="text-ink-secondary font-medium italic">
                   Hover or focus on any meal slot above to inspect detailed menu, timing window, and check-in timestamp.
                 </div>
               )}
 
-              <div className="text-[11px] text-ink-muted font-mono shrink-0">
+              <div className="text-[11px] text-ink-secondary font-mono font-bold shrink-0">
                 IST Timezone (+05:30)
               </div>
             </div>
           </div>
 
-          {/* Quick Counter QR Check-in Box (Replaces paste 64-char token) */}
-          <div className="p-4 bg-surface border border-border rounded-lg space-y-3">
+          {/* Quick Counter QR Check-in Box */}
+          <div className="p-5 bg-surface border-2 border-black rounded-sm space-y-3 shadow-hard">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded bg-primary-subtle text-primary border border-primary-border flex items-center justify-center shrink-0">
-                  <QrCode className="w-4.5 h-4.5" strokeWidth={1.75} />
+                <div className="w-10 h-10 rounded-sm bg-paper text-ink-primary border-2 border-black shadow-hard-sm flex items-center justify-center shrink-0">
+                  <QrCode className="w-5 h-5" strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="text-xs font-semibold text-ink-primary uppercase tracking-wider">
+                  <h3 className="text-xs font-extrabold text-ink-primary uppercase tracking-wider">
                     Counter QR Check-in
                   </h3>
-                  <p className="text-[11px] text-ink-muted">
+                  <p className="text-[11px] font-medium text-ink-secondary">
                     Scan the rotating 60-second QR code at the dining hall entrance to auto-record your meal attendance.
                   </p>
                 </div>
@@ -685,7 +687,7 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
 
             {/* Collapsed manual fallback form */}
             {showManualFallback && (
-              <form onSubmit={handleMarkManual} className="pt-3 border-t border-border flex flex-col sm:flex-row items-center gap-2">
+              <form onSubmit={handleMarkManual} className="pt-3 border-t-2 border-black flex flex-col sm:flex-row items-center gap-2">
                 <Input
                   placeholder="Paste 64-char HMAC token from counter screen..."
                   value={scanToken}
@@ -707,40 +709,40 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
       {activeTab === 'LEDGER' && (
         <section aria-label="Mess Refund Ledger" className="space-y-6">
           {/* Multi-Month Refund Ledger Table */}
-          <div className="bg-surface border border-border rounded-lg overflow-hidden shadow-none space-y-0">
-            <div className="px-5 py-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="bg-surface border-2 border-black rounded-sm overflow-hidden shadow-hard-xl space-y-0">
+            <div className="px-6 py-4 border-b-2 border-black flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-surface-subtle">
               <div>
-                <h2 className="text-base font-serif font-bold text-ink-primary">
+                <h2 className="text-base font-heading font-extrabold text-ink-primary">
                   Mess Refund Ledger by Month
                 </h2>
-                <p className="text-xs text-ink-secondary">
-                  Audited monthly dining rebate records calculated via <code className="font-mono text-[11px] bg-surface-subtle px-1 py-0.5 rounded">sp_calculate_refunds</code>.
+                <p className="text-xs font-medium text-ink-secondary">
+                  Audited monthly dining rebate records calculated via <code className="font-mono text-[11px] bg-paper border border-black px-1.5 py-0.5 rounded-sm">sp_calculate_refunds</code>.
                 </p>
               </div>
-              <span className="text-xs font-mono text-ink-muted">
+              <span className="text-xs font-mono font-bold text-ink-primary">
                 Statutory Free Skips: {projection?.free_skips ?? 8} meals
               </span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-xs text-left">
-                <thead className="bg-surface-subtle border-b border-border text-ink-secondary uppercase font-semibold text-[10px] tracking-wider">
+                <thead className="bg-paper border-b-2 border-black text-ink-primary uppercase font-extrabold text-[10px] tracking-wider">
                   <tr>
-                    <th className="py-2.5 px-4">Month</th>
-                    <th className="py-2.5 px-3 text-right">Scheduled</th>
-                    <th className="py-2.5 px-3 text-right">Eaten</th>
-                    <th className="py-2.5 px-3 text-right">Missed</th>
-                    <th className="py-2.5 px-3 text-right">Free Skips</th>
-                    <th className="py-2.5 px-3 text-right">Attendance Refund</th>
-                    <th className="py-2.5 px-3 text-right">Flat Refund</th>
-                    <th className="py-2.5 px-3 text-right">Difference</th>
-                    <th className="py-2.5 px-4 text-center">Status</th>
+                    <th className="py-3 px-4">Month</th>
+                    <th className="py-3 px-3 text-right">Scheduled</th>
+                    <th className="py-3 px-3 text-right">Eaten</th>
+                    <th className="py-3 px-3 text-right">Missed</th>
+                    <th className="py-3 px-3 text-right">Free Skips</th>
+                    <th className="py-3 px-3 text-right">Attendance Refund</th>
+                    <th className="py-3 px-3 text-right">Flat Refund</th>
+                    <th className="py-3 px-3 text-right">Difference</th>
+                    <th className="py-3 px-4 text-center">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border font-mono text-[11px]">
+                <tbody className="divide-y-2 divide-black font-mono text-[11px]">
                   {ledgerHistory.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="py-6 text-center text-ink-muted font-sans text-xs">
+                      <td colSpan={9} className="py-6 text-center text-ink-muted font-sans text-xs font-bold">
                         No refund ledger records found.
                       </td>
                     </tr>
@@ -748,30 +750,30 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
                     ledgerHistory.map((rec) => {
                       const isPositiveDiff = rec.difference >= 0;
                       return (
-                        <tr key={`ledger-${rec.month}-${rec.year}`} className="hover:bg-surface-subtle transition-colors">
-                          <td className="py-3 px-4 font-sans font-medium text-ink-primary">
+                        <tr key={`ledger-${rec.month}-${rec.year}`} className="hover:bg-paper/30 transition-colors">
+                          <td className="py-3 px-4 font-sans font-bold text-ink-primary">
                             {rec.monthName}
                           </td>
-                          <td className="py-3 px-3 text-right tabular-nums text-ink-secondary">
+                          <td className="py-3 px-3 text-right tabular-nums text-ink-secondary font-bold">
                             {rec.scheduled}
                           </td>
-                          <td className="py-3 px-3 text-right tabular-nums text-ink-primary font-semibold">
+                          <td className="py-3 px-3 text-right tabular-nums text-ink-primary font-black">
                             {rec.eaten}
                           </td>
-                          <td className="py-3 px-3 text-right tabular-nums text-amber-700">
+                          <td className="py-3 px-3 text-right tabular-nums text-status-warning-text font-bold">
                             {rec.missed}
                           </td>
-                          <td className="py-3 px-3 text-right tabular-nums text-ink-muted">
+                          <td className="py-3 px-3 text-right tabular-nums text-ink-muted font-bold">
                             {rec.freeSkips}
                           </td>
-                          <td className="py-3 px-3 text-right tabular-nums font-bold text-ink-primary">
+                          <td className="py-3 px-3 text-right tabular-nums font-black text-ink-primary">
                             {formatCurrencyINR(rec.attendanceRefund)}
                           </td>
-                          <td className="py-3 px-3 text-right tabular-nums text-ink-muted">
+                          <td className="py-3 px-3 text-right tabular-nums text-ink-secondary font-bold">
                             {formatCurrencyINR(rec.flatRefund)}
                           </td>
-                          <td className="py-3 px-3 text-right tabular-nums font-semibold">
-                            <span className={isPositiveDiff ? 'text-emerald-700' : 'text-amber-700'}>
+                          <td className="py-3 px-3 text-right tabular-nums font-black">
+                            <span className={isPositiveDiff ? 'text-status-success-text' : 'text-status-warning-text'}>
                               {isPositiveDiff ? '+' : ''}{formatCurrencyINR(rec.difference)}
                             </span>
                           </td>
@@ -795,42 +797,42 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
 
           {/* Current-Month Projection Panel with Real Numbers Spelled Out */}
           {projection && (
-            <div className="p-5 bg-surface border border-border rounded-lg space-y-4">
+            <div className="p-6 bg-surface border-2 border-black rounded-sm space-y-4 shadow-hard-lg">
               <div>
-                <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
+                <span className="text-[10px] font-extrabold text-ink-secondary uppercase tracking-wider">
                   Rebate Formula Walkthrough • {MONTH_NAMES[projection.month]} {projection.year}
                 </span>
-                <h3 className="text-base font-serif font-bold text-ink-primary mt-0.5">
+                <h3 className="text-base font-heading font-extrabold text-ink-primary mt-0.5">
                   Institutional Attendance-Based Rebate Formula
                 </h3>
-                <p className="text-xs text-ink-secondary mt-1">
+                <p className="text-xs font-medium text-ink-secondary mt-1">
                   Rebate calculation verified per institutional dining statutes with real parameters:
                 </p>
               </div>
 
               {/* Formula Mathematical Display */}
-              <div className="p-4 bg-surface-subtle border border-border rounded text-xs font-mono space-y-2 text-ink-primary">
+              <div className="p-4 bg-surface-subtle border-2 border-black rounded-sm text-xs font-mono space-y-2 text-ink-primary shadow-hard-sm">
                 <div>
                   <strong>Eligible Missed Meals:</strong>{' '}
-                  <span className="text-emerald-700 font-bold">
+                  <span className="text-status-success-text font-black">
                     MAX(0, Scheduled ({projection.scheduled}) - Eaten ({projection.eaten}) - Free Skips ({projection.free_skips})) = {projection.eligible_missed} meals
                   </span>
                 </div>
                 <div>
                   <strong>Raw Calculated Refund:</strong>{' '}
-                  <span>
+                  <span className="font-bold">
                     {projection.eligible_missed} meals × ₹{projection.per_meal_rate}.00/meal = ₹{(projection.eligible_missed * projection.per_meal_rate).toFixed(2)}
                   </span>
                 </div>
                 <div>
                   <strong>Policy Ceiling Cap (60% of Food Component):</strong>{' '}
-                  <span>
+                  <span className="font-bold">
                     60% of ₹{projection.food_component}.00 = ₹{projection.cap_amount}.00
                   </span>
                 </div>
-                <div className="pt-2 border-t border-border flex justify-between font-semibold">
+                <div className="pt-2 border-t-2 border-black flex justify-between font-extrabold">
                   <span>Final Calculated Rebate:</span>
-                  <span className="text-emerald-700 text-sm">
+                  <span className="text-status-success-text text-sm font-black">
                     {formatCurrencyINR(projection.attendance_refund)}
                   </span>
                 </div>
@@ -838,28 +840,28 @@ export const StudentAttendanceStrip: React.FC<StudentAttendanceStripProps> = ({ 
 
               {/* Comparison vs Flat Refund */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                <div className="p-3 rounded bg-surface-subtle border border-border">
-                  <div className="text-[10px] font-semibold text-ink-muted uppercase">Attendance Refund</div>
-                  <div className="text-lg font-bold font-mono text-ink-primary mt-1">
+                <div className="p-3.5 rounded-sm bg-paper border-2 border-black shadow-hard-sm">
+                  <div className="text-[10px] font-extrabold text-ink-secondary uppercase">Attendance Refund</div>
+                  <div className="text-lg font-black font-mono text-ink-primary mt-1">
                     {formatCurrencyINR(projection.attendance_refund)}
                   </div>
-                  <div className="text-[10px] text-ink-muted">Formulated credit</div>
+                  <div className="text-[10px] font-medium text-ink-secondary">Formulated credit</div>
                 </div>
 
-                <div className="p-3 rounded bg-surface-subtle border border-border">
-                  <div className="text-[10px] font-semibold text-ink-muted uppercase">Historical Flat Benchmark</div>
-                  <div className="text-lg font-bold font-mono text-ink-secondary mt-1">
+                <div className="p-3.5 rounded-sm bg-surface border-2 border-black shadow-hard-sm">
+                  <div className="text-[10px] font-extrabold text-ink-secondary uppercase">Historical Flat Benchmark</div>
+                  <div className="text-lg font-black font-mono text-ink-secondary mt-1">
                     {formatCurrencyINR(projection.flat_refund)}
                   </div>
-                  <div className="text-[10px] text-ink-muted">Uniform legacy rate</div>
+                  <div className="text-[10px] font-medium text-ink-secondary">Uniform legacy rate</div>
                 </div>
 
-                <div className="p-3 rounded bg-surface-subtle border border-border">
-                  <div className="text-[10px] font-semibold text-ink-muted uppercase">Net Variance</div>
-                  <div className={`text-lg font-bold font-mono mt-1 ${projection.difference >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                <div className="p-3.5 rounded-sm bg-surface-subtle border-2 border-black shadow-hard-sm">
+                  <div className="text-[10px] font-extrabold text-ink-secondary uppercase">Net Variance</div>
+                  <div className={`text-lg font-black font-mono mt-1 ${projection.difference >= 0 ? 'text-status-success-text' : 'text-status-warning-text'}`}>
                     {projection.difference >= 0 ? '+' : ''}{formatCurrencyINR(projection.difference)}
                   </div>
-                  <div className="text-[10px] text-ink-muted">
+                  <div className="text-[10px] font-medium text-ink-secondary">
                     {projection.difference >= 0 ? 'Higher rebate for absence' : 'Reflects frequent dining'}
                   </div>
                 </div>

@@ -319,8 +319,7 @@ describe('Phase 9: Mess Attendance, Integrity & Refund Ledger', () => {
     });
 
     it('Previous 60s window token is accepted (grace period)', () => {
-      const pastTime = Date.now() - 65 * 1000;
-      const prevWindow = get60sWindowIndex(pastTime);
+      const prevWindow = get60sWindowIndex() - 1;
       const token = `HC-MEAL:101:${prevWindow}:${generateMessHmac(101, prevWindow)}`;
 
       const verification = verifyMessQrToken(token, 101);

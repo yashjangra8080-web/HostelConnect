@@ -258,101 +258,103 @@ export const ManagerRefundConsole: React.FC = () => {
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
       {/* Header and Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-border">
-        <div>
-          <h1 className="text-2xl font-serif font-bold text-ink-primary">
-            Monthly Dining Rebate & Refund Ledger
-          </h1>
-          <p className="text-xs text-ink-secondary mt-1">
-            Compute, audit, preview, and lock attendance-based meal refunds across ~300 active residents in IST.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Hostel Select */}
-          <div className="flex items-center gap-1.5 bg-surface border border-border rounded px-3 py-1.5 text-xs">
-            <Building className="w-3.5 h-3.5 text-ink-muted" strokeWidth={1.75} />
-            <select
-              value={selectedHostel}
-              onChange={(e) => {
-                setSelectedHostel(Number(e.target.value));
-                setPage(1);
-              }}
-              className="bg-transparent font-medium text-ink-primary focus:outline-none cursor-pointer"
-            >
-              <option value={1}>BH1 (Boys Hostel 1)</option>
-              <option value={2}>BH2 (Boys Hostel 2)</option>
-              <option value={3}>GH1 (Girls Hostel 1)</option>
-              <option value={4}>GH2 (Girls Hostel 2)</option>
-            </select>
+      <div className="bg-surface border-2 border-black rounded-sm p-6 shadow-hard-lg">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-extrabold font-heading text-ink-primary tracking-tight">
+              Monthly Dining Rebate & Refund Ledger
+            </h1>
+            <p className="text-xs font-medium text-ink-secondary mt-1">
+              Compute, audit, preview, and lock attendance-based meal refunds across ~300 active residents in IST.
+            </p>
           </div>
 
-          {/* Month/Year Select */}
-          <div className="flex items-center gap-1.5 bg-surface border border-border rounded px-3 py-1.5 text-xs">
-            <Calendar className="w-3.5 h-3.5 text-ink-muted" strokeWidth={1.75} />
-            <select
-              value={month}
-              onChange={(e) => {
-                setMonth(Number(e.target.value));
-                setPage(1);
-              }}
-              className="bg-transparent font-medium text-ink-primary focus:outline-none cursor-pointer"
-            >
-              <option value={9}>Sep 2026</option>
-              <option value={10}>Oct 2026</option>
-              <option value={11}>Nov 2026</option>
-            </select>
-          </div>
-
-          <Button variant="outline" size="sm" onClick={fetchRefunds} disabled={loading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${loading ? 'animate-spin' : ''}`} strokeWidth={1.75} />
-            Sync
-          </Button>
-
-          <Button variant="outline" size="sm" onClick={handleExportCSV}>
-            <Download className="w-3.5 h-3.5 mr-1" strokeWidth={1.75} />
-            CSV Export
-          </Button>
-
-          {/* Recalculate Preview */}
-          {!isFinalised && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRunPreview}
-              disabled={calculatingPreview}
-            >
-              {calculatingPreview ? 'Calculating...' : 'Run Preview'}
-            </Button>
-          )}
-
-          {/* Finalise Button */}
-          {!isFinalised ? (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setIsConfirmOpen(true)}
-              disabled={!totalResidents || finalising}
-            >
-              <Lock className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.75} />
-              Finalise Refunds
-            </Button>
-          ) : (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded text-xs font-semibold uppercase tracking-wider">
-              <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={2} />
-              FINAL & IMMUTABLE
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Hostel Select */}
+            <div className="flex items-center gap-1.5 bg-surface border-2 border-black rounded-sm px-3 py-1.5 text-xs shadow-hard-sm">
+              <Building className="w-4 h-4 text-ink-primary" strokeWidth={2} />
+              <select
+                value={selectedHostel}
+                onChange={(e) => {
+                  setSelectedHostel(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="bg-transparent font-extrabold text-ink-primary focus:outline-none cursor-pointer"
+              >
+                <option value={1}>BH1 (Boys Hostel 1)</option>
+                <option value={2}>BH2 (Boys Hostel 2)</option>
+                <option value={3}>GH1 (Girls Hostel 1)</option>
+                <option value={4}>GH2 (Girls Hostel 2)</option>
+              </select>
             </div>
-          )}
+
+            {/* Month/Year Select */}
+            <div className="flex items-center gap-1.5 bg-surface border-2 border-black rounded-sm px-3 py-1.5 text-xs shadow-hard-sm">
+              <Calendar className="w-4 h-4 text-ink-primary" strokeWidth={2} />
+              <select
+                value={month}
+                onChange={(e) => {
+                  setMonth(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="bg-transparent font-extrabold text-ink-primary focus:outline-none cursor-pointer"
+              >
+                <option value={9}>Sep 2026</option>
+                <option value={10}>Oct 2026</option>
+                <option value={11}>Nov 2026</option>
+              </select>
+            </div>
+
+            <Button variant="outline" size="sm" onClick={fetchRefunds} disabled={loading}>
+              <RefreshCw className={`w-3.5 h-3.5 mr-1 ${loading ? 'animate-spin' : ''}`} strokeWidth={2} />
+              Sync
+            </Button>
+
+            <Button variant="outline" size="sm" onClick={handleExportCSV}>
+              <Download className="w-3.5 h-3.5 mr-1" strokeWidth={2} />
+              CSV Export
+            </Button>
+
+            {/* Recalculate Preview */}
+            {!isFinalised && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRunPreview}
+                disabled={calculatingPreview}
+              >
+                {calculatingPreview ? 'Calculating...' : 'Run Preview'}
+              </Button>
+            )}
+
+            {/* Finalise Button */}
+            {!isFinalised ? (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setIsConfirmOpen(true)}
+                disabled={!totalResidents || finalising}
+              >
+                <Lock className="w-3.5 h-3.5 mr-1.5" strokeWidth={2} />
+                Finalise Refunds
+              </Button>
+            ) : (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-status-success-subtle border-2 border-black text-status-success-text rounded-sm text-xs font-extrabold uppercase tracking-wider shadow-hard-sm">
+                <CheckCircle2 className="w-4 h-4" strokeWidth={2.5} />
+                FINAL & IMMUTABLE
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Institutional KPI Strip */}
       <section className="space-y-2">
         <div className="flex items-center justify-between text-xs text-ink-secondary">
-          <span className="font-semibold uppercase tracking-wider">
+          <span className="font-extrabold uppercase tracking-wider text-ink-primary">
             Ledger Metrics • Hostel {selectedHostel} ({month}/{year})
           </span>
-          <span className="text-ink-muted font-mono tabular-nums">
+          <span className="text-ink-secondary font-mono font-bold tabular-nums">
             Rate: {formatCurrencyINR(data?.config?.per_meal_refund_rate ?? 28)}/meal • Free Skips: {data?.config?.free_skips ?? 8} • Cap: {data?.config?.cap_pct ?? 60}%
           </span>
         </div>
@@ -399,15 +401,15 @@ export const ManagerRefundConsole: React.FC = () => {
 
       {/* Preview Distribution Histogram */}
       {data?.histogram && data.histogram.length > 0 && (
-        <div className="bg-surface border border-border rounded-lg p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-border">
+        <div className="bg-surface border-2 border-black rounded-sm p-6 space-y-4 shadow-hard">
+          <div className="flex items-center justify-between pb-3 border-b-2 border-black">
             <div className="flex items-center gap-2">
-              <BarChart2 className="w-4 h-4 text-saffron" strokeWidth={1.75} />
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-ink-primary">
+              <BarChart2 className="w-4 h-4 text-ink-primary" strokeWidth={2} />
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-ink-primary">
                 Preview Distribution Histogram ({data.summary.total_calculated} Calculated Residents)
               </h3>
             </div>
-            <span className="text-[11px] text-ink-muted font-mono">
+            <span className="text-[11px] text-ink-secondary font-mono font-bold">
               Formula: min(cap, max(0, missed - free_skips) × rate)
             </span>
           </div>
@@ -419,24 +421,24 @@ export const ManagerRefundConsole: React.FC = () => {
               return (
                 <div
                   key={bin.label}
-                  className="bg-surface-subtle border border-border rounded p-3 flex flex-col justify-between space-y-2"
+                  className="bg-surface border-2 border-black rounded-sm p-3.5 flex flex-col justify-between space-y-2 shadow-hard-sm"
                 >
                   <div className="flex items-center justify-between text-[11px]">
-                    <span className="font-mono font-semibold text-ink-primary">{bin.label}</span>
-                    <span className="text-ink-muted font-mono tabular-nums">{pct}%</span>
+                    <span className="font-mono font-extrabold text-ink-primary">{bin.label}</span>
+                    <span className="text-ink-secondary font-mono font-bold tabular-nums">{pct}%</span>
                   </div>
-                  <div className="space-y-1">
-                    <div className="w-full bg-border/60 rounded-full h-1.5 overflow-hidden">
+                  <div className="space-y-1.5">
+                    <div className="w-full bg-surface-subtle border border-black rounded-sm h-2.5 overflow-hidden">
                       <div
-                        className="bg-saffron h-full rounded-full transition-all duration-300"
+                        className="bg-saffron h-full transition-all duration-300"
                         style={{ width: `${Math.min(100, Math.max(pct > 0 ? 6 : 0, pct))}%` }}
                       />
                     </div>
                     <div className="text-right">
-                      <span className="font-mono text-xs font-bold text-ink-primary tabular-nums">
+                      <span className="font-mono text-xs font-black text-ink-primary tabular-nums">
                         {bin.count}
                       </span>
-                      <span className="text-[10px] text-ink-muted ml-1">res.</span>
+                      <span className="text-[10px] font-bold text-ink-secondary ml-1">res.</span>
                     </div>
                   </div>
                 </div>
@@ -447,7 +449,7 @@ export const ManagerRefundConsole: React.FC = () => {
       )}
 
       {/* Search and Table Controls */}
-      <div className="p-4 bg-surface border border-border rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="p-4 bg-surface border-2 border-black rounded-sm flex flex-col sm:flex-row items-center justify-between gap-4 shadow-hard">
         <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 w-full sm:w-80">
           <Input
             placeholder="Search roll number, name, room..."
@@ -456,14 +458,14 @@ export const ManagerRefundConsole: React.FC = () => {
             className="w-full text-xs"
           />
           <Button type="submit" variant="outline" size="sm" className="shrink-0">
-            <Search className="w-3.5 h-3.5" strokeWidth={1.75} />
+            <Search className="w-3.5 h-3.5" strokeWidth={2} />
           </Button>
         </form>
 
         <div className="flex items-center gap-3 text-xs text-ink-secondary w-full sm:w-auto justify-end">
-          <span className="tabular-nums">
-            Showing <strong className="text-ink-primary font-mono">{data?.refunds?.length || 0}</strong> of{' '}
-            <strong className="text-ink-primary font-mono">{data?.total || 0}</strong> residents
+          <span className="tabular-nums font-bold">
+            Showing <strong className="text-ink-primary font-mono font-extrabold">{data?.refunds?.length || 0}</strong> of{' '}
+            <strong className="text-ink-primary font-mono font-extrabold">{data?.total || 0}</strong> residents
           </span>
 
           <select
@@ -472,7 +474,7 @@ export const ManagerRefundConsole: React.FC = () => {
               setPageSize(Number(e.target.value));
               setPage(1);
             }}
-            className="bg-surface border border-border rounded px-2 py-1 text-xs text-ink-primary focus:outline-none"
+            className="bg-surface border-2 border-black rounded-sm px-2.5 py-1 text-xs font-bold text-ink-primary shadow-hard-sm focus:outline-none cursor-pointer"
           >
             <option value={20}>20 / page</option>
             <option value={50}>50 / page</option>
@@ -483,11 +485,11 @@ export const ManagerRefundConsole: React.FC = () => {
       </div>
 
       {/* Roster Table Container */}
-      <div className="bg-surface border border-border rounded-lg overflow-hidden shadow-none">
+      <div className="bg-surface border-2 border-black rounded-sm overflow-hidden shadow-hard-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-surface-subtle border-b border-border text-ink-muted uppercase font-semibold text-[11px] select-none">
+              <tr className="bg-paper border-b-2 border-black text-ink-primary uppercase font-extrabold text-[11px] select-none">
                 <th className="py-3 px-4">Roll Number</th>
                 <th className="py-3 px-4">Resident Name</th>
                 <th className="py-3 px-4">Room</th>
@@ -499,44 +501,44 @@ export const ManagerRefundConsole: React.FC = () => {
                 <th className="py-3 px-4 text-center">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y-2 divide-black">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-ink-muted">
+                  <td colSpan={9} className="py-12 text-center text-xs font-bold text-ink-muted">
                     Loading resident refund records...
                   </td>
                 </tr>
               ) : !data?.refunds?.length ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-ink-muted">
+                  <td colSpan={9} className="py-12 text-center text-xs font-bold text-ink-muted">
                     No refund records found for this hostel and month. Click &quot;Run Preview&quot; to calculate.
                   </td>
                 </tr>
               ) : (
                 data.refunds.map((row) => (
-                  <tr key={`${row.student_id}-${row.roll_no}`} className="hover:bg-surface-subtle/60 transition-colors">
-                    <td className="py-3 px-4 font-mono font-medium text-ink-primary tabular-nums">
+                  <tr key={`${row.student_id}-${row.roll_no}`} className="hover:bg-paper/30 transition-colors">
+                    <td className="py-3 px-4 font-mono font-bold text-ink-primary tabular-nums">
                       {row.roll_no}
                     </td>
-                    <td className="py-3 px-4 font-medium text-ink-primary">
+                    <td className="py-3 px-4 font-extrabold text-ink-primary">
                       {row.full_name}
                     </td>
-                    <td className="py-3 px-4 text-ink-secondary font-mono">
+                    <td className="py-3 px-4 text-ink-secondary font-mono font-bold">
                       {row.room_no}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono tabular-nums text-ink-secondary">
+                    <td className="py-3 px-4 text-right font-mono tabular-nums text-ink-secondary font-bold">
                       {row.meals_scheduled}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono tabular-nums text-ink-primary">
+                    <td className="py-3 px-4 text-right font-mono tabular-nums text-ink-primary font-black">
                       {row.meals_eaten}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono tabular-nums text-ink-muted">
+                    <td className="py-3 px-4 text-right font-mono tabular-nums text-ink-muted font-bold">
                       {row.free_skips}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono tabular-nums font-semibold text-emerald-700">
+                    <td className="py-3 px-4 text-right font-mono tabular-nums font-black text-status-success-text">
                       {row.eligible_missed}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono tabular-nums font-bold text-ink-primary">
+                    <td className="py-3 px-4 text-right font-mono tabular-nums font-black text-ink-primary">
                       {formatCurrencyINR(row.refund_amount)}
                     </td>
                     <td className="py-3 px-4 text-center">
@@ -555,13 +557,13 @@ export const ManagerRefundConsole: React.FC = () => {
 
         {/* Table Pagination Controls */}
         {totalPages > 1 && (
-          <div className="px-4 py-3 bg-surface-subtle border-t border-border flex items-center justify-between text-xs">
-            <span className="text-ink-secondary">
-              Page <strong className="text-ink-primary font-mono">{page}</strong> of{' '}
-              <strong className="text-ink-primary font-mono">{totalPages}</strong>
+          <div className="px-5 py-3 bg-surface-subtle border-t-2 border-black flex items-center justify-between text-xs">
+            <span className="font-medium text-ink-secondary">
+              Page <strong className="text-ink-primary font-mono font-extrabold tabular-nums">{page}</strong> of{' '}
+              <strong className="text-ink-primary font-mono font-extrabold tabular-nums">{totalPages}</strong>
             </span>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -596,24 +598,24 @@ export const ManagerRefundConsole: React.FC = () => {
           <div className="space-y-3">
             <p>
               You are about to permanently finalise mess refunds for{' '}
-              <strong className="text-ink-primary">Hostel {selectedHostel}</strong> for{' '}
-              <strong className="text-ink-primary">{month}/{year}</strong>.
+              <strong className="text-ink-primary font-extrabold">Hostel {selectedHostel}</strong> for{' '}
+              <strong className="text-ink-primary font-extrabold">{month}/{year}</strong>.
             </p>
 
-            <div className="p-3 bg-surface-subtle rounded border border-border text-xs space-y-1.5 font-mono">
+            <div className="p-3 bg-surface-subtle rounded-sm border-2 border-black text-xs space-y-1.5 font-mono shadow-hard-sm">
               <div className="flex justify-between">
-                <span>Total Residents:</span>
+                <span className="font-bold">Total Residents:</span>
                 <strong className="text-ink-primary">{totalResidents} residents</strong>
               </div>
               <div className="flex justify-between">
-                <span>Total Outlay:</span>
-                <strong className="text-emerald-700">
+                <span className="font-bold">Total Outlay:</span>
+                <strong className="text-status-success-text font-black">
                   {formatCurrencyINR(totalOutlay)}
                 </strong>
               </div>
             </div>
 
-            <p className="text-[11px] text-amber-700 font-sans">
+            <p className="text-[11px] text-status-warning-text font-sans font-bold">
               <strong>Warning:</strong> Under institutional rules, FINAL records are made strictly immutable via MySQL trigger and cannot be updated or recalculated. An automatic notification will be dispatched to each student.
             </p>
           </div>

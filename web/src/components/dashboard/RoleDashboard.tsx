@@ -42,11 +42,11 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
-      {/* Welcome Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border">
+    <div className="space-y-6 max-w-6xl mx-auto">
+      {/* Page Header Block: White card, 2px border, shadow-hard-lg */}
+      <div className="bg-white border-2 border-black rounded-[4px] p-6 shadow-hard-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-serif font-bold text-ink-primary">
+          <h1 className="text-2xl sm:text-3xl font-heading font-extrabold tracking-tight text-black">
             {role === 'ADMIN' && 'Administrative Systems Control'}
             {role === 'HOSTEL_OFFICE' && 'Hostel Office Allotment Operations'}
             {role === 'CHIEF_WARDEN' && 'Chief Warden Executive Overview'}
@@ -55,54 +55,58 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({ onNavigate }) => {
             {role === 'CARETAKER' && 'Hostel Caretaker Operations (BH1)'}
             {role === 'STUDENT' && 'Resident Student Portal'}
           </h1>
-          <p className="text-xs text-ink-secondary mt-1">
-            Logged in as <strong className="font-semibold text-ink-primary">{user?.loginId}</strong> ({user?.role}). System operating strictly in Indian Standard Time (IST, UTC+05:30).
+          <p className="text-xs text-black/75 font-medium mt-1">
+            Logged in as <strong className="font-bold text-black">{user?.loginId}</strong> ({user?.role}). Operating strictly in Indian Standard Time (IST, UTC+05:30).
           </p>
         </div>
       </div>
 
-      {/* KPI Strip */}
-      <section className="space-y-2">
-        <div className="flex items-center justify-between text-xs text-ink-secondary">
-          <span className="font-semibold uppercase tracking-wider">Live Operational Indicators</span>
-          <span className="text-ink-muted">Refreshed automatically</span>
+      {/* KPI Section */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between text-xs text-black font-heading font-bold">
+          <span className="uppercase tracking-wider">Live Operational Indicators</span>
+          <span className="text-black/60 font-mono">Refreshed automatically</span>
         </div>
         <KPIStrip items={getKpis()} />
       </section>
 
       {/* Role Action Shortcuts */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-5 bg-surface border border-border rounded-lg space-y-3">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded bg-primary-subtle text-primary border border-primary-border">
-              <Building2 className="w-4 h-4" strokeWidth={1.75} />
+        <div className="p-5 bg-white border-2 border-black rounded-[4px] shadow-hard space-y-3 flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-[4px] bg-paper text-black border-2 border-black flex items-center justify-center shrink-0">
+                <Building2 className="w-4 h-4" strokeWidth={2} />
+              </div>
+              <div>
+                <h3 className="text-sm font-heading font-bold text-black">Hostel Inventory</h3>
+                <p className="text-xs text-black/70 font-medium">Inspect rooms and beds</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-semibold text-ink-primary">Hostel Inventory</h3>
-              <p className="text-xs text-ink-muted">Inspect rooms and beds</p>
-            </div>
+            <p className="text-xs text-black/80 font-medium leading-relaxed">
+              Verify study-habit compatibility tags (DAY vs NIGHT) and room capacity limits (2 or 3 occupants).
+            </p>
           </div>
-          <p className="text-xs text-ink-secondary leading-relaxed">
-            Verify study-habit compatibility tags (DAY vs NIGHT) and room capacity limits (2 or 3 occupants).
-          </p>
           <Button variant="outline" size="sm" className="w-full" onClick={() => onNavigate(role === 'STUDENT' ? '/student/allotment' : '/rooms')}>
             Explore Inventory →
           </Button>
         </div>
 
-        <div className="p-5 bg-surface border border-border rounded-lg space-y-3">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded bg-saffron-subtle text-saffron border border-saffron-border">
-              <Utensils className="w-4 h-4" strokeWidth={1.75} />
+        <div className="p-5 bg-white border-2 border-black rounded-[4px] shadow-hard space-y-3 flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-[4px] bg-saffron text-black border-2 border-black flex items-center justify-center shrink-0">
+                <Utensils className="w-4 h-4" strokeWidth={2} />
+              </div>
+              <div>
+                <h3 className="text-sm font-heading font-bold text-black">Mess Operations</h3>
+                <p className="text-xs text-black/70 font-medium">Attendance & dining refunds</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-semibold text-ink-primary">Mess Operations</h3>
-              <p className="text-xs text-ink-muted">Attendance & dining refunds</p>
-            </div>
+            <p className="text-xs text-black/80 font-medium leading-relaxed">
+              Attendance integrity checked against serving windows: Breakfast, Lunch, Snacks, Dinner.
+            </p>
           </div>
-          <p className="text-xs text-ink-secondary leading-relaxed">
-            Attendance integrity checked against serving windows: Breakfast, Lunch, Snacks, Dinner.
-          </p>
           <Button
             variant="outline"
             size="sm"
@@ -113,19 +117,21 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({ onNavigate }) => {
           </Button>
         </div>
 
-        <div className="p-5 bg-surface border border-border rounded-lg space-y-3">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded bg-status-success-bg text-status-success-text border border-status-success-border">
-              <Shirt className="w-4 h-4" strokeWidth={1.75} />
+        <div className="p-5 bg-white border-2 border-black rounded-[4px] shadow-hard space-y-3 flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-[4px] bg-surface-subtle text-black border-2 border-black flex items-center justify-center shrink-0">
+                <Shirt className="w-4 h-4" strokeWidth={2} />
+              </div>
+              <div>
+                <h3 className="text-sm font-heading font-bold text-black">Smart Laundry</h3>
+                <p className="text-xs text-black/70 font-medium">Pessimistic row locking</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-semibold text-ink-primary">Smart Laundry</h3>
-              <p className="text-xs text-ink-muted">Pessimistic row locking</p>
-            </div>
+            <p className="text-xs text-black/80 font-medium leading-relaxed">
+              45-minute washing cycles, automated event cleanup, and single-machine concurrent limits.
+            </p>
           </div>
-          <p className="text-xs text-ink-secondary leading-relaxed">
-            45-minute washing cycles, automated event cleanup, and single-machine concurrent limits.
-          </p>
           <Button variant="outline" size="sm" className="w-full" onClick={() => onNavigate(role === 'STUDENT' ? '/student/laundry' : '/laundry')}>
             Check Washing Machines →
           </Button>

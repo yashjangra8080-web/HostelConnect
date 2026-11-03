@@ -18,15 +18,15 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   return (
     <div
       role="alert"
-      className={`w-full p-4 bg-status-danger-bg/40 border border-status-danger-border rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm text-ink-primary ${className}`}
+      className={`w-full p-4 bg-white border-2 border-black rounded-[4px] shadow-hard flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm text-black ${className}`}
     >
       <div className="flex items-start gap-3">
-        <div className="shrink-0 mt-0.5">
-          <AlertCircle className="w-4 h-4 text-status-danger-text" strokeWidth={2} />
+        <div className="w-8 h-8 rounded-full bg-status-danger-bg border-2 border-black flex items-center justify-center shrink-0">
+          <AlertCircle className="w-4 h-4 text-status-danger-text" strokeWidth={2.5} />
         </div>
         <div>
-          <h4 className="text-sm font-semibold text-status-danger-text leading-tight">{title}</h4>
-          <p className="text-xs text-ink-secondary mt-0.5 leading-normal">{message}</p>
+          <h4 className="text-sm font-heading font-extrabold text-status-danger-text leading-tight">{title}</h4>
+          <p className="text-xs text-black font-medium mt-0.5 leading-normal">{message}</p>
         </div>
       </div>
 
@@ -35,8 +35,8 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           variant="outline"
           size="sm"
           onClick={onRetry}
-          leftIcon={<RefreshCw className="w-3.5 h-3.5" strokeWidth={1.75} />}
-          className="shrink-0 border-status-danger-border hover:bg-surface text-ink-primary"
+          leftIcon={<RefreshCw className="w-3.5 h-3.5" strokeWidth={2} />}
+          className="shrink-0"
         >
           Retry
         </Button>

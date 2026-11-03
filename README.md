@@ -60,7 +60,7 @@ npm run test:sql
 - `db/routines/`: Idempotent stored procedures, functions, views, triggers, and events.
 - `db/seed/`: Initial baseline configuration and synthetic student applicants.
 - `server/`: Node 20 + Express + TypeScript (`mysql2/promise` with 100% parameterized queries, no ORM).
-- `web/`: React 18/19 + Vite + TypeScript + Tailwind CSS (institutional UI, strict design tokens, no gradients).
+- `web/`: React 18/19 + Vite + TypeScript + Tailwind CSS (Neo-Brutalist design system, Cabinet Grotesk / Satoshi typography, high-contrast offset shadows, and 2px borders).
 - `docs/`: Technical specifications (`SPEC.md`), design system (`DESIGN.md`), project proposal (`proposal.pdf`).
 - `scripts/`: Migration runner (`migrate.ts`), routine loader (`routine-loader.ts`), seed runner (`seed.ts`), and SQL assertion runner (`sql-assertion-runner.ts`).
 - `tests/`: Integration tests and declarative SQL assertion suite (`assertions.sql`).

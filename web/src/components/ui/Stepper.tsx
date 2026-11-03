@@ -39,41 +39,41 @@ export const Stepper: React.FC<StepperProps> = ({
               {idx !== steps.length - 1 && (
                 <div
                   aria-hidden="true"
-                  className={`absolute top-4 left-1/2 w-full h-[1px] -translate-y-1/2 z-0 ${
-                    idx < currentStep ? 'bg-primary' : 'bg-border'
+                  className={`absolute top-4 left-1/2 w-full h-[2px] -translate-y-1/2 z-0 ${
+                    idx < currentStep ? 'bg-black' : 'bg-black/30'
                   }`}
                 />
               )}
 
-              {/* Step indicator circle */}
+              {/* Step indicator circle/square: 2px black border; completed = black, current = saffron, upcoming = white */}
               <button
                 type="button"
                 disabled={!canClick}
                 onClick={() => canClick && onStepClick(idx)}
-                className={`relative z-10 w-8 h-8 rounded-full border flex items-center justify-center text-xs font-semibold select-none transition-colors ${
+                className={`relative z-10 w-8 h-8 rounded-full border-2 border-black flex items-center justify-center text-xs font-bold select-none transition-colors ${
                   isCompleted
-                    ? 'bg-primary border-primary text-ink-onDark'
+                    ? 'bg-black text-white'
                     : isCurrent
-                    ? 'bg-surface border-primary text-primary ring-2 ring-primary/20'
-                    : 'bg-surface border-border text-ink-muted'
-                } ${canClick ? 'cursor-pointer hover:border-primary' : 'cursor-default'}`}
+                    ? 'bg-saffron text-black shadow-hard-sm'
+                    : 'bg-white text-black'
+                } ${canClick ? 'cursor-pointer' : 'cursor-default'}`}
               >
                 {isCompleted ? (
-                  <Check className="w-4 h-4 text-white" strokeWidth={2.5} />
+                  <Check className="w-4 h-4 text-white" strokeWidth={3} />
                 ) : (
-                  <span className="tabular-nums">{idx + 1}</span>
+                  <span className="tabular-nums font-bold">{idx + 1}</span>
                 )}
               </button>
 
               {/* Step Title & Description */}
               <div className="mt-2 text-center">
                 <span
-                  className={`text-xs block font-medium ${
+                  className={`text-xs block font-heading ${
                     isCurrent
-                      ? 'text-primary font-semibold'
+                      ? 'text-black font-extrabold'
                       : isCompleted
-                      ? 'text-ink-primary'
-                      : 'text-ink-muted'
+                      ? 'text-black font-bold'
+                      : 'text-black/60 font-medium'
                   }`}
                 >
                   {step.title}

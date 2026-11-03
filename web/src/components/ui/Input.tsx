@@ -35,7 +35,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-xs font-semibold text-ink-secondary tracking-tight"
+            className="block text-xs font-bold text-black tracking-tight"
           >
             {label}
           </label>
@@ -43,7 +43,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
         <div className="relative flex items-center">
           {leftIcon && (
-            <div className="absolute left-3 flex items-center pointer-events-none text-ink-muted">
+            <div className="absolute left-3 flex items-center pointer-events-none text-black">
               {leftIcon}
             </div>
           )}
@@ -52,13 +52,13 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             disabled={disabled}
-            className={`w-full h-9 rounded bg-surface border text-sm text-ink-primary placeholder:text-ink-muted transition-colors duration-150 focus:outline-none focus:ring-1 ${
+            className={`w-full h-9 rounded-[8px] bg-white border-2 text-base sm:text-sm text-black placeholder:text-ink-light transition-all duration-150 focus:outline-none focus:shadow-hard ${
               error
-                ? 'border-status-danger-text focus:border-status-danger-text focus:ring-status-danger-text'
-                : 'border-border hover:border-border-strong focus:border-primary focus:ring-primary'
+                ? 'border-status-danger-text focus:border-status-danger-text'
+                : 'border-black hover:border-black focus:border-black'
             } ${leftIcon ? 'pl-9' : 'pl-3'} ${
               rightIcon || isLoading || error ? 'pr-9' : 'pr-3'
-            } ${disabled ? 'bg-surface-subtle text-ink-muted cursor-not-allowed opacity-60' : ''} ${
+            } ${disabled ? 'bg-surface-subtle text-black cursor-not-allowed opacity-60' : ''} ${
               tabularNums ? 'tabular-nums' : ''
             } ${className}`}
             {...props}
@@ -66,19 +66,19 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
           <div className="absolute right-3 flex items-center gap-1.5 pointer-events-none">
             {isLoading && (
-              <Loader2 className="w-4 h-4 text-ink-muted animate-spin" strokeWidth={1.75} />
+              <Loader2 className="w-4 h-4 text-black animate-spin" strokeWidth={1.75} />
             )}
             {!isLoading && error && (
               <AlertCircle className="w-4 h-4 text-status-danger-text" strokeWidth={1.75} />
             )}
             {!isLoading && !error && rightIcon && (
-              <span className="text-ink-muted flex items-center">{rightIcon}</span>
+              <span className="text-black flex items-center">{rightIcon}</span>
             )}
           </div>
         </div>
 
         {error ? (
-          <p className="text-xs text-status-danger-text font-medium flex items-center gap-1">
+          <p className="text-xs text-status-danger-text font-bold flex items-center gap-1">
             <span>{error}</span>
           </p>
         ) : helperText ? (

@@ -55,7 +55,7 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
 }) => {
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
+  // Close on outside click & ESC
   useEffect(() => {
     if (!isOpen) return;
 
@@ -88,7 +88,6 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
 
     // If explicit relative link exists and is allowed, use it
     if (isAllowedInAppRoute(rawLink)) {
-      // Role-specific refinement for ALLOTMENT
       if (notif.notif_type === 'ALLOTMENT') {
         if (userRole === 'STUDENT') {
           return '/student/allotment';
@@ -140,26 +139,26 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
       ref={popoverRef}
       role="dialog"
       aria-label="Notifications"
-      className="absolute right-0 mt-2 w-80 sm:w-96 bg-surface border border-border rounded-lg shadow-lg z-50 flex flex-col overflow-hidden text-xs"
+      className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border-2 border-black rounded-[4px] shadow-hard z-50 flex flex-col overflow-hidden text-xs"
       tabIndex={-1}
     >
-      {/* Header */}
-      <div className="px-3.5 py-2.5 border-b border-border bg-surface-subtle flex items-center justify-between">
+      {/* Header: font-heading font-extrabold, 2px bottom border */}
+      <div className="px-3.5 py-2.5 border-b-2 border-black bg-white flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-ink-primary">Notifications</span>
+          <span className="font-heading font-extrabold text-sm text-black">Notifications</span>
           {unreadCount > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-saffron text-white tabular-nums">
+            <span className="px-1.5 py-0.5 rounded-[4px] text-[10px] font-bold bg-saffron text-black border border-black tabular-nums">
               {unreadCount} unread
             </span>
           )}
         </div>
-        <span className="text-[11px] text-ink-muted font-mono">IST</span>
+        <span className="text-[11px] text-black/70 font-mono font-bold">IST</span>
       </div>
 
       {/* Notifications List (Max 8 items) */}
-      <div className="max-h-[380px] overflow-y-auto divide-y divide-border">
+      <div className="max-h-[380px] overflow-y-auto divide-y divide-black/20 bg-white">
         {displayItems.length === 0 ? (
-          <div className="py-8 text-center text-ink-muted">No notifications</div>
+          <div className="py-8 text-center text-black font-medium">No notifications</div>
         ) : (
           displayItems.map((notif) => {
             const Icon = TYPE_ICONS[notif.notif_type] || Bell;
@@ -168,19 +167,19 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
                 key={notif.notif_id}
                 type="button"
                 onClick={() => handleNotificationClick(notif)}
-                className={`w-full text-left p-3 flex items-start gap-3 transition-colors hover:bg-surface-subtle focus:outline-none focus:bg-surface-subtle ${
-                  !notif.is_read ? 'bg-primary-subtle/20' : 'bg-surface'
+                className={`w-full text-left p-3 flex items-start gap-3 transition-colors hover:bg-paper focus:outline-none focus:bg-paper ${
+                  !notif.is_read ? 'bg-paper/25' : 'bg-white'
                 }`}
               >
                 {/* Type Icon Container */}
                 <div
-                  className={`p-1.5 rounded shrink-0 border mt-0.5 ${
+                  className={`p-1.5 rounded-[4px] shrink-0 border-2 border-black mt-0.5 ${
                     !notif.is_read
-                      ? 'bg-primary text-white border-primary'
-                      : 'bg-surface-subtle text-ink-secondary border-border'
+                      ? 'bg-saffron text-black'
+                      : 'bg-white text-black'
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5" strokeWidth={1.75} />
+                  <Icon className="w-3.5 h-3.5" strokeWidth={2} />
                 </div>
 
                 {/* Content */}
@@ -188,28 +187,28 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
                   <div className="flex items-center justify-between gap-1 mb-0.5">
                     <p
                       className={`truncate leading-tight text-xs ${
-                        !notif.is_read ? 'font-semibold text-ink-primary' : 'font-medium text-ink-secondary'
+                        !notif.is_read ? 'font-heading font-extrabold text-black' : 'font-bold text-black/80'
                       }`}
                     >
                       {notif.title}
                     </p>
-                    {/* Unread indicator dot */}
+                    {/* Unread indicator dot: keep bg-saffron class for automated tests */}
                     {!notif.is_read && (
                       <span
-                        className="w-2 h-2 rounded-full bg-saffron shrink-0"
+                        className="w-2.5 h-2.5 rounded-full bg-saffron border border-black shrink-0"
                         title="Unread notification"
                         aria-label="Unread"
                       />
                     )}
                   </div>
 
-                  <p className="text-[11px] text-ink-muted truncate leading-snug">
+                  <p className="text-[11px] text-black/75 truncate leading-snug font-medium">
                     {notif.body}
                   </p>
 
-                  <div className="mt-1 flex items-center justify-between text-[10px] text-ink-muted font-mono">
+                  <div className="mt-1 flex items-center justify-between text-[10px] text-black/70 font-mono font-bold">
                     <span className="tabular-nums">{formatRelativeTime(notif.created_at)}</span>
-                    <span className="text-[10px] text-primary hover:underline flex items-center gap-0.5">
+                    <span className="text-[10px] text-black hover:underline flex items-center gap-0.5 font-bold">
                       Open <ChevronRight className="w-2.5 h-2.5 inline" />
                     </span>
                   </div>
@@ -221,16 +220,16 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
       </div>
 
       {/* Footer */}
-      <div className="px-3 py-2 border-t border-border bg-surface-subtle flex items-center justify-between">
+      <div className="px-3 py-2 border-t-2 border-black bg-white flex items-center justify-between">
         <button
           type="button"
           onClick={() => {
             onMarkAllRead();
           }}
           disabled={unreadCount === 0}
-          className="text-[11px] font-medium text-primary hover:text-primary-hover disabled:text-ink-muted disabled:cursor-not-allowed flex items-center gap-1 focus:outline-none"
+          className="text-[11px] font-bold text-black hover:underline disabled:text-black/40 disabled:cursor-not-allowed disabled:no-underline flex items-center gap-1 focus:outline-none"
         >
-          <CheckCheck className="w-3.5 h-3.5" strokeWidth={1.75} />
+          <CheckCheck className="w-3.5 h-3.5" strokeWidth={2} />
           <span>Mark all as read</span>
         </button>
 
@@ -240,10 +239,10 @@ export const NotificationPopover: React.FC<NotificationPopoverProps> = ({
             onClose();
             onNavigate('/notifications');
           }}
-          className="text-[11px] font-medium text-ink-secondary hover:text-ink-primary flex items-center gap-1 focus:outline-none"
+          className="text-[11px] font-bold text-black hover:underline flex items-center gap-1 focus:outline-none"
         >
           <span>View all</span>
-          <ExternalLink className="w-3 h-3" strokeWidth={1.75} />
+          <ExternalLink className="w-3 h-3" strokeWidth={2} />
         </button>
       </div>
     </div>

@@ -72,12 +72,13 @@ describe('Task 2: Notifications UI End-to-End', () => {
       expect(submitBtn).toBeTruthy();
       await submitBtn!.click();
 
-      // Wait for dashboard and bell
+      // Wait for dashboard and bell with unread badge
       await page.waitForSelector('button[aria-label*="notification" i], button[aria-label*="unread" i]', { timeout: 10000 });
       const bellBtn = await page.$('button[aria-label*="notification" i], button[aria-label*="unread" i]');
       expect(bellBtn).toBeTruthy();
 
       // Read initial badge count (3 unread)
+      await page.waitForSelector('button[aria-label*="notification" i] span.rounded-full, button[aria-label*="unread" i] span.rounded-full', { timeout: 5000 });
       const badgeEl = await bellBtn!.$('span.rounded-full');
       const initialBadge = badgeEl ? await page.evaluate(el => el.textContent?.trim(), badgeEl) : '0';
       expect(initialBadge).toBe('3');

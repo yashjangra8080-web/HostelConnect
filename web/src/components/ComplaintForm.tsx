@@ -37,31 +37,27 @@ interface Complaint {
   responses: ComplaintResponse[];
 }
 
-// ─── Status badge colour map ──────────────────────────────────────────────────
-const STATUS_STYLES: Record<string, { text: string; bg: string; border: string }> = {
-  OPEN:        { text: '#D97706', bg: '#FFFBEB', border: '#FDE68A' },
-  SEEN:        { text: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE' },
-  IN_PROGRESS: { text: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE' },
-  RESOLVED:    { text: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
-  REJECTED:    { text: '#DC2626', bg: '#FEF2F2', border: '#FECACA' },
-};
-
-const SEVERITY_STYLES: Record<string, { text: string; bg: string; border: string }> = {
-  LOW:    { text: '#4B5563', bg: '#F3F4F6', border: '#E5E7EB' },
-  MEDIUM: { text: '#D97706', bg: '#FFFBEB', border: '#FDE68A' },
-  HIGH:   { text: '#EA580C', bg: '#FFF7ED', border: '#FED7AA' },
-  URGENT: { text: '#DC2626', bg: '#FEF2F2', border: '#FECACA' },
-};
-
 function StatusBadge({ status }: { status: string }) {
-  const s = STATUS_STYLES[status] ?? STATUS_STYLES.OPEN;
+  const getStyle = () => {
+    switch (status) {
+      case 'OPEN':
+        return 'bg-paper text-black';
+      case 'SEEN':
+        return 'bg-surface-subtle text-black';
+      case 'IN_PROGRESS':
+        return 'bg-saffron text-black';
+      case 'RESOLVED':
+        return 'bg-status-success-bg text-black';
+      case 'REJECTED':
+        return 'bg-status-danger-bg text-black';
+      default:
+        return 'bg-paper text-black';
+    }
+  };
+
   return (
     <span
-      style={{
-        color: s.text, background: s.bg, border: `1px solid ${s.border}`,
-        borderRadius: 9999, fontSize: 11, fontWeight: 600,
-        padding: '2px 8px', display: 'inline-block',
-      }}
+      className={`inline-block px-2 py-0.5 rounded-[6px] text-[10px] font-heading font-bold border-2 border-black ${getStyle()}`}
     >
       {status.replace('_', ' ')}
     </span>
@@ -69,14 +65,24 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function SeverityBadge({ severity }: { severity: string }) {
-  const s = SEVERITY_STYLES[severity] ?? SEVERITY_STYLES.MEDIUM;
+  const getStyle = () => {
+    switch (severity) {
+      case 'LOW':
+        return 'bg-white text-black';
+      case 'MEDIUM':
+        return 'bg-paper text-black';
+      case 'HIGH':
+        return 'bg-saffron text-black';
+      case 'URGENT':
+        return 'bg-status-danger-bg text-black';
+      default:
+        return 'bg-paper text-black';
+    }
+  };
+
   return (
     <span
-      style={{
-        color: s.text, background: s.bg, border: `1px solid ${s.border}`,
-        borderRadius: 9999, fontSize: 11, fontWeight: 600,
-        padding: '2px 8px', display: 'inline-block',
-      }}
+      className={`inline-block px-2 py-0.5 rounded-[6px] text-[10px] font-heading font-bold border-2 border-black ${getStyle()}`}
     >
       {severity}
     </span>
@@ -94,29 +100,25 @@ function formatIST(dateStr: string) {
 // ─── Complaint Timeline ───────────────────────────────────────────────────────
 function ComplaintTimeline({ complaint }: { complaint: Complaint }) {
   return (
-    <div style={{ marginTop: 16 }}>
+    <div className="mt-4">
       {/* Filed event */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-        <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: '50%',
-            background: '#EEF2FF', border: '2px solid #2F5BD6',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Send size={13} strokeWidth={1.75} color="#2F5BD6" />
+      <div className="flex gap-3 mb-4">
+        <div className="shrink-0 flex flex-col items-center">
+          <div className="w-7 h-7 rounded-full bg-saffron border-2 border-black flex items-center justify-center shadow-hard-sm">
+            <Send size={13} strokeWidth={2} className="text-black" />
           </div>
           {complaint.responses.length > 0 && (
-            <div style={{ width: 2, flex: 1, background: '#E2E8F0', marginTop: 4 }} />
+            <div className="w-0.5 flex-1 bg-black mt-1" />
           )}
         </div>
-        <div style={{ paddingBottom: 8 }}>
-          <div style={{ fontWeight: 600, fontSize: 13, color: '#0F172A' }}>
+        <div className="pb-2">
+          <div className="font-heading font-bold text-sm text-black">
             Complaint Filed
           </div>
-          <div style={{ fontSize: 12, color: '#64748B', fontVariantNumeric: 'tabular-nums' }}>
+          <div className="text-xs text-black/70 font-sans tabular-nums">
             {formatIST(complaint.created_at)}
           </div>
-          <div style={{ marginTop: 4, display: 'flex', gap: 8 }}>
+          <div className="mt-1 flex gap-2">
             <StatusBadge status="OPEN" />
             <SeverityBadge severity={complaint.severity} />
           </div>
@@ -128,39 +130,29 @@ function ComplaintTimeline({ complaint }: { complaint: Complaint }) {
         const isLast = idx === complaint.responses.length - 1;
         const isAuthority = r.responder_role !== 'STUDENT';
         return (
-          <div key={r.response_id} style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-            <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: '50%',
-                background: isAuthority ? '#EEF2FF' : '#ECFDF5',
-                border: `2px solid ${isAuthority ? '#2F5BD6' : '#059669'}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <ChevronRight size={13} strokeWidth={1.75} color={isAuthority ? '#2F5BD6' : '#059669'} />
+          <div key={r.response_id} className="flex gap-3 mb-4">
+            <div className="shrink-0 flex flex-col items-center">
+              <div className={`w-7 h-7 rounded-full border-2 border-black flex items-center justify-center shadow-hard-sm ${isAuthority ? 'bg-surface-subtle' : 'bg-status-success-bg'}`}>
+                <ChevronRight size={13} strokeWidth={2.5} className="text-black" />
               </div>
               {!isLast && (
-                <div style={{ width: 2, flex: 1, background: '#E2E8F0', marginTop: 4 }} />
+                <div className="w-0.5 flex-1 bg-black mt-1" />
               )}
             </div>
-            <div style={{ paddingBottom: 8, flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontWeight: 600, fontSize: 13, color: '#0F172A' }}>
+            <div className="pb-2 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-heading font-bold text-sm text-black">
                   {r.responder_name}
                 </span>
-                <span style={{ fontSize: 11, color: '#64748B', background: '#F3F4F6',
-                  border: '1px solid #E5E7EB', borderRadius: 9999, padding: '1px 6px' }}>
+                <span className="text-[10px] font-heading font-bold text-black bg-white border-2 border-black rounded-[4px] px-1.5 py-0.5">
                   {r.responder_role}
                 </span>
                 {r.new_status && <StatusBadge status={r.new_status} />}
               </div>
-              <div style={{ fontSize: 12, color: '#64748B', fontVariantNumeric: 'tabular-nums' }}>
+              <div className="text-xs text-black/70 font-sans tabular-nums mt-0.5">
                 {formatIST(r.created_at)}
               </div>
-              <div style={{
-                marginTop: 6, padding: '8px 12px',
-                background: '#F8FAFC', border: '1px solid #E2E8F0',
-                borderRadius: 6, fontSize: 13, color: '#0F172A', lineHeight: 1.5,
-              }}>
+              <div className="mt-1.5 p-3 bg-surface-subtle/20 border-2 border-black rounded-[4px] text-xs text-black leading-relaxed font-sans">
                 {r.message}
               </div>
             </div>
@@ -182,75 +174,58 @@ function ComplaintCard({
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div style={{
-      background: '#FFFFFF', border: '1px solid #E2E8F0',
-      borderRadius: 8, marginBottom: 12, overflow: 'hidden',
-    }}>
+    <div className="bg-white border-2 border-black rounded-[4px] mb-3 overflow-hidden shadow-hard">
       {/* Header */}
       <div
         onClick={() => setExpanded((v) => !v)}
-        style={{
-          padding: '12px 16px', display: 'flex', alignItems: 'center',
-          justifyContent: 'space-between', cursor: 'pointer',
-          background: expanded ? '#F8FAFC' : '#FFFFFF',
-          borderBottom: expanded ? '1px solid #E2E8F0' : 'none',
-        }}
+        className={`p-3 sm:p-4 flex items-center justify-between cursor-pointer transition-colors ${
+          expanded ? 'bg-paper border-b-2 border-black' : 'bg-white hover:bg-paper/40'
+        }`}
       >
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+        <div className="flex-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             <StatusBadge status={complaint.status} />
             <SeverityBadge severity={complaint.severity} />
-            <span style={{
-              fontSize: 11, color: '#64748B', background: '#F3F4F6',
-              border: '1px solid #E5E7EB', borderRadius: 9999, padding: '1px 6px', fontWeight: 600,
-            }}>
+            <span className="text-[10px] font-heading font-bold text-black bg-white border-2 border-black rounded-[4px] px-1.5 py-0.5">
               {complaint.category}
             </span>
             {complaint.is_anonymous && (
-              <span style={{ fontSize: 11, color: '#7C3AED', background: '#F5F3FF',
-                border: '1px solid #DDD6FE', borderRadius: 9999, padding: '1px 6px', fontWeight: 600 }}>
+              <span className="text-[10px] font-heading font-bold text-black bg-saffron border-2 border-black rounded-[4px] px-1.5 py-0.5">
                 ANONYMOUS
               </span>
             )}
           </div>
-          <div style={{ fontWeight: 600, fontSize: 14, color: '#0F172A' }}>
+          <div className="font-heading font-bold text-base text-black">
             {complaint.subject}
           </div>
-          <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
+          <div className="text-xs text-black/70 font-sans mt-0.5">
             To: {complaint.authority_name} ({complaint.authority_designation})
             {complaint.authority_hostel && ` — ${complaint.authority_hostel}`}
             {' · '}
-            <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatIST(complaint.created_at)}</span>
+            <span className="tabular-nums font-mono">{formatIST(complaint.created_at)}</span>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <code style={{
-            fontSize: 12, fontFamily: 'JetBrains Mono, monospace',
-            background: '#F3F4F6', padding: '2px 8px', borderRadius: 4,
-            color: '#475569', letterSpacing: '0.05em',
-          }}>
+        <div className="flex items-center gap-2">
+          <code className="text-xs font-mono font-bold bg-saffron text-black px-2 py-0.5 rounded-[4px] border-2 border-black shadow-hard-sm">
             {complaint.tracking_code}
           </code>
           <ChevronRight
-            size={16} strokeWidth={1.75} color="#64748B"
-            style={{ transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}
+            size={18}
+            strokeWidth={2}
+            className={`text-black transition-transform ${expanded ? 'rotate-90' : ''}`}
           />
         </div>
       </div>
 
       {/* Expanded: timeline + reply */}
       {expanded && (
-        <div style={{ padding: '0 16px 16px' }}>
+        <div className="p-4 bg-white space-y-4">
           {complaint.escalated_at && (
-            <div style={{
-              margin: '12px 0', padding: '8px 12px',
-              background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 6,
-              display: 'flex', gap: 8, alignItems: 'center',
-            }}>
-              <AlertCircle size={14} strokeWidth={1.75} color="#D97706" />
-              <span style={{ fontSize: 13, color: '#D97706', fontWeight: 500 }}>
+            <div className="p-3 bg-paper border-2 border-black rounded-[4px] flex gap-2 items-center text-xs text-black font-heading font-bold shadow-hard-sm">
+              <AlertCircle size={15} strokeWidth={2} className="text-black shrink-0" />
+              <span>
                 Escalated to {complaint.escalated_to_authority_name} on{' '}
-                <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+                <span className="tabular-nums font-mono">
                   {formatIST(complaint.escalated_at)}
                 </span>
               </span>
@@ -262,16 +237,10 @@ function ComplaintCard({
           {complaint.status !== 'REJECTED' && (
             <button
               onClick={() => onReply(complaint.complaint_id)}
-              style={{
-                marginTop: 8, padding: '8px 16px',
-                background: '#2F5BD6', color: '#FFFFFF',
-                border: 'none', borderRadius: 6, cursor: 'pointer',
-                fontWeight: 500, fontSize: 14,
-                display: 'flex', alignItems: 'center', gap: 6,
-              }}
+              className="mt-2 px-4 py-2 bg-black text-white text-xs font-heading font-bold rounded-[8px] border-2 border-black hover:bg-black/80 flex items-center gap-1.5 shadow-hard-sm active:translate-x-[2px] active:translate-y-[2px] transition-all"
             >
-              <Send size={14} strokeWidth={1.75} />
-              Reply
+              <Send size={13} strokeWidth={2} />
+              <span>Reply</span>
             </button>
           )}
         </div>
@@ -314,15 +283,9 @@ function ReplyModal({
   });
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50,
-    }}>
-      <div style={{
-        background: '#FFFFFF', borderRadius: 10, width: 480,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.15)', padding: 24,
-      }}>
-        <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: '#0F172A' }}>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <div className="bg-white border-2 border-black rounded-[4px] max-w-md w-full shadow-hard-xl p-6">
+        <h3 className="text-base font-heading font-extrabold text-black mb-4">
           Submit Reply
         </h3>
         <textarea
@@ -330,41 +293,27 @@ function ReplyModal({
           onChange={(e) => setMessage(e.target.value)}
           rows={5}
           placeholder="Type your reply here…"
-          style={{
-            width: '100%', boxSizing: 'border-box',
-            border: '1px solid #E2E8F0', borderRadius: 6, padding: '10px 12px',
-            fontSize: 14, color: '#0F172A', resize: 'vertical',
-            outline: 'none', fontFamily: 'Inter, system-ui, sans-serif',
-          }}
+          className="w-full border-2 border-black rounded-[8px] p-2.5 text-xs text-black bg-white font-sans focus:outline-none focus:shadow-hard"
         />
         {mutation.error && (
-          <div style={{ marginTop: 8, color: '#DC2626', fontSize: 13 }}>
+          <div className="mt-2 text-xs text-status-danger-text font-medium font-sans">
             {(mutation.error as Error).message}
           </div>
         )}
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+        <div className="flex gap-2 justify-end mt-4">
           <button
             onClick={onClose}
-            style={{
-              padding: '8px 16px', background: 'transparent',
-              border: '1px solid #E2E8F0', borderRadius: 6,
-              cursor: 'pointer', fontSize: 14, color: '#475569',
-            }}
+            className="px-4 py-2 bg-white text-black text-xs font-heading font-bold rounded-[8px] border-2 border-black hover:bg-paper shadow-hard-sm"
           >
             Cancel
           </button>
           <button
             onClick={() => mutation.mutate()}
             disabled={!message.trim() || mutation.isPending}
-            style={{
-              padding: '8px 16px', background: '#2F5BD6', color: '#FFFFFF',
-              border: 'none', borderRadius: 6, cursor: 'pointer',
-              fontWeight: 500, fontSize: 14, opacity: mutation.isPending ? 0.7 : 1,
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}
+            className="px-4 py-2 bg-black text-white text-xs font-heading font-bold rounded-[8px] border-2 border-black hover:bg-black/80 flex items-center gap-1.5 shadow-hard-sm active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50"
           >
-            <Send size={14} strokeWidth={1.75} />
-            {mutation.isPending ? 'Submitting…' : 'Submit Reply'}
+            <Send size={13} strokeWidth={2} />
+            <span>{mutation.isPending ? 'Submitting…' : 'Submit Reply'}</span>
           </button>
         </div>
       </div>
@@ -377,35 +326,25 @@ function TrackingCodeBanner({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
 
   return (
-    <div style={{
-      padding: '16px 20px', background: '#ECFDF5',
-      border: '1px solid #A7F3D0', borderRadius: 8,
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      marginBottom: 24,
-    }}>
+    <div className="p-4 sm:p-5 bg-saffron border-2 border-black rounded-[4px] flex items-center justify-between mb-6 shadow-hard-lg">
       <div>
-        <div style={{ fontSize: 12, fontWeight: 600, color: '#059669', letterSpacing: '0.05em' }}>
+        <div className="text-xs font-heading font-extrabold text-black uppercase tracking-wider">
           COMPLAINT FILED — TRACKING CODE
         </div>
-        <code style={{
-          fontSize: 20, fontFamily: 'JetBrains Mono, monospace',
-          fontWeight: 500, color: '#0F172A', letterSpacing: '0.08em',
-        }}>
+        <code className="text-xl sm:text-2xl font-mono font-bold text-black tracking-wider block mt-1">
           {code}
         </code>
       </div>
       <button
-        onClick={() => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-        style={{
-          padding: '6px 12px', background: copied ? '#059669' : '#FFFFFF',
-          border: '1px solid #A7F3D0', borderRadius: 6,
-          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-          fontSize: 13, fontWeight: 500, color: copied ? '#FFFFFF' : '#059669',
-          transition: 'all 0.15s',
+        onClick={() => {
+          navigator.clipboard.writeText(code);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
         }}
+        className="px-3 py-1.5 bg-white text-black border-2 border-black rounded-[8px] font-heading font-bold text-xs flex items-center gap-1.5 shadow-hard-sm hover:bg-paper active:translate-x-[2px] active:translate-y-[2px] transition-all"
       >
-        {copied ? <Check size={14} strokeWidth={1.75} /> : <Copy size={14} strokeWidth={1.75} />}
-        {copied ? 'Copied' : 'Copy'}
+        {copied ? <Check size={14} strokeWidth={2.5} /> : <Copy size={14} strokeWidth={2} />}
+        <span>{copied ? 'Copied' : 'Copy'}</span>
       </button>
     </div>
   );
@@ -467,23 +406,18 @@ function ComplaintFilingForm({
     return Object.keys(e).length === 0;
   };
 
-  const fieldStyle = {
-    width: '100%', boxSizing: 'border-box' as const,
-    border: '1px solid #E2E8F0', borderRadius: 6, padding: '9px 12px',
-    fontSize: 16, color: '#0F172A', background: '#FFFFFF', outline: 'none',
-    fontFamily: 'Inter, system-ui, sans-serif',
-  };
-  const labelStyle = { display: 'block' as const, fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 4 };
-  const errStyle = { fontSize: 12, color: '#DC2626', marginTop: 4 };
+  const fieldClasses = "w-full border-2 border-black rounded-[8px] px-3 py-2 text-sm text-black bg-white font-sans focus:outline-none focus:shadow-hard";
+  const labelClasses = "block text-xs font-heading font-bold text-black mb-1";
+  const errClasses = "text-xs text-status-danger-text font-medium font-sans mt-1";
 
   return (
     <div>
-      <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>Authority *</label>
+      <div className="mb-4">
+        <label className={labelClasses}>Authority *</label>
         <select
           value={form.authority_id}
           onChange={(e) => setForm({ ...form, authority_id: e.target.value })}
-          style={fieldStyle}
+          className={fieldClasses}
         >
           <option value="">— Select Authority —</option>
           {authoritiesData?.authorities?.map((a) => (
@@ -493,21 +427,29 @@ function ComplaintFilingForm({
             </option>
           ))}
         </select>
-        {errors.authority_id && <div style={errStyle}>{errors.authority_id}</div>}
+        {errors.authority_id && <div className={errClasses}>{errors.authority_id}</div>}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <div>
-          <label style={labelStyle}>Category *</label>
-          <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} style={fieldStyle}>
+          <label className={labelClasses}>Category *</label>
+          <select
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            className={fieldClasses}
+          >
             {['ELECTRICAL','PLUMBING','MESS','CLEANLINESS','CONDUCT','OTHER'].map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </div>
         <div>
-          <label style={labelStyle}>Severity *</label>
-          <select value={form.severity} onChange={(e) => setForm({ ...form, severity: e.target.value })} style={fieldStyle}>
+          <label className={labelClasses}>Severity *</label>
+          <select
+            value={form.severity}
+            onChange={(e) => setForm({ ...form, severity: e.target.value })}
+            className={fieldClasses}
+          >
             {['LOW','MEDIUM','HIGH','URGENT'].map((s) => (
               <option key={s} value={s}>{s}</option>
             ))}
@@ -515,94 +457,73 @@ function ComplaintFilingForm({
         </div>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>Subject *</label>
+      <div className="mb-4">
+        <label className={labelClasses}>Subject *</label>
         <input
           type="text"
           value={form.subject}
           maxLength={160}
           onChange={(e) => setForm({ ...form, subject: e.target.value })}
           placeholder="Brief title for your complaint"
-          style={fieldStyle}
+          className={fieldClasses}
         />
-        {errors.subject && <div style={errStyle}>{errors.subject}</div>}
+        {errors.subject && <div className={errClasses}>{errors.subject}</div>}
       </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <label style={labelStyle}>Description *</label>
+      <div className="mb-4">
+        <label className={labelClasses}>Description *</label>
         <textarea
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
           rows={5}
           maxLength={4000}
           placeholder="Describe your complaint in detail…"
-          style={{ ...fieldStyle, resize: 'vertical' }}
+          className={`${fieldClasses} resize-vertical`}
         />
-        <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+        <div className="text-[11px] text-black/60 mt-1 text-right tabular-nums font-mono">
           {form.description.length}/4000
         </div>
-        {errors.description && <div style={errStyle}>{errors.description}</div>}
+        {errors.description && <div className={errClasses}>{errors.description}</div>}
       </div>
 
       {/* Anonymous toggle */}
-      <div style={{
-        marginBottom: 20, padding: '12px 16px',
-        background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
+      <div className="mb-5 p-3 sm:p-4 bg-surface-subtle/20 border-2 border-black rounded-[4px] flex items-center justify-between">
         <div>
-          <div style={{ fontWeight: 600, fontSize: 14, color: '#0F172A', display: 'flex', gap: 8, alignItems: 'center' }}>
-            {form.is_anonymous ? <EyeOff size={15} strokeWidth={1.75} /> : <Eye size={15} strokeWidth={1.75} />}
-            File Anonymously
+          <div className="font-heading font-bold text-sm text-black flex gap-2 items-center">
+            {form.is_anonymous ? <EyeOff size={16} strokeWidth={2} /> : <Eye size={16} strokeWidth={2} />}
+            <span>File Anonymously</span>
           </div>
-          <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>
+          <div className="text-xs text-black/70 font-sans mt-0.5">
             Your identity will be hidden from the authority. You can still track via your code.
           </div>
         </div>
-        <label style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
+        <label className="relative inline-flex items-center cursor-pointer">
           <input
             type="checkbox"
             checked={form.is_anonymous}
             onChange={(e) => setForm({ ...form, is_anonymous: e.target.checked })}
-            style={{ opacity: 0, width: 0, height: 0 }}
+            className="sr-only peer"
           />
-          <div style={{
-            width: 40, height: 22, background: form.is_anonymous ? '#2F5BD6' : '#CBD5E1',
-            borderRadius: 11, position: 'relative', transition: 'background 0.2s',
-          }}>
-            <div style={{
-              position: 'absolute', top: 3, left: form.is_anonymous ? 21 : 3,
-              width: 16, height: 16, background: '#FFFFFF', borderRadius: '50%',
-              transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-            }} />
+          <div className="w-11 h-6 bg-white border-2 border-black rounded-full peer peer-checked:bg-saffron transition-colors relative">
+            <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-black rounded-full transition-transform ${form.is_anonymous ? 'translate-x-5' : ''}`} />
           </div>
         </label>
       </div>
 
       {mutation.error && (
-        <div style={{
-          marginBottom: 16, padding: '10px 14px',
-          background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 6,
-          display: 'flex', gap: 8, alignItems: 'center',
-        }}>
-          <AlertCircle size={15} strokeWidth={1.75} color="#DC2626" />
-          <span style={{ fontSize: 13, color: '#DC2626' }}>{(mutation.error as Error).message}</span>
+        <div className="mb-4 p-3 bg-status-danger-bg border-2 border-black rounded-[4px] flex gap-2 items-center text-xs text-black shadow-hard-sm">
+          <AlertCircle size={15} strokeWidth={2} className="text-black shrink-0" />
+          <span className="font-medium font-sans">{(mutation.error as Error).message}</span>
         </div>
       )}
 
       <button
         onClick={() => { if (validate()) mutation.mutate(); }}
         disabled={mutation.isPending}
-        style={{
-          width: '100%', padding: '10px 0',
-          background: mutation.isPending ? '#6B8FDE' : '#2F5BD6',
-          color: '#FFFFFF', border: 'none', borderRadius: 6,
-          fontWeight: 500, fontSize: 16, cursor: mutation.isPending ? 'not-allowed' : 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        }}
+        className="w-full py-2.5 bg-black text-white text-sm font-heading font-bold rounded-[8px] border-2 border-black hover:bg-black/80 flex items-center justify-center gap-2 shadow-hard-sm active:translate-x-[2px] active:translate-y-[2px] transition-all disabled:opacity-50"
       >
-        <Send size={16} strokeWidth={1.75} />
-        {mutation.isPending ? 'Filing Complaint…' : 'Submit Complaint'}
+        <Send size={15} strokeWidth={2} />
+        <span>{mutation.isPending ? 'Filing Complaint…' : 'Submit Complaint'}</span>
       </button>
     </div>
   );
@@ -625,28 +546,35 @@ export function ComplaintForm({ csrfToken }: { csrfToken: string }) {
     enabled: activeTab === 'mine',
   });
 
-  const tabStyle = (active: boolean) => ({
-    padding: '9px 20px', fontSize: 14, fontWeight: 500,
-    background: active ? '#2F5BD6' : 'transparent',
-    color: active ? '#FFFFFF' : '#475569',
-    border: 'none', cursor: 'pointer', borderRadius: '6px 6px 0 0',
-  });
-
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto', padding: 24 }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, color: '#0F172A', margin: '0 0 4px' }}>
+    <div className="max-w-2xl mx-auto py-6 px-4">
+      <h1 className="text-2xl font-heading font-extrabold text-black tracking-tight mb-1">
         Complaints Portal
       </h1>
-      <p style={{ fontSize: 14, color: '#64748B', margin: '0 0 24px' }}>
+      <p className="text-xs text-black/70 font-sans mb-6">
         File confidential complaints addressed directly to hostel authorities.
       </p>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '2px solid #E2E8F0', marginBottom: 24 }}>
-        <button style={tabStyle(activeTab === 'file')} onClick={() => setActiveTab('file')}>
+      <div className="flex gap-2 border-b-2 border-black mb-6">
+        <button
+          onClick={() => setActiveTab('file')}
+          className={`px-4 py-2 text-xs font-heading font-bold rounded-t-[8px] border-2 border-b-0 border-black transition-colors ${
+            activeTab === 'file'
+              ? 'bg-black text-white shadow-hard-sm'
+              : 'bg-white text-black hover:bg-saffron'
+          }`}
+        >
           File a Complaint
         </button>
-        <button style={tabStyle(activeTab === 'mine')} onClick={() => setActiveTab('mine')}>
+        <button
+          onClick={() => setActiveTab('mine')}
+          className={`px-4 py-2 text-xs font-heading font-bold rounded-t-[8px] border-2 border-b-0 border-black transition-colors ${
+            activeTab === 'mine'
+              ? 'bg-black text-white shadow-hard-sm'
+              : 'bg-white text-black hover:bg-saffron'
+          }`}
+        >
           My Complaints
         </button>
       </div>
@@ -656,10 +584,7 @@ export function ComplaintForm({ csrfToken }: { csrfToken: string }) {
           {trackingCode && (
             <TrackingCodeBanner code={trackingCode} />
           )}
-          <div style={{
-            background: '#FFFFFF', border: '1px solid #E2E8F0',
-            borderRadius: 8, padding: 24,
-          }}>
+          <div className="bg-white border-2 border-black rounded-[4px] p-6 shadow-hard-lg">
             <ComplaintFilingForm
               csrfToken={csrfToken}
               onFiled={(code) => {
@@ -674,15 +599,11 @@ export function ComplaintForm({ csrfToken }: { csrfToken: string }) {
       {activeTab === 'mine' && (
         <div>
           {isLoading ? (
-            <div style={{ textAlign: 'center', padding: 48, color: '#64748B' }}>
+            <div className="text-center py-12 text-black/70 font-sans text-xs">
               Loading complaints…
             </div>
           ) : data?.complaints?.length === 0 ? (
-            <div style={{
-              textAlign: 'center', padding: 48,
-              background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8,
-              color: '#64748B', fontSize: 14,
-            }}>
+            <div className="text-center py-12 bg-white border-2 border-black rounded-[4px] text-black/70 font-sans text-xs shadow-hard">
               You have not filed any complaints yet.
             </div>
           ) : (

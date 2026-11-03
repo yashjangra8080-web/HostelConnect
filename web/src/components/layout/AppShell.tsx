@@ -60,7 +60,7 @@ interface AppShellProps {
 
 // Strictly 16px Lucide Icons mapper
 function renderNavIcon(iconName: string) {
-  const props = { className: 'w-4 h-4 shrink-0', strokeWidth: 1.75 };
+  const props = { className: 'w-4 h-4 shrink-0', strokeWidth: 2 };
   switch (iconName) {
     case 'LayoutDashboard':
       return <LayoutDashboard {...props} />;
@@ -120,97 +120,92 @@ function renderNavIcon(iconName: string) {
 export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, children }) => {
   const { user, logout } = useAuth();
   const [navGroups, setNavGroups] = useState<NavGroup[]>([]);
-  const [unreadCount, setUnreadCount] = useState<number>(0);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
-  const [isNotifPopoverOpen, setIsNotifPopoverOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  const [currentTimeIST, setCurrentTimeIST] = useState<string>('');
+  const [isNotifPopoverOpen, setIsNotifPopoverOpen] = useState(false);
+  const [currentTimeIST, setCurrentTimeIST] = useState('');
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
-  // Platform shortcut detection (Ctrl K vs ⌘K)
-  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPod|iPad/i.test(navigator.platform || navigator.userAgent);
+  // Platform-aware shortcut indicator
+  const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
   const shortcutLabel = isMac ? '⌘K' : 'Ctrl K';
 
-  // Dynamic document.title per page
+  // Synchronize document.title per page
   useEffect(() => {
-    const PAGE_TITLE_MAP: Record<string, string> = {
-      '/': 'Dashboard',
-      '/student/dashboard': 'Student Dashboard',
-      '/notifications': 'Notifications & Alerts',
-      '/student/notices': 'Campus Notice Hub',
-      '/notices': 'Campus Notice Hub',
-      '/student/mess': 'Mess Attendance & Refund Ledger',
-      '/mess/attendance': 'Mess Attendance & Refund Ledger',
-      '/mess/refunds': 'Dining Rebate & Refund Ledger',
-      '/mess/counter': 'Mess Attendance Counter',
-      '/mess/check-in': 'Dining Hall Check-In',
-      '/student/laundry': 'Smart Laundry Monitoring',
-      '/laundry': 'Smart Laundry Monitoring',
-      '/student/allotment': 'Hostel Room Allotment',
-      '/allotment': 'Hostel Room Allotment',
-      '/student/apply': 'Student Profile & Application',
-      '/apply': 'Student Profile & Application',
-      '/student/complaints': 'Confidential Complaints',
-      '/complaints': 'Confidential Complaints',
-      '/water-quality': 'Water Quality Surveillance',
-      '/maintenance': 'Maintenance Schedule',
-      '/pool': 'Public Transparency Pool',
-      '/verify': 'Application Verification Queue',
-      '/admin/audit': 'System Audit Log',
-      '/admin/privilege-proof': 'Privilege Proof Console',
-      '/change-password': 'Change Account Password',
+    const titles: Record<string, string> = {
+      '/': 'Dashboard — HostelConnect',
+      '/student/apply': 'Application Profile — HostelConnect',
+      '/student/allotment': 'My Room & Allotment — HostelConnect',
+      '/student/mess': 'Mess Attendance — HostelConnect',
+      '/student/refunds': 'Mess Refund Ledger — HostelConnect',
+      '/student/complaints': 'File Complaint — HostelConnect',
+      '/student/notices': 'Campus Notices — HostelConnect',
+      '/student/laundry': 'Smart Laundry — HostelConnect',
+      '/notifications': 'Notifications & Alerts — HostelConnect',
+      '/water-quality': 'Water Quality Telemetry — HostelConnect',
+      '/maintenance': 'Maintenance Schedules — HostelConnect',
+      '/complaints': 'Grievance Central Inbox — HostelConnect',
+      '/verify': 'Application Verification Queue — HostelConnect',
+      '/pool': 'Public Transparency Pool — HostelConnect',
+      '/office/allotment-run': 'Hostel Office Allotment Console — HostelConnect',
+      '/rooms': 'Room Occupancy Matrix — HostelConnect',
+      '/residents': 'Student Resident Directory — HostelConnect',
+      '/mess': 'Dining Operations Counter — HostelConnect',
+      '/mess/counter': 'Dining Operations Counter — HostelConnect',
+      '/mess/refunds': 'Mess Refund Console — HostelConnect',
+      '/mess/config': 'Mess Configuration — HostelConnect',
+      '/admin/privilege-proof': 'Database Privilege Proof — HostelConnect',
+      '/change-password': 'Change Password — HostelConnect',
     };
-    const title = PAGE_TITLE_MAP[currentPath] || 'Campus Portal';
-    document.title = `${title} — HostelConnect`;
+    document.title = titles[currentPath] || 'HostelConnect — NSUT Dwarka';
   }, [currentPath]);
 
-  // Update IST clock
+  // Maintain live IST clock in sidebar footer
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      setCurrentTimeIST(
-        now.toLocaleTimeString('en-IN', {
-          timeZone: 'Asia/Kolkata',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: true,
-        })
-      );
+      const istString = now.toLocaleTimeString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      });
+      setCurrentTimeIST(istString);
     };
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch nav groups
+  // Fetch dynamic navigation groups from backend
   useEffect(() => {
     fetch('/api/nav', { credentials: 'include' })
       .then((res) => (res.ok ? res.json() : { groups: [] }))
       .then((data) => setNavGroups(data.groups || []))
       .catch(() => setNavGroups([]));
-  }, [user?.role]);
+  }, [user]);
 
-  // Fetch unread notification count
-  const fetchNotifCount = () => {
-    fetch('/api/notifications/count', { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() : { unreadCount: 0 }))
-      .then((data) => setUnreadCount(data.unreadCount || 0))
-      .catch(() => setUnreadCount(0));
-  };
-
+  // Polling unread notification badge count every 30 seconds
   useEffect(() => {
-    fetchNotifCount();
-    const interval = setInterval(fetchNotifCount, 30000); // 30s polling
-    return () => clearInterval(interval);
-  }, []);
+    const fetchUnread = () => {
+      fetch('/api/notifications/count', { credentials: 'include' })
+        .then((res) => (res.ok ? res.json() : { unreadCount: 0 }))
+        .then((data) => setUnreadCount(Number(data.unreadCount ?? data.count) || 0))
+        .catch(() => {});
+    };
+    fetchUnread();
+    const pollInterval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(pollInterval);
+  }, [user]);
 
-  // Fetch latest 8 notifications when popover opens (unread first)
+  // Fetch recent notifications when popover is toggled open
   const toggleNotifPopover = () => {
     if (!isNotifPopoverOpen) {
-      fetch('/api/notifications?page=1&pageSize=8', { credentials: 'include' })
+      fetch('/api/notifications?limit=8', { credentials: 'include' })
         .then((res) => (res.ok ? res.json() : { notifications: [] }))
         .then((data) => setNotifications(data.notifications || []))
         .catch(() => setNotifications([]));
@@ -219,8 +214,8 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
   };
 
   const markNotificationRead = (notifId: number) => {
-    // Optimistic update: drop badge and mark read immediately
-    setUnreadCount((prev) => Math.max(0, prev - 1));
+    // Optimistic update
+    setUnreadCount((c) => Math.max(0, c - 1));
     setNotifications((prev) =>
       prev.map((n) => (n.notif_id === notifId ? { ...n, is_read: true } : n))
     );
@@ -228,7 +223,7 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
   };
 
   const markAllNotificationsRead = () => {
-    // Optimistic update: zero unread badge immediately
+    // Optimistic update
     setUnreadCount(0);
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     fetch('/api/notifications/read-all', { method: 'POST', credentials: 'include' }).catch(() => {});
@@ -257,17 +252,17 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
   const renderSidebarContent = (onItemClick?: () => void) => (
     <>
       <div>
-        {/* Institutional Wordmark Header (No Clipping) */}
-        <div className="h-16 px-4 shrink-0 border-b border-white/10 flex items-center justify-between">
+        {/* Brand Header */}
+        <div className="h-16 px-4 shrink-0 border-b-2 border-black flex items-center justify-between bg-navy-sidebar">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded bg-saffron text-white flex items-center justify-center font-bold text-xs shrink-0 tracking-tight">
+            <div className="w-8 h-8 rounded-[4px] bg-saffron text-black border-2 border-black flex items-center justify-center font-heading font-extrabold text-xs shrink-0 tracking-tight shadow-hard-sm">
               HC
             </div>
             <div className="min-w-0 flex-1">
-              <span className="font-serif font-bold text-sm tracking-tight leading-tight block truncate text-white">
+              <span className="font-heading font-extrabold text-sm tracking-tight leading-tight block truncate text-white">
                 HostelConnect
               </span>
-              <span className="text-[11px] text-slate-400 leading-tight block truncate">
+              <span className="text-[11px] text-surface-subtle leading-tight block truncate font-bold">
                 NSUT Dwarka
               </span>
             </div>
@@ -277,17 +272,17 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
               type="button"
               onClick={onItemClick}
               aria-label="Close navigation"
-              className="lg:hidden p-1 rounded text-slate-400 hover:text-white focus:outline-none"
+              className="lg:hidden p-1 rounded-[8px] border-2 border-black bg-white text-black hover:bg-saffron focus:outline-none"
             >
-              <X className="w-5 h-5" strokeWidth={1.75} />
+              <X className="w-5 h-5" strokeWidth={2} />
             </button>
           )}
         </div>
 
         {/* Role Indicator Ribbon */}
-        <div className="px-5 py-2.5 bg-white/[0.04] border-b border-white/10 flex items-center justify-between text-xs">
-          <span className="text-[11px] text-slate-400 font-medium">Logged in as</span>
-          <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-saffron/20 text-saffron border border-saffron/40">
+        <div className="px-4 py-2.5 bg-black/40 border-b-2 border-black flex items-center justify-between text-xs">
+          <span className="text-[11px] text-surface-subtle font-bold">Logged in as</span>
+          <span className="px-2 py-0.5 rounded-[4px] text-[10px] font-bold uppercase tracking-wider bg-surface-subtle text-black border-2 border-black">
             {roleLabel}
           </span>
         </div>
@@ -295,8 +290,8 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
         {/* Navigation Groups with Thin Custom Scrollbar */}
         <div className="py-4 px-3 space-y-6 overflow-y-auto max-h-[calc(100vh-170px)] scrollbar-thin">
           {navGroups.map((group, gIdx) => (
-            <div key={`${group.title}-${gIdx}`} className="space-y-1">
-              <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            <div key={`${group.title}-${gIdx}`} className="space-y-1.5">
+              <div className="px-3 pb-1 text-[10px] font-heading font-extrabold uppercase tracking-wider text-surface-subtle">
                 {group.title}
               </div>
               {group.items.map((item) => {
@@ -309,10 +304,10 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
                       onNavigate(item.path);
                       if (onItemClick) onItemClick();
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded text-xs font-medium transition-colors text-left ${
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-[4px] text-xs transition-colors text-left ${
                       isActive
-                        ? 'bg-navy-active text-white border-l-2 border-saffron font-semibold'
-                        : 'text-slate-300 hover:bg-white/[0.08] hover:text-white border-l-2 border-transparent'
+                        ? 'bg-saffron text-black border-2 border-black shadow-hard font-heading font-bold'
+                        : 'text-white hover:bg-surface-subtle hover:text-black font-medium border-2 border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -320,7 +315,7 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
                       <span className="truncate">{item.label}</span>
                     </div>
                     {item.badge !== undefined && (
-                      <span className="ml-2 px-1.5 py-0.2 rounded text-[10px] font-semibold tabular-nums bg-white/20 text-white">
+                      <span className="ml-2 px-1.5 py-0.2 rounded-[4px] text-[10px] font-bold tabular-nums bg-white text-black border-2 border-black">
                         {item.badge}
                       </span>
                     )}
@@ -333,13 +328,13 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
       </div>
 
       {/* Sidebar Footer with IST Clock */}
-      <div className="p-3 border-t border-white/10 bg-white/[0.02]">
-        <div className="flex items-center justify-between text-[11px] text-slate-400 px-2 py-1">
+      <div className="p-3 border-t-2 border-black bg-black/30">
+        <div className="bg-surface-subtle text-black border-2 border-black rounded-[4px] px-2.5 py-1.5 flex items-center justify-between text-[11px] font-bold">
           <div className="flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-saffron" strokeWidth={1.75} />
+            <Clock className="w-3.5 h-3.5 text-black" strokeWidth={2} />
             <span className="tabular-nums font-mono">{currentTimeIST || 'IST'}</span>
           </div>
-          <span className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+          <span className="text-[10px] uppercase font-bold tracking-wider">
             UTC+05:30
           </span>
         </div>
@@ -348,17 +343,17 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
   );
 
   return (
-    <div className="min-h-screen flex bg-paper">
+    <div className="min-h-screen flex bg-dots">
       {/* Skip to Content for Keyboard Accessibility */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-3 focus:py-1.5 focus:bg-primary focus:text-white focus:rounded focus:text-xs focus:font-medium focus:shadow-md"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-3 focus:py-1.5 focus:bg-black focus:text-white focus:border-2 focus:border-white focus:rounded-[4px] focus:text-xs focus:font-bold"
       >
         Skip to main content
       </a>
 
       {/* 240px Fixed Left Rail Navigation for Desktop */}
-      <aside className="hidden lg:flex w-[240px] shrink-0 min-h-screen bg-navy-sidebar text-white flex-col justify-between select-none z-20">
+      <aside className="hidden lg:flex w-[240px] shrink-0 min-h-screen bg-navy-sidebar text-white flex-col justify-between select-none z-20 border-r-2 border-black">
         {renderSidebarContent()}
       </aside>
 
@@ -370,7 +365,7 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
             onClick={() => setIsMobileNavOpen(false)}
             aria-hidden="true"
           />
-          <aside className="relative w-[260px] max-w-[85vw] bg-navy-sidebar text-white flex flex-col justify-between z-10 h-full shadow-2xl">
+          <aside className="relative w-[260px] max-w-[85vw] bg-navy-sidebar text-white flex flex-col justify-between z-10 h-full border-r-2 border-black shadow-hard-xl">
             {renderSidebarContent(() => setIsMobileNavOpen(false))}
           </aside>
         </div>
@@ -378,26 +373,26 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Persistent 64px Top Bar */}
-        <header className="h-16 bg-surface border-b border-border px-3 sm:px-6 flex items-center justify-between sticky top-0 z-10">
+        {/* Persistent 64px Top Bar: bg-white, border-b-2 border-black */}
+        <header className="h-16 bg-white border-b-2 border-black px-3 sm:px-6 flex items-center justify-between sticky top-0 z-10">
           {/* Mobile Menu & Quick Search Button */}
           <div className="flex items-center gap-2 sm:gap-4">
             <button
               type="button"
               onClick={() => setIsMobileNavOpen(true)}
               aria-label="Open navigation menu"
-              className="lg:hidden p-2 -ml-1 rounded text-ink-secondary hover:text-ink-primary hover:bg-surface-subtle focus:outline-none focus:ring-1 focus:ring-primary"
+              className="lg:hidden p-2 rounded-[8px] border-2 border-black bg-white hover:bg-paper text-black focus:outline-none"
             >
-              <Menu className="w-5 h-5" strokeWidth={1.75} />
+              <Menu className="w-5 h-5" strokeWidth={2} />
             </button>
             <button
               type="button"
               onClick={() => setIsCommandOpen(true)}
-              className="flex items-center gap-2 sm:gap-2.5 h-9 px-2 sm:px-3 bg-surface-subtle border border-border hover:border-border-strong rounded text-xs text-ink-muted transition-colors w-32 sm:w-48 md:w-64 text-left focus:outline-none focus:ring-1 focus:ring-primary"
+              className="flex items-center gap-2 sm:gap-2.5 h-9 px-2 sm:px-3 bg-white border-2 border-black rounded-[8px] text-xs font-bold text-black transition-all hover:bg-paper shadow-hard-sm w-36 sm:w-48 md:w-64 text-left focus:outline-none"
             >
-              <Search className="w-4 h-4 text-ink-muted shrink-0" strokeWidth={1.75} />
+              <Search className="w-4 h-4 text-black shrink-0" strokeWidth={2} />
               <span className="flex-1 truncate">Search...</span>
-              <kbd className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-surface border border-border text-[10px] font-mono text-ink-secondary">
+              <kbd className="hidden sm:inline-block px-1.5 py-0.5 rounded-[4px] bg-white border-2 border-black text-[10px] font-mono text-black font-bold">
                 {shortcutLabel}
               </kbd>
             </button>
@@ -411,11 +406,11 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
                 type="button"
                 onClick={toggleNotifPopover}
                 aria-label="View notifications"
-                className="relative p-2 rounded text-ink-secondary hover:text-ink-primary hover:bg-surface-subtle transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
+                className="relative p-2 rounded-[8px] border-2 border-black bg-white hover:bg-saffron text-black transition-colors focus:outline-none shadow-hard-sm"
               >
-                <Bell className="w-4 h-4" strokeWidth={1.75} />
+                <Bell className="w-4 h-4" strokeWidth={2} />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-saffron text-white text-[10px] font-bold flex items-center justify-center tabular-nums leading-none">
+                  <span className="absolute -top-1.5 -right-1.5 px-1 min-w-[16px] h-4 rounded-full bg-saffron text-black border border-black text-[10px] font-bold flex items-center justify-center tabular-nums leading-none">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -432,27 +427,27 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
               />
             </div>
 
-            <div className="h-4 w-[1px] bg-border mx-1" />
+            <div className="h-6 w-[2px] bg-black mx-1" />
 
             {/* User Profile Menu */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                className="flex items-center gap-2.5 p-1.5 pl-2.5 rounded hover:bg-surface-subtle transition-colors text-left focus:outline-none"
+                className="flex items-center gap-2 p-1.5 pl-2.5 rounded-[8px] border-2 border-black bg-white hover:bg-paper transition-colors text-left focus:outline-none shadow-hard-sm"
               >
                 <div className="hidden sm:flex flex-col items-end">
-                  <span className="text-xs font-semibold text-ink-primary leading-tight max-w-[130px] truncate">
+                  <span className="text-xs font-bold text-black leading-tight max-w-[130px] truncate">
                     {displayName}
                   </span>
-                  <span className="text-[10px] text-ink-muted font-mono leading-tight">
+                  <span className="text-[10px] text-black/70 font-mono leading-tight font-bold">
                     {user?.loginId}
                   </span>
                 </div>
-                <div className="w-7 h-7 rounded bg-navy-sidebar text-white flex items-center justify-center text-xs font-semibold shrink-0">
+                <div className="w-7 h-7 rounded-[4px] bg-navy-sidebar text-white border-2 border-black flex items-center justify-center text-xs font-bold shrink-0">
                   {displayName.charAt(0).toUpperCase()}
                 </div>
-                <ChevronDown className="w-3.5 h-3.5 text-ink-muted" strokeWidth={1.75} />
+                <ChevronDown className="w-3.5 h-3.5 text-black" strokeWidth={2} />
               </button>
 
               {/* User Dropdown */}
@@ -463,10 +458,10 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
                     className="fixed inset-0 z-30"
                     aria-hidden="true"
                   />
-                  <div className="absolute right-0 mt-1 w-56 bg-surface border border-border rounded-lg shadow-none py-1.5 z-40 text-xs">
-                    <div className="px-3 py-2 border-b border-border mb-1">
-                      <p className="font-semibold text-ink-primary truncate">{displayName}</p>
-                      <p className="text-[11px] text-ink-muted truncate mt-0.5">{roleLabel}</p>
+                  <div className="absolute right-0 mt-2 w-56 bg-white border-2 border-black rounded-[4px] shadow-hard py-1.5 z-40 text-xs">
+                    <div className="px-3 py-2 border-b-2 border-black mb-1 bg-paper/30">
+                      <p className="font-heading font-bold text-black truncate">{displayName}</p>
+                      <p className="text-[11px] text-black/70 font-bold truncate mt-0.5">{roleLabel}</p>
                     </div>
 
                     <button
@@ -475,9 +470,9 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
                         setIsUserMenuOpen(false);
                         setIsProfileModalOpen(true);
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-ink-secondary hover:text-ink-primary hover:bg-surface-subtle text-left"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-black font-bold hover:bg-paper text-left"
                     >
-                      <User className="w-4 h-4 text-ink-muted" strokeWidth={1.75} />
+                      <User className="w-4 h-4 text-black" strokeWidth={2} />
                       <span>User Profile</span>
                     </button>
 
@@ -487,13 +482,13 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
                         setIsUserMenuOpen(false);
                         onNavigate('/change-password');
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-ink-secondary hover:text-ink-primary hover:bg-surface-subtle text-left"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-black font-bold hover:bg-paper text-left"
                     >
-                      <KeyRound className="w-4 h-4 text-ink-muted" strokeWidth={1.75} />
+                      <KeyRound className="w-4 h-4 text-black" strokeWidth={2} />
                       <span>Change Password</span>
                     </button>
 
-                    <div className="border-t border-border my-1" />
+                    <div className="border-t-2 border-black my-1" />
 
                     <button
                       type="button"
@@ -501,9 +496,9 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
                         setIsUserMenuOpen(false);
                         logout();
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-status-danger-text hover:bg-status-danger-bg/50 text-left font-medium"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-status-danger-text hover:bg-status-danger-bg text-left font-bold"
                     >
-                      <LogOut className="w-4 h-4" strokeWidth={1.75} />
+                      <LogOut className="w-4 h-4" strokeWidth={2} />
                       <span>Sign Out</span>
                     </button>
                   </div>
@@ -513,8 +508,8 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
           </div>
         </header>
 
-        {/* Scrollable Page Body */}
-        <main id="main-content" className="flex-1 p-3 sm:p-6 md:p-8 overflow-y-auto min-w-0">{children}</main>
+        {/* Scrollable Page Body with Dot Canvas */}
+        <main id="main-content" className="flex-1 p-3 sm:p-6 md:p-8 overflow-y-auto min-w-0 bg-dots">{children}</main>
       </div>
 
       {/* Global Command Palette (Ctrl+K) */}
@@ -529,65 +524,65 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
 
       {/* User Profile Modal */}
       {isProfileModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-primary/50 p-4">
-          <div className="bg-surface border border-border rounded-lg max-w-md w-full p-6 shadow-xl space-y-5">
-            <div className="flex items-start justify-between pb-3 border-b border-border">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white border-2 border-black rounded-[4px] max-w-md w-full p-6 shadow-hard-lg space-y-5">
+            <div className="flex items-start justify-between pb-3 border-b-2 border-black">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-navy text-white flex items-center justify-center font-bold text-sm">
+                <div className="w-10 h-10 rounded-full bg-paper border-2 border-black text-black flex items-center justify-center font-heading font-extrabold text-sm">
                   {displayName.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-ink-primary font-serif leading-tight">{displayName}</h3>
-                  <span className="text-[11px] font-mono text-ink-muted">{user?.loginId} • {roleLabel}</span>
+                  <h3 className="font-heading font-extrabold text-base text-black leading-tight">{displayName}</h3>
+                  <span className="text-[11px] font-mono font-bold text-black/70">{user?.loginId} • {roleLabel}</span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsProfileModalOpen(false)}
-                className="text-ink-muted hover:text-ink-primary p-1 rounded"
+                className="text-black p-1 rounded-[8px] border-2 border-black hover:bg-saffron"
               >
-                <X className="w-4 h-4" strokeWidth={1.75} />
+                <X className="w-4 h-4" strokeWidth={2.5} />
               </button>
             </div>
 
             <div className="space-y-2.5 font-mono text-xs">
-              <div className="flex justify-between py-1 border-b border-border/50">
-                <span className="text-ink-muted">Account Role:</span>
-                <span className="text-ink-primary font-semibold">{user?.role}</span>
+              <div className="flex justify-between py-1 border-b border-black">
+                <span className="text-black/70 font-medium">Account Role:</span>
+                <span className="text-black font-bold">{user?.role}</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-border/50">
-                <span className="text-ink-muted">User ID:</span>
-                <span className="text-ink-primary font-semibold">{user?.userId}</span>
+              <div className="flex justify-between py-1 border-b border-black">
+                <span className="text-black/70 font-medium">User ID:</span>
+                <span className="text-black font-bold">{user?.userId}</span>
               </div>
               {user?.student && (
                 <>
-                  <div className="flex justify-between py-1 border-b border-border/50">
-                    <span className="text-ink-muted">Roll Number:</span>
-                    <span className="text-ink-primary font-semibold">{user.student.roll_no}</span>
+                  <div className="flex justify-between py-1 border-b border-black">
+                    <span className="text-black/70 font-medium">Roll Number:</span>
+                    <span className="text-black font-bold">{user.student.roll_no}</span>
                   </div>
-                  <div className="flex justify-between py-1 border-b border-border/50">
-                    <span className="text-ink-muted">Student Name:</span>
-                    <span className="text-ink-primary">{user.student.full_name}</span>
+                  <div className="flex justify-between py-1 border-b border-black">
+                    <span className="text-black/70 font-medium">Student Name:</span>
+                    <span className="text-black font-bold">{user.student.full_name}</span>
                   </div>
                 </>
               )}
               {user?.authority && (
                 <>
-                  <div className="flex justify-between py-1 border-b border-border/50">
-                    <span className="text-ink-muted">Designation:</span>
-                    <span className="text-ink-primary font-semibold">{user.authority.designation}</span>
+                  <div className="flex justify-between py-1 border-b border-black">
+                    <span className="text-black/70 font-medium">Designation:</span>
+                    <span className="text-black font-bold">{user.authority.designation}</span>
                   </div>
                   {user.authority.hostel_id && (
-                    <div className="flex justify-between py-1 border-b border-border/50">
-                      <span className="text-ink-muted">Assigned Hostel:</span>
-                      <span className="text-ink-primary">Hostel {user.authority.hostel_id}</span>
+                    <div className="flex justify-between py-1 border-b border-black">
+                      <span className="text-black/70 font-medium">Assigned Hostel:</span>
+                      <span className="text-black font-bold">Hostel {user.authority.hostel_id}</span>
                     </div>
                   )}
                 </>
               )}
             </div>
 
-            <div className="pt-2 flex items-center justify-end gap-2 border-t border-border">
+            <div className="pt-2 flex items-center justify-end gap-2 border-t-2 border-black">
               {user?.role === 'STUDENT' && (
                 <Button
                   variant="outline"

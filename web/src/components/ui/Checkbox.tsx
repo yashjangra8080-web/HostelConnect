@@ -61,16 +61,16 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
               e.preventDefault();
               internalRef.current?.click();
             }}
-            className={`w-4 h-4 rounded-sm border transition-colors flex items-center justify-center ${
+            className={`w-4 h-4 rounded-[4px] border-2 border-black transition-colors flex items-center justify-center ${
               isCheckedOrIndeterminate
-                ? 'bg-primary border-primary text-ink-onDark'
-                : 'bg-surface border-border hover:border-border-strong'
-            } ${disabled ? 'bg-surface-subtle border-border' : ''}`}
+                ? 'bg-black text-white'
+                : 'bg-white hover:bg-paper'
+            } ${disabled ? 'bg-surface-subtle' : ''}`}
           >
             {indeterminate ? (
-              <Minus className="w-3 h-3 text-white" strokeWidth={2.5} />
+              <Minus className="w-3 h-3 text-white" strokeWidth={3} />
             ) : checked ? (
-              <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
+              <Check className="w-3 h-3 text-white" strokeWidth={3} />
             ) : null}
           </div>
         </div>
@@ -83,7 +83,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             className="select-none"
           >
             {label && (
-              <label htmlFor={checkboxId} className="text-sm font-medium text-ink-primary leading-tight block cursor-pointer">
+              <label htmlFor={checkboxId} className="text-sm font-bold text-black leading-tight block cursor-pointer">
                 {label}
               </label>
             )}

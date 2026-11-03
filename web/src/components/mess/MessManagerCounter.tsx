@@ -71,7 +71,7 @@ export const MessManagerCounter: React.FC = () => {
           width: 320,
           margin: 1,
           color: {
-            dark: '#0C2054', // Dark Navy
+            dark: '#000000', // Pure Black for Neo-Brutalist max scan contrast
             light: '#FFFFFF',
           },
         });
@@ -152,34 +152,36 @@ export const MessManagerCounter: React.FC = () => {
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Top Banner & Hostel Selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
-        <div>
-          <h1 className="text-2xl font-serif font-bold text-ink-primary">
-            Mess Attendance Counter
-          </h1>
-          <p className="text-xs text-ink-secondary mt-1">
-            High-contrast digital scanner console with rotating 60-second HMAC token and manual fallback roster.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-ink-secondary">
-            <Building className="w-4 h-4 text-ink-muted" strokeWidth={1.75} />
-            <span>Hostel:</span>
+      <div className="bg-surface border-2 border-black rounded-sm p-6 shadow-hard-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-extrabold font-heading text-ink-primary tracking-tight">
+              Mess Attendance Counter
+            </h1>
+            <p className="text-xs font-medium text-ink-secondary mt-1">
+              High-contrast digital scanner console with rotating 60-second HMAC token and manual fallback roster.
+            </p>
           </div>
-          <select
-            value={selectedHostel}
-            onChange={(e) => setSelectedHostel(Number(e.target.value))}
-            className="text-xs bg-surface border border-border rounded px-3 py-1.5 font-medium text-ink-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value={1}>BH1 — Aryabhatta Hall</option>
-            <option value={2}>BH2 — Ramanujan Hall</option>
-            <option value={3}>GH1 — Kalpana Chawla Hall</option>
-            <option value={4}>GH2 — Gargi Hall</option>
-          </select>
-          <Button variant="outline" size="sm" onClick={() => fetchCounter(selectedHostel)} isLoading={loading}>
-            <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.75} />
-          </Button>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-ink-secondary">
+              <Building className="w-4 h-4 text-ink-primary" strokeWidth={2} />
+              <span>Hostel:</span>
+            </div>
+            <select
+              value={selectedHostel}
+              onChange={(e) => setSelectedHostel(Number(e.target.value))}
+              className="text-xs bg-surface border-2 border-black rounded-sm px-3 py-1.5 font-bold text-ink-primary shadow-hard-sm focus:outline-none cursor-pointer"
+            >
+              <option value={1}>BH1 — Aryabhatta Hall</option>
+              <option value={2}>BH2 — Ramanujan Hall</option>
+              <option value={3}>GH1 — Kalpana Chawla Hall</option>
+              <option value={4}>GH2 — Gargi Hall</option>
+            </select>
+            <Button variant="outline" size="sm" onClick={() => fetchCounter(selectedHostel)} isLoading={loading}>
+              <RefreshCw className="w-4 h-4" strokeWidth={2} />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -187,19 +189,19 @@ export const MessManagerCounter: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: QR Token & Meal Slot in Large Type (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="p-6 bg-surface border border-border rounded-xl space-y-6 shadow-sm">
+          <div className="p-6 bg-surface border-2 border-black rounded-sm space-y-6 shadow-hard-lg">
             {/* Header: Meal Type in Extra Large Type */}
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between border-b-2 border-black pb-4">
               <div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-ink-secondary">
                   Current Meal Window
                 </span>
-                <h2 className="text-3xl font-serif font-extrabold text-ink-primary tracking-tight mt-1">
+                <h2 className="text-3xl font-heading font-extrabold text-ink-primary tracking-tight mt-1">
                   {data?.meal?.type_name || 'MEAL SERVICE'}
                 </h2>
-                <div className="flex items-center gap-2 mt-1.5 text-xs text-ink-secondary">
-                  <Clock className="w-4 h-4 text-primary shrink-0" strokeWidth={1.75} />
-                  <span className="font-mono tabular-nums font-semibold">
+                <div className="flex items-center gap-2 mt-1.5 text-xs font-bold text-ink-secondary">
+                  <Clock className="w-4 h-4 text-ink-primary shrink-0" strokeWidth={2} />
+                  <span className="font-mono tabular-nums">
                     {data?.meal?.start_time?.slice(0, 5)} — {data?.meal?.end_time?.slice(0, 5)} IST
                   </span>
                   <span>•</span>
@@ -217,38 +219,38 @@ export const MessManagerCounter: React.FC = () => {
             </div>
 
             {/* Menu Description */}
-            <div className="p-3 bg-surface-subtle border border-border rounded text-xs text-ink-secondary">
-              <strong className="text-ink-primary font-semibold">Menu Today: </strong>
+            <div className="p-3.5 bg-paper border-2 border-black rounded-sm shadow-hard-sm text-xs font-medium text-ink-primary">
+              <strong className="text-ink-primary font-extrabold">Menu Today: </strong>
               <span>{data?.meal?.menu || 'Standard university mess meal provisions'}</span>
             </div>
 
             {/* Large QR Display */}
-            <div className="flex flex-col items-center justify-center p-6 bg-paper border border-border rounded-lg space-y-4">
-              <div className="bg-white p-4 rounded-xl border-2 border-primary/20 shadow-none">
+            <div className="flex flex-col items-center justify-center p-6 bg-dots bg-paper border-2 border-black rounded-sm space-y-4 shadow-hard">
+              <div className="bg-white p-4 rounded-sm border-2 border-black shadow-hard-lg">
                 {qrDataUrl ? (
                   <img src={qrDataUrl} alt="Mess Attendance QR Token" className="w-56 h-56 object-contain" />
                 ) : (
-                  <div className="w-56 h-56 flex items-center justify-center text-xs text-ink-muted">
+                  <div className="w-56 h-56 flex items-center justify-center text-xs font-bold text-ink-muted">
                     Loading QR...
                   </div>
                 )}
               </div>
 
               {/* 60s Timer Bar */}
-              <div className="w-full max-w-xs space-y-1.5 text-center">
-                <div className="flex items-center justify-between text-xs text-ink-secondary font-mono">
+              <div className="w-full max-w-xs space-y-2 text-center">
+                <div className="flex items-center justify-between text-xs font-mono font-bold text-ink-primary">
                   <span>Rotating Token</span>
-                  <span className="font-bold text-saffron tabular-nums">
+                  <span className="tabular-nums">
                     Refreshes in {data?.expiresIn ?? 60}s
                   </span>
                 </div>
-                <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
+                <div className="w-full h-3 bg-surface border-2 border-black rounded-sm overflow-hidden shadow-hard-sm">
                   <div
-                    className="h-full bg-saffron transition-all duration-1000 ease-linear rounded-full"
+                    className="h-full bg-saffron transition-all duration-1000 ease-linear border-r-2 border-black"
                     style={{ width: `${(((data?.expiresIn ?? 60) / 60) * 100).toFixed(0)}%` }}
                   />
                 </div>
-                <p className="text-[10px] text-ink-muted mt-1">
+                <p className="text-[10px] font-bold text-ink-secondary mt-1">
                   SHA-256 HMAC rotated every 60 seconds. Previous window accepted for 60s grace.
                 </p>
               </div>
@@ -259,10 +261,10 @@ export const MessManagerCounter: React.FC = () => {
                   type="text"
                   readOnly
                   value={data?.token || ''}
-                  className="flex-1 text-[11px] font-mono bg-white border border-border rounded px-2.5 py-1 text-ink-muted truncate"
+                  className="flex-1 text-[11px] font-mono font-bold bg-white border-2 border-black rounded-sm px-3 py-1.5 text-ink-primary truncate shadow-hard-sm"
                 />
                 <Button variant="outline" size="sm" onClick={copyToken}>
-                  {copied ? <Check className="w-3.5 h-3.5 text-status-success" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied ? <Check className="w-3.5 h-3.5 text-status-success-text" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copied ? 'Copied' : 'Copy'}</span>
                 </Button>
               </div>
@@ -273,35 +275,35 @@ export const MessManagerCounter: React.FC = () => {
         {/* Right Column: Live Marked Count & Manual Fallback (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
           {/* Live Attendance Metric Card */}
-          <div className="p-5 bg-surface border border-border rounded-xl space-y-4 shadow-sm">
+          <div className="p-5 bg-surface border-2 border-black rounded-sm space-y-4 shadow-hard-lg">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-ink-secondary">
                 Live Marked Attendance
               </span>
-              <span className="flex items-center gap-1.5 text-[11px] text-[#059669] font-semibold bg-[#ECFDF5] px-2 py-0.5 rounded-full border border-[#A7F3D0]">
-                <span className="w-2 h-2 rounded-full bg-[#059669] animate-pulse" />
+              <span className="flex items-center gap-1.5 text-[11px] text-status-success-text font-extrabold bg-status-success-subtle px-2.5 py-0.5 rounded-sm border-2 border-black shadow-hard-sm">
+                <span className="w-2 h-2 rounded-full bg-black animate-pulse" />
                 Live Sync
               </span>
             </div>
 
             <div className="flex items-baseline gap-3">
-              <span className="text-4xl font-serif font-black text-ink-primary tabular-nums">
+              <span className="text-4xl font-heading font-black text-ink-primary tabular-nums">
                 {data?.markedCount ?? 0}
               </span>
-              <span className="text-sm text-ink-muted font-medium">
+              <span className="text-sm text-ink-secondary font-bold">
                 / {data?.totalResidents ?? 300} resident beds
               </span>
             </div>
 
             {/* Attendance Percentage Progress */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs font-mono text-ink-secondary">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs font-mono font-bold text-ink-secondary">
                 <span>Meal Turnout</span>
-                <span className="font-bold text-primary">{data?.percentMarked ?? 0}%</span>
+                <span className="text-ink-primary">{data?.percentMarked ?? 0}%</span>
               </div>
-              <div className="w-full h-2.5 bg-surface-subtle border border-border rounded-full overflow-hidden">
+              <div className="w-full h-3.5 bg-surface-subtle border-2 border-black rounded-sm overflow-hidden shadow-hard-sm">
                 <div
-                  className="h-full bg-primary transition-all duration-500 rounded-full"
+                  className="h-full bg-black transition-all duration-500"
                   style={{ width: `${Math.min(100, data?.percentMarked ?? 0)}%` }}
                 />
               </div>
@@ -309,10 +311,10 @@ export const MessManagerCounter: React.FC = () => {
           </div>
 
           {/* Manual Fallback Search Roster */}
-          <div className="p-5 bg-surface border border-border rounded-xl space-y-4 shadow-sm">
+          <div className="p-5 bg-surface border-2 border-black rounded-sm space-y-4 shadow-hard-lg">
             <div>
-              <h3 className="text-sm font-semibold text-ink-primary">Manual Fallback Roster</h3>
-              <p className="text-xs text-ink-secondary mt-0.5">
+              <h3 className="text-sm font-extrabold font-heading text-ink-primary">Manual Fallback Roster</h3>
+              <p className="text-xs font-medium text-ink-secondary mt-0.5">
                 Search resident by roll number or name if student phone is depleted.
               </p>
             </div>
@@ -321,27 +323,27 @@ export const MessManagerCounter: React.FC = () => {
               placeholder="Search Roll No (e.g. 2026UCS0001)..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              leftIcon={<Search className="w-4 h-4 text-ink-muted" strokeWidth={1.75} />}
+              leftIcon={<Search className="w-4 h-4 text-ink-primary" strokeWidth={2} />}
             />
 
             {/* Resident Result List */}
-            <div className="border border-border rounded-lg divide-y divide-border max-h-72 overflow-y-auto">
+            <div className="border-2 border-black rounded-sm divide-y-2 divide-black max-h-72 overflow-y-auto shadow-hard-sm">
               {residents.length === 0 ? (
-                <div className="p-4 text-center text-xs text-ink-muted">
+                <div className="p-4 text-center text-xs font-bold text-ink-muted">
                   {searching ? 'Searching roster...' : 'No resident students match search query.'}
                 </div>
               ) : (
                 residents.map((r: any) => (
                   <div
                     key={r.student_id}
-                    className="p-3 flex items-center justify-between hover:bg-surface-subtle transition-colors text-xs"
+                    className="p-3 flex items-center justify-between hover:bg-paper/30 transition-colors text-xs"
                   >
                     <div>
-                      <div className="font-medium text-ink-primary flex items-center gap-1.5">
+                      <div className="font-extrabold text-ink-primary flex items-center gap-1.5">
                         <span>{r.full_name}</span>
-                        <span className="text-[10px] font-mono text-ink-muted">({r.room_no})</span>
+                        <span className="text-[10px] font-mono text-ink-secondary">({r.room_no})</span>
                       </div>
-                      <div className="text-[11px] font-mono text-ink-muted tabular-nums">
+                      <div className="text-[11px] font-mono font-bold text-ink-secondary tabular-nums">
                         {r.roll_no}
                       </div>
                     </div>
@@ -352,7 +354,7 @@ export const MessManagerCounter: React.FC = () => {
                       isLoading={manualSubmitting === r.student_id}
                       onClick={() => handleMarkManual(r.student_id, r.full_name)}
                     >
-                      <Check className="w-3.5 h-3.5 text-primary" />
+                      <Check className="w-3.5 h-3.5 text-ink-primary" strokeWidth={2} />
                       <span>Mark Present</span>
                     </Button>
                   </div>
@@ -365,11 +367,11 @@ export const MessManagerCounter: React.FC = () => {
 
       {/* Today's Headcount Across All 4 Meals */}
       <section className="space-y-3">
-        <div className="flex items-center justify-between text-xs text-ink-secondary">
-          <span className="font-semibold uppercase tracking-wider text-ink-primary">
+        <div className="flex items-center justify-between text-xs font-extrabold text-ink-secondary">
+          <span className="uppercase tracking-wider text-ink-primary">
             Today's Headcount per Meal Slot (Hostel {selectedHostel})
           </span>
-          <span className="font-mono text-ink-muted">Resident Count: {data?.totalResidents ?? 75}</span>
+          <span className="font-mono text-ink-primary">Resident Count: {data?.totalResidents ?? 75}</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -380,27 +382,27 @@ export const MessManagerCounter: React.FC = () => {
             const isClosed = slot.is_closed === 1;
 
             return (
-              <div key={`today-slot-${slot.meal_id}`} className="p-4 bg-surface border border-border rounded-lg space-y-2">
+              <div key={`today-slot-${slot.meal_id}`} className="p-4 bg-surface border-2 border-black rounded-sm shadow-hard space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-xs text-ink-primary">{slot.type_name}</span>
+                  <span className="font-extrabold text-xs text-ink-primary">{slot.type_name}</span>
                   {isClosed ? (
                     <StatusTag status="warning" label="CLOSED" size="sm" />
                   ) : (
-                    <span className="text-[10px] font-mono text-ink-muted">
+                    <span className="text-[10px] font-mono font-bold text-ink-secondary">
                       {slot.start_time?.slice(0, 5)} - {slot.end_time?.slice(0, 5)}
                     </span>
                   )}
                 </div>
 
                 <div className="flex items-baseline justify-between">
-                  <div className="text-2xl font-serif font-bold text-ink-primary tabular-nums">
-                    {count} <span className="text-xs font-sans text-ink-muted font-normal">/ {total}</span>
+                  <div className="text-2xl font-heading font-black text-ink-primary tabular-nums">
+                    {count} <span className="text-xs font-sans text-ink-secondary font-bold">/ {total}</span>
                   </div>
-                  <span className="text-xs font-mono font-semibold text-primary tabular-nums">{pct}%</span>
+                  <span className="text-xs font-mono font-extrabold text-ink-primary tabular-nums">{pct}%</span>
                 </div>
 
-                <div className="w-full bg-surface-subtle border border-border h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-primary h-full rounded-full transition-all" style={{ width: `${Math.min(100, pct)}%` }} />
+                <div className="w-full bg-surface-subtle border-2 border-black h-2 rounded-sm overflow-hidden shadow-hard-sm">
+                  <div className="bg-saffron h-full transition-all" style={{ width: `${Math.min(100, pct)}%` }} />
                 </div>
               </div>
             );
@@ -411,12 +413,12 @@ export const MessManagerCounter: React.FC = () => {
       {/* 14-Day Trend & 30-Day Per-Meal Rates */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* 14-Day Daily Attendance Trend (7 cols) */}
-        <div className="lg:col-span-7 p-5 bg-surface border border-border rounded-xl space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-ink-primary">
+        <div className="lg:col-span-7 p-5 bg-surface border-2 border-black rounded-sm space-y-3 shadow-hard">
+          <div className="flex items-center justify-between border-b-2 border-black pb-2">
+            <span className="text-xs font-extrabold uppercase tracking-wider text-ink-primary">
               14-Day Daily Turnout Trend
             </span>
-            <span className="text-[11px] font-mono text-ink-muted">Daily Attendance %</span>
+            <span className="text-[11px] font-mono font-bold text-ink-secondary">Daily Attendance %</span>
           </div>
 
           <div className="grid grid-cols-7 sm:grid-cols-14 gap-1.5 text-center items-end min-h-[90px] pt-4">
@@ -428,17 +430,17 @@ export const MessManagerCounter: React.FC = () => {
 
               return (
                 <div key={`trend-${t.date}`} className="flex flex-col items-center gap-1 group">
-                  <div className="text-[9px] font-mono text-ink-muted group-hover:text-ink-primary tabular-nums">
+                  <div className="text-[9px] font-mono font-bold text-ink-secondary group-hover:text-ink-primary tabular-nums">
                     {pct}%
                   </div>
-                  <div className="w-full h-14 bg-surface-subtle border border-border/80 rounded-t flex items-end overflow-hidden">
+                  <div className="w-full h-14 bg-surface-subtle border-2 border-black rounded-t-sm flex items-end overflow-hidden shadow-hard-sm">
                     <div
-                      className="w-full bg-primary transition-all duration-300"
+                      className="w-full bg-black transition-all duration-300"
                       style={{ height: `${pct}%` }}
                       title={`${t.date}: ${attended}/${scheduled} meals (${pct}%)`}
                     />
                   </div>
-                  <span className="text-[10px] font-mono text-ink-secondary">{dayStr}</span>
+                  <span className="text-[10px] font-mono font-bold text-ink-primary">{dayStr}</span>
                 </div>
               );
             })}
@@ -446,12 +448,12 @@ export const MessManagerCounter: React.FC = () => {
         </div>
 
         {/* 30-Day Per-Meal-Type Turnover Rates (5 cols) */}
-        <div className="lg:col-span-5 p-5 bg-surface border border-border rounded-xl space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-ink-primary">
+        <div className="lg:col-span-5 p-5 bg-surface border-2 border-black rounded-sm space-y-3 shadow-hard">
+          <div className="flex items-center justify-between border-b-2 border-black pb-2">
+            <span className="text-xs font-extrabold uppercase tracking-wider text-ink-primary">
               Per-Meal-Type Rates (Past 30 Days)
             </span>
-            <span className="text-[11px] font-mono text-ink-muted">Turnout %</span>
+            <span className="text-[11px] font-mono font-bold text-ink-secondary">Turnout %</span>
           </div>
 
           <div className="space-y-3 pt-1">
@@ -463,13 +465,13 @@ export const MessManagerCounter: React.FC = () => {
               return (
                 <div key={`rate-${rate.meal_type_id}`} className="space-y-1">
                   <div className="flex justify-between text-xs">
-                    <span className="font-semibold text-ink-primary">{rate.type_name}</span>
-                    <span className="font-mono text-ink-secondary tabular-nums">
+                    <span className="font-extrabold text-ink-primary">{rate.type_name}</span>
+                    <span className="font-mono font-bold text-ink-secondary tabular-nums">
                       {attended} / {scheduled} ({pct}%)
                     </span>
                   </div>
-                  <div className="w-full bg-surface-subtle border border-border h-2 rounded-full overflow-hidden">
-                    <div className="bg-primary h-full rounded-full transition-all" style={{ width: `${Math.min(100, pct)}%` }} />
+                  <div className="w-full bg-surface-subtle border-2 border-black h-2.5 rounded-sm overflow-hidden shadow-hard-sm">
+                    <div className="bg-saffron h-full transition-all" style={{ width: `${Math.min(100, pct)}%` }} />
                   </div>
                 </div>
               );

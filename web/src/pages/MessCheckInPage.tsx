@@ -125,20 +125,20 @@ export const MessCheckInPage: React.FC<MessCheckInPageProps> = ({ onNavigate }) 
     <div className="max-w-xl mx-auto py-8 px-4 space-y-6">
       {/* Header */}
       <div className="text-center space-y-1">
-        <h1 className="text-2xl font-serif font-bold text-ink-primary">
+        <h1 className="text-2xl font-heading font-extrabold text-black tracking-tight">
           Dining Hall Attendance
         </h1>
-        <p className="text-xs text-ink-muted">
+        <p className="text-xs text-black/70 font-sans">
           Instant contactless check-in via 60-second rotating counter QR code.
         </p>
       </div>
 
       {/* Submitting Loading State */}
       {submitting && (
-        <div className="p-8 bg-surface border border-border rounded-lg text-center space-y-3">
-          <RefreshCw className="w-8 h-8 text-primary animate-spin mx-auto" />
-          <h3 className="text-sm font-semibold text-ink-primary">Verifying Counter Token...</h3>
-          <p className="text-xs text-ink-muted max-w-xs mx-auto">
+        <div className="p-8 bg-white border-2 border-black rounded-[4px] text-center space-y-3 shadow-hard-lg">
+          <RefreshCw className="w-8 h-8 text-black animate-spin mx-auto" />
+          <h3 className="text-sm font-heading font-bold text-black">Verifying Counter Token...</h3>
+          <p className="text-xs text-black/70 max-w-xs mx-auto font-sans">
             Checking HMAC cryptographic signature, 60-second rotation window, and hostel residence.
           </p>
         </div>
@@ -146,50 +146,50 @@ export const MessCheckInPage: React.FC<MessCheckInPageProps> = ({ onNavigate }) 
 
       {/* Success Card */}
       {!submitting && result?.status === 'success' && (
-        <div className="p-6 bg-surface border-2 border-emerald-500/50 rounded-lg space-y-5 text-center shadow-sm">
-          <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center mx-auto">
-            <CheckCircle2 className="w-8 h-8" strokeWidth={2.25} />
+        <div className="p-6 bg-white border-2 border-black rounded-[4px] space-y-5 text-center shadow-hard-lg">
+          <div className="w-14 h-14 rounded-full bg-status-success-bg border-2 border-black text-black flex items-center justify-center mx-auto shadow-hard-sm">
+            <CheckCircle2 className="w-8 h-8 text-black" strokeWidth={2.5} />
           </div>
 
           <div className="space-y-1">
-            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-800">
+            <span className="text-xs font-heading font-extrabold uppercase tracking-wider text-black bg-saffron px-2.5 py-1 border-2 border-black rounded-[4px] inline-block shadow-hard-sm">
               Verified & Logged
             </span>
-            <h2 className="text-2xl font-serif font-bold text-ink-primary">
+            <h2 className="text-2xl font-heading font-extrabold text-black tracking-tight mt-2">
               {result.meal?.type_name || 'Meal'} Recorded
             </h2>
-            <p className="text-xs text-ink-secondary max-w-sm mx-auto">
+            <p className="text-xs text-black/80 font-sans max-w-sm mx-auto">
               {result.message}
             </p>
           </div>
 
           {/* Details Grid */}
-          <div className="p-4 bg-surface-subtle border border-border rounded text-xs space-y-2 text-left font-mono">
+          <div className="p-4 bg-surface-subtle/20 border-2 border-black rounded-[4px] text-xs space-y-2 text-left font-mono">
             {result.student && (
-              <div className="flex justify-between border-b border-border/50 pb-1.5">
-                <span className="text-ink-muted font-sans text-[11px]">Resident:</span>
-                <span className="font-semibold text-ink-primary">
+              <div className="flex justify-between border-b border-black/20 pb-1.5">
+                <span className="text-black/60 font-sans text-[11px]">Resident:</span>
+                <span className="font-bold text-black">
                   {result.student.full_name} ({result.student.roll_no})
                 </span>
               </div>
             )}
             {result.meal && (
-              <div className="flex justify-between border-b border-border/50 pb-1.5">
-                <span className="text-ink-muted font-sans text-[11px]">Meal Slot:</span>
-                <span className="font-medium text-ink-primary">
+              <div className="flex justify-between border-b border-black/20 pb-1.5">
+                <span className="text-black/60 font-sans text-[11px]">Meal Slot:</span>
+                <span className="font-semibold text-black">
                   {result.meal.type_name} ({result.meal.start_time?.slice(0, 5)} - {result.meal.end_time?.slice(0, 5)} IST)
                 </span>
               </div>
             )}
             {result.meal?.hostel_name && (
-              <div className="flex justify-between border-b border-border/50 pb-1.5">
-                <span className="text-ink-muted font-sans text-[11px]">Dining Hall:</span>
-                <span className="font-medium text-ink-primary">{result.meal.hostel_name}</span>
+              <div className="flex justify-between border-b border-black/20 pb-1.5">
+                <span className="text-black/60 font-sans text-[11px]">Dining Hall:</span>
+                <span className="font-semibold text-black">{result.meal.hostel_name}</span>
               </div>
             )}
             <div className="flex justify-between pt-0.5">
-              <span className="text-ink-muted font-sans text-[11px]">Timestamp:</span>
-              <span className="font-medium text-ink-secondary tabular-nums">
+              <span className="text-black/60 font-sans text-[11px]">Timestamp:</span>
+              <span className="font-medium text-black tabular-nums">
                 {result.timestamp ? formatDateTimeIST(result.timestamp) : 'Just now'}
               </span>
             </div>
@@ -220,19 +220,19 @@ export const MessCheckInPage: React.FC<MessCheckInPageProps> = ({ onNavigate }) 
 
       {/* Error Card */}
       {!submitting && result?.status === 'error' && (
-        <div className="p-6 bg-surface border-2 border-danger/40 rounded-lg space-y-4 text-center shadow-sm">
-          <div className="w-14 h-14 rounded-full bg-danger-subtle border border-danger/30 text-danger flex items-center justify-center mx-auto">
-            <AlertTriangle className="w-7 h-7" strokeWidth={2} />
+        <div className="p-6 bg-white border-2 border-black rounded-[4px] space-y-4 text-center shadow-hard-lg">
+          <div className="w-14 h-14 rounded-full bg-status-danger-bg border-2 border-black text-black flex items-center justify-center mx-auto shadow-hard-sm">
+            <AlertTriangle className="w-7 h-7 text-black" strokeWidth={2.5} />
           </div>
 
           <div className="space-y-1">
-            <span className="text-xs font-semibold uppercase tracking-wider text-danger">
+            <span className="text-xs font-heading font-extrabold uppercase tracking-wider text-black bg-status-danger-bg px-2.5 py-1 border-2 border-black rounded-[4px] inline-block shadow-hard-sm">
               Check-in Rejected
             </span>
-            <h2 className="text-xl font-serif font-bold text-ink-primary">
+            <h2 className="text-xl font-heading font-extrabold text-black tracking-tight mt-2">
               {result.title}
             </h2>
-            <p className="text-xs text-ink-secondary max-w-sm mx-auto leading-relaxed">
+            <p className="text-xs text-black/80 font-sans max-w-sm mx-auto leading-relaxed">
               {result.message}
             </p>
           </div>
@@ -260,26 +260,26 @@ export const MessCheckInPage: React.FC<MessCheckInPageProps> = ({ onNavigate }) 
       )}
 
       {/* Collapsed Manual Code Fallback */}
-      <div className="bg-surface border border-border rounded-lg overflow-hidden">
+      <div className="bg-white border-2 border-black rounded-[4px] overflow-hidden shadow-hard">
         <button
           type="button"
           onClick={() => setShowManualInput((prev) => !prev)}
-          className="w-full px-4 py-3 flex items-center justify-between text-xs font-semibold text-ink-secondary hover:bg-surface-subtle transition-colors text-left"
+          className="w-full px-4 py-3 flex items-center justify-between text-xs font-heading font-bold text-black hover:bg-paper transition-colors text-left"
         >
           <span className="flex items-center gap-2">
-            <QrCode className="w-4 h-4 text-ink-muted" />
+            <QrCode className="w-4 h-4 text-black" strokeWidth={2} />
             <span>Enter code manually</span>
           </span>
           {showManualInput ? (
-            <ChevronUp className="w-4 h-4 text-ink-muted" />
+            <ChevronUp className="w-4 h-4 text-black" strokeWidth={2} />
           ) : (
-            <ChevronDown className="w-4 h-4 text-ink-muted" />
+            <ChevronDown className="w-4 h-4 text-black" strokeWidth={2} />
           )}
         </button>
 
         {showManualInput && (
-          <form onSubmit={handleManualSubmit} className="p-4 pt-1 border-t border-border space-y-3 bg-surface-subtle">
-            <p className="text-[11px] text-ink-muted">
+          <form onSubmit={handleManualSubmit} className="p-4 pt-3 border-t-2 border-black space-y-3 bg-surface-subtle/20">
+            <p className="text-[11px] text-black/70 font-sans">
               If your phone camera cannot scan the QR code, paste the 64-character token displayed below the counter screen.
             </p>
             <div className="flex gap-2">

@@ -44,22 +44,6 @@ interface Complaint {
   responses: ComplaintResponse[];
 }
 
-// ─── Style helpers ────────────────────────────────────────────────────────────
-const STATUS_STYLES: Record<string, { text: string; bg: string; border: string }> = {
-  OPEN:        { text: '#D97706', bg: '#FFFBEB', border: '#FDE68A' },
-  SEEN:        { text: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE' },
-  IN_PROGRESS: { text: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE' },
-  RESOLVED:    { text: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
-  REJECTED:    { text: '#DC2626', bg: '#FEF2F2', border: '#FECACA' },
-};
-
-const SEVERITY_STYLES: Record<string, { text: string; bg: string; border: string }> = {
-  LOW:    { text: '#4B5563', bg: '#F3F4F6', border: '#E5E7EB' },
-  MEDIUM: { text: '#D97706', bg: '#FFFBEB', border: '#FDE68A' },
-  HIGH:   { text: '#EA580C', bg: '#FFF7ED', border: '#FED7AA' },
-  URGENT: { text: '#DC2626', bg: '#FEF2F2', border: '#FECACA' },
-};
-
 // Valid next transitions from each state (authority perspective)
 const NEXT_STATES: Record<string, string[]> = {
   OPEN:        ['SEEN', 'REJECTED'],
@@ -70,26 +54,52 @@ const NEXT_STATES: Record<string, string[]> = {
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const s = STATUS_STYLES[status] ?? STATUS_STYLES.OPEN;
+  const getStyle = () => {
+    switch (status) {
+      case 'OPEN':
+        return 'bg-paper text-black';
+      case 'SEEN':
+        return 'bg-surface-subtle text-black';
+      case 'IN_PROGRESS':
+        return 'bg-saffron text-black';
+      case 'RESOLVED':
+        return 'bg-status-success-bg text-black';
+      case 'REJECTED':
+        return 'bg-status-danger-bg text-black';
+      default:
+        return 'bg-paper text-black';
+    }
+  };
+
   return (
-    <span style={{
-      color: s.text, background: s.bg, border: `1px solid ${s.border}`,
-      borderRadius: 9999, fontSize: 11, fontWeight: 600, padding: '2px 8px',
-      display: 'inline-block', whiteSpace: 'nowrap',
-    }}>
+    <span
+      className={`inline-block px-2 py-0.5 rounded-[6px] text-[10px] font-heading font-bold border-2 border-black whitespace-nowrap ${getStyle()}`}
+    >
       {status.replace('_', ' ')}
     </span>
   );
 }
 
 function SeverityBadge({ severity }: { severity: string }) {
-  const s = SEVERITY_STYLES[severity] ?? SEVERITY_STYLES.MEDIUM;
+  const getStyle = () => {
+    switch (severity) {
+      case 'LOW':
+        return 'bg-white text-black';
+      case 'MEDIUM':
+        return 'bg-paper text-black';
+      case 'HIGH':
+        return 'bg-saffron text-black';
+      case 'URGENT':
+        return 'bg-status-danger-bg text-black';
+      default:
+        return 'bg-paper text-black';
+    }
+  };
+
   return (
-    <span style={{
-      color: s.text, background: s.bg, border: `1px solid ${s.border}`,
-      borderRadius: 9999, fontSize: 11, fontWeight: 600, padding: '2px 8px',
-      display: 'inline-block',
-    }}>
+    <span
+      className={`inline-block px-2 py-0.5 rounded-[6px] text-[10px] font-heading font-bold border-2 border-black ${getStyle()}`}
+    >
       {severity}
     </span>
   );
@@ -146,92 +156,63 @@ function ComplaintDrawer({
       {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.25)', zIndex: 40,
-        }}
+        className="fixed inset-0 bg-black/60 z-40"
       />
       {/* Drawer panel */}
-      <div style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0, width: 560,
-        background: '#FFFFFF', zIndex: 50, display: 'flex', flexDirection: 'column',
-        boxShadow: '-4px 0 24px rgba(0,0,0,0.12)',
-      }}>
+      <div className="fixed top-0 right-0 bottom-0 max-w-lg w-full bg-white z-50 flex flex-col shadow-hard-xl border-l-2 border-black animate-in slide-in-from-right duration-200">
         {/* Header */}
-        <div style={{
-          padding: '16px 20px', borderBottom: '1px solid #E2E8F0',
-          display: 'flex', alignItems: 'flex-start', gap: 12,
-          background: '#F8FAFC',
-        }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+        <div className="p-5 border-b-2 border-black flex items-start justify-between gap-3 bg-surface-subtle">
+          <div className="flex-1 min-w-0">
+            <div className="flex gap-2 flex-wrap mb-2">
               <StatusBadge status={complaint.status} />
               <SeverityBadge severity={complaint.severity} />
-              <span style={{
-                fontSize: 11, fontWeight: 600, color: '#64748B',
-                background: '#F3F4F6', border: '1px solid #E5E7EB',
-                borderRadius: 9999, padding: '2px 8px',
-              }}>
+              <span className="text-[10px] font-heading font-bold text-black bg-white border-2 border-black rounded-[4px] px-1.5 py-0.5">
                 {complaint.category}
               </span>
               {complaint.is_anonymous && (
-                <span style={{
-                  fontSize: 11, fontWeight: 600, color: '#7C3AED',
-                  background: '#F5F3FF', border: '1px solid #DDD6FE',
-                  borderRadius: 9999, padding: '2px 8px',
-                }}>
+                <span className="text-[10px] font-heading font-bold text-black bg-saffron border-2 border-black rounded-[4px] px-1.5 py-0.5">
                   ANONYMOUS
                 </span>
               )}
               {complaint.escalated_at && (
-                <span style={{
-                  fontSize: 11, fontWeight: 600, color: '#D97706',
-                  background: '#FFFBEB', border: '1px solid #FDE68A',
-                  borderRadius: 9999, padding: '2px 8px',
-                  display: 'flex', alignItems: 'center', gap: 4,
-                }}>
-                  <AlertCircle size={11} strokeWidth={1.75} />
+                <span className="text-[10px] font-heading font-bold text-black bg-status-danger-bg border-2 border-black rounded-[4px] px-1.5 py-0.5 flex items-center gap-1">
+                  <AlertCircle size={12} strokeWidth={2} />
                   ESCALATED
                 </span>
               )}
             </div>
-            <div style={{ fontWeight: 700, fontSize: 16, color: '#0F172A', marginBottom: 2 }}>
+            <div className="font-heading font-extrabold text-base text-black mb-1">
               {complaint.subject}
             </div>
-            <div style={{ fontSize: 12, color: '#64748B' }}>
+            <div className="text-xs text-black/80 font-sans">
               From: {complaint.student_name}{' '}
               {complaint.student_roll_no !== 'ANONYMOUS' && (
-                <code style={{ fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}>
+                <code className="text-xs font-mono font-bold text-black">
                   ({complaint.student_roll_no})
                 </code>
               )}
               {' · '}
-              <span style={{ fontVariantNumeric: 'tabular-nums' }}>{formatIST(complaint.created_at)}</span>
+              <span className="tabular-nums font-mono">{formatIST(complaint.created_at)}</span>
               {' · '}
-              <span style={{ fontVariantNumeric: 'tabular-nums' }}>{complaint.age_days}d old</span>
+              <span className="tabular-nums font-mono font-bold">{complaint.age_days}d old</span>
             </div>
           </div>
           <button
             onClick={onClose}
-            style={{
-              background: 'transparent', border: 'none', cursor: 'pointer',
-              padding: 4, borderRadius: 4, color: '#64748B',
-            }}
+            className="w-8 h-8 rounded-[8px] border-2 border-black bg-white hover:bg-status-danger-bg text-black flex items-center justify-center transition-colors shadow-hard-sm"
           >
-            <X size={18} strokeWidth={1.75} />
+            <X size={16} strokeWidth={2} />
           </button>
         </div>
 
         {/* Thread */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+        <div className="flex-1 overflow-y-auto p-5 space-y-3">
           {/* Original description */}
-          <div style={{
-            padding: '12px 14px', background: '#F8FAFC',
-            border: '1px solid #E2E8F0', borderRadius: 8, marginBottom: 12,
-          }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 6 }}>
+          <div className="p-3.5 bg-surface-subtle/20 border-2 border-black rounded-[4px]">
+            <div className="text-xs font-heading font-extrabold text-black uppercase tracking-wider mb-1.5">
               Original Complaint
             </div>
-            <div style={{ fontSize: 14, color: '#0F172A', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+            <div className="text-sm text-black font-sans leading-relaxed whitespace-pre-wrap">
               {complaint.description}
             </div>
           </div>
@@ -240,23 +221,25 @@ function ComplaintDrawer({
           {complaint.responses.map((r) => {
             const isAuthority = r.responder_role !== 'STUDENT';
             return (
-              <div key={r.response_id} style={{
-                marginBottom: 10, padding: '10px 14px',
-                background: isAuthority ? '#EEF2FF' : '#F0FDF4',
-                border: `1px solid ${isAuthority ? '#C7D2FE' : '#BBF7D0'}`,
-                borderRadius: 8, borderLeft: `3px solid ${isAuthority ? '#2F5BD6' : '#059669'}`,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontWeight: 600, fontSize: 13, color: '#0F172A' }}>
+              <div
+                key={r.response_id}
+                className={`p-3 rounded-[4px] border-2 border-black shadow-hard-sm ${
+                  isAuthority ? 'bg-white' : 'bg-status-success-bg'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="font-heading font-bold text-sm text-black">
                     {r.responder_name}
                   </span>
-                  <span style={{ fontSize: 11, color: '#64748B' }}>{r.responder_role}</span>
+                  <span className="text-[10px] font-heading font-bold text-black bg-white border border-black rounded-[4px] px-1 py-0.2">
+                    {r.responder_role}
+                  </span>
                   {r.new_status && <StatusBadge status={r.new_status} />}
-                  <span style={{ marginLeft: 'auto', fontSize: 11, color: '#94A3B8', fontVariantNumeric: 'tabular-nums' }}>
+                  <span className="ml-auto text-[11px] text-black/70 font-mono tabular-nums">
                     {formatIST(r.created_at)}
                   </span>
                 </div>
-                <div style={{ fontSize: 13, color: '#0F172A', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                <div className="text-xs text-black font-sans leading-relaxed whitespace-pre-wrap">
                   {r.message}
                 </div>
               </div>
@@ -266,18 +249,12 @@ function ComplaintDrawer({
 
         {/* Respond panel */}
         {nextOptions.length > 0 && (
-          <div style={{
-            padding: '16px 20px', borderTop: '1px solid #E2E8F0', background: '#F8FAFC',
-          }}>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+          <div className="p-4 border-t-2 border-black bg-white">
+            <div className="flex gap-2 mb-2">
               <select
                 value={newStatus}
                 onChange={(e) => setNewStatus(e.target.value)}
-                style={{
-                  flex: 1, padding: '8px 10px',
-                  border: '1px solid #E2E8F0', borderRadius: 6,
-                  fontSize: 14, color: '#0F172A', background: '#FFFFFF',
-                }}
+                className="w-full p-2 border-2 border-black rounded-[8px] text-xs font-heading font-bold text-black bg-white focus:outline-none focus:shadow-hard"
               >
                 <option value="">— Keep current status —</option>
                 {nextOptions.map((s) => (
@@ -290,32 +267,20 @@ function ComplaintDrawer({
               onChange={(e) => setMessage(e.target.value)}
               rows={3}
               placeholder="Write your response…"
-              style={{
-                width: '100%', boxSizing: 'border-box',
-                border: '1px solid #E2E8F0', borderRadius: 6, padding: '8px 12px',
-                fontSize: 14, color: '#0F172A', resize: 'vertical',
-                fontFamily: 'Inter, system-ui, sans-serif',
-              }}
+              className="w-full border-2 border-black rounded-[8px] p-2 text-xs text-black font-sans focus:outline-none focus:shadow-hard"
             />
             {mutation.error && (
-              <div style={{ fontSize: 12, color: '#DC2626', marginTop: 4 }}>
+              <div className="text-xs text-status-danger-text font-medium font-sans mt-1">
                 {(mutation.error as Error).message}
               </div>
             )}
             <button
               onClick={() => mutation.mutate()}
               disabled={!message.trim() || mutation.isPending}
-              style={{
-                marginTop: 10, padding: '9px 20px',
-                background: '#2F5BD6', color: '#FFFFFF',
-                border: 'none', borderRadius: 6, cursor: 'pointer',
-                fontWeight: 500, fontSize: 14, width: '100%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                opacity: mutation.isPending ? 0.7 : 1,
-              }}
+              className="mt-2.5 w-full py-2 bg-black text-white text-xs font-heading font-bold rounded-[8px] border-2 border-black hover:bg-black/80 flex items-center justify-center gap-2 shadow-hard-sm active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50 transition-all"
             >
-              <Send size={14} strokeWidth={1.75} />
-              {mutation.isPending ? 'Sending…' : 'Send Response'}
+              <Send size={13} strokeWidth={2} />
+              <span>{mutation.isPending ? 'Sending…' : 'Send Response'}</span>
             </button>
           </div>
         )}
@@ -354,7 +319,7 @@ export function ComplaintInbox({ csrfToken }: { csrfToken: string }) {
     columnHelper.accessor('tracking_code', {
       header: 'CODE',
       cell: (info) => (
-        <code style={{ fontSize: 12, fontFamily: 'JetBrains Mono, monospace', color: '#475569' }}>
+        <code className="text-xs font-mono font-bold text-black bg-saffron px-1.5 py-0.5 rounded-[4px] border border-black shadow-hard-sm">
           {info.getValue()}
         </code>
       ),
@@ -373,17 +338,14 @@ export function ComplaintInbox({ csrfToken }: { csrfToken: string }) {
     columnHelper.accessor('category', {
       header: 'CATEGORY',
       cell: (info) => (
-        <span style={{ fontSize: 13, color: '#475569' }}>{info.getValue()}</span>
+        <span className="text-xs font-bold text-black">{info.getValue()}</span>
       ),
       size: 110,
     }),
     columnHelper.accessor('subject', {
       header: 'SUBJECT',
       cell: (info) => (
-        <div style={{
-          fontSize: 13, color: '#0F172A', fontWeight: 500,
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200,
-        }}>
+        <div className="text-xs font-heading font-bold text-black truncate max-w-[200px]">
           {info.getValue()}
         </div>
       ),
@@ -391,7 +353,7 @@ export function ComplaintInbox({ csrfToken }: { csrfToken: string }) {
     columnHelper.accessor('student_name', {
       header: 'STUDENT',
       cell: (info) => (
-        <span style={{ fontSize: 13, color: info.getValue() === 'Anonymous Resident' ? '#94A3B8' : '#475569', fontStyle: info.getValue() === 'Anonymous Resident' ? 'italic' : 'normal' }}>
+        <span className={`text-xs text-black font-medium ${info.getValue() === 'Anonymous Resident' ? 'italic text-black/60' : ''}`}>
           {info.getValue()}
         </span>
       ),
@@ -400,7 +362,7 @@ export function ComplaintInbox({ csrfToken }: { csrfToken: string }) {
     columnHelper.accessor('age_days', {
       header: 'AGE',
       cell: (info) => (
-        <span style={{ fontSize: 13, fontVariantNumeric: 'tabular-nums', color: info.getValue() > 3 ? '#DC2626' : '#475569' }}>
+        <span className={`text-xs font-mono font-bold tabular-nums ${info.getValue() > 3 ? 'text-status-danger-text' : 'text-black'}`}>
           {info.getValue()}d
         </span>
       ),
@@ -410,8 +372,8 @@ export function ComplaintInbox({ csrfToken }: { csrfToken: string }) {
       id: 'escalated',
       header: 'FLAG',
       cell: ({ row }) => row.original.escalated_at ? (
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#D97706', fontSize: 12, fontWeight: 600 }}>
-          <AlertCircle size={13} strokeWidth={1.75} />
+        <span className="inline-flex items-center gap-1 text-black font-heading font-extrabold text-[10px] bg-status-danger-bg px-1.5 py-0.5 rounded-[4px] border border-black">
+          <AlertCircle size={12} strokeWidth={2} />
           ESC
         </span>
       ) : null,
@@ -431,40 +393,32 @@ export function ComplaintInbox({ csrfToken }: { csrfToken: string }) {
     initialState: { pagination: { pageSize: 25 } },
   });
 
-  const selectStyle = {
-    padding: '7px 10px', border: '1px solid #E2E8F0', borderRadius: 6,
-    fontSize: 13, color: '#0F172A', background: '#FFFFFF', cursor: 'pointer',
-  };
+  const selectClasses = "px-3 py-1.5 border-2 border-black rounded-[8px] text-xs font-heading font-bold text-black bg-white focus:outline-none focus:shadow-hard cursor-pointer";
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700, color: '#0F172A', margin: '0 0 4px' }}>
+    <div className="p-6">
+      <h1 className="text-2xl font-heading font-extrabold text-black tracking-tight mb-1">
         Complaint Inbox
       </h1>
-      <p style={{ fontSize: 14, color: '#64748B', margin: '0 0 20px' }}>
+      <p className="text-xs text-black/70 font-sans mb-5">
         Complaints addressed to you or escalated to you for review.
       </p>
 
       {/* Filter toolbar */}
-      <div style={{
-        display: 'flex', gap: 10, marginBottom: 16,
-        padding: '12px 16px', background: '#F8FAFC',
-        border: '1px solid #E2E8F0', borderRadius: 8,
-        flexWrap: 'wrap',
-      }}>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={selectStyle}>
+      <div className="flex flex-wrap gap-2 mb-4 p-3 bg-white border-2 border-black rounded-[4px] shadow-hard">
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={selectClasses}>
           <option value="">All Statuses</option>
           {['OPEN','SEEN','IN_PROGRESS','RESOLVED','REJECTED'].map((s) => (
             <option key={s} value={s}>{s.replace('_', ' ')}</option>
           ))}
         </select>
-        <select value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value)} style={selectStyle}>
+        <select value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value)} className={selectClasses}>
           <option value="">All Severities</option>
           {['LOW','MEDIUM','HIGH','URGENT'].map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>
-        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} style={selectStyle}>
+        <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className={selectClasses}>
           <option value="">All Categories</option>
           {['ELECTRICAL','PLUMBING','MESS','CLEANLINESS','CONDUCT','OTHER'].map((c) => (
             <option key={c} value={c}>{c}</option>
@@ -473,7 +427,7 @@ export function ComplaintInbox({ csrfToken }: { csrfToken: string }) {
         {(statusFilter || severityFilter || categoryFilter) && (
           <button
             onClick={() => { setStatusFilter(''); setSeverityFilter(''); setCategoryFilter(''); }}
-            style={{ ...selectStyle, color: '#DC2626', border: '1px solid #FECACA', background: '#FEF2F2' }}
+            className="px-3 py-1.5 text-xs font-heading font-bold rounded-[8px] border-2 border-black bg-white hover:bg-status-danger-bg text-black shadow-hard-sm transition-colors"
           >
             Clear Filters
           </button>
@@ -481,40 +435,32 @@ export function ComplaintInbox({ csrfToken }: { csrfToken: string }) {
       </div>
 
       {/* Table */}
-      <div style={{
-        background: '#FFFFFF', border: '1px solid #E2E8F0',
-        borderRadius: 8, overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      }}>
+      <div className="bg-white border-2 border-black rounded-[4px] overflow-hidden shadow-hard-xl">
         {isError ? (
-          <div style={{ padding: 48, textAlign: 'center', color: '#DC2626' }}>
+          <div className="p-12 text-center text-status-danger-text font-heading font-bold text-xs">
             Failed to load complaints.
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table className="w-full border-collapse">
             <thead>
               {table.getHeaderGroups().map((hg) => (
-                <tr key={hg.id} style={{ background: '#F8FAFC', height: 40 }}>
+                <tr key={hg.id} className="bg-surface-subtle border-b-2 border-black h-10">
                   {hg.headers.map((header) => (
                     <th
                       key={header.id}
                       onClick={header.column.getToggleSortingHandler()}
+                      className="px-3 text-left text-xs font-heading font-extrabold uppercase tracking-wider text-black select-none border-b-2 border-black"
                       style={{
-                        padding: '0 12px', textAlign: 'left',
-                        fontSize: 12, fontWeight: 600, color: '#475569',
-                        letterSpacing: '0.06em', whiteSpace: 'nowrap',
-                        cursor: header.column.getCanSort() ? 'pointer' : 'default',
-                        borderBottom: '1px solid #E2E8F0',
                         width: header.column.columnDef.size,
-                        userSelect: 'none',
+                        cursor: header.column.getCanSort() ? 'pointer' : 'default',
                       }}
                     >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span className="flex items-center gap-1">
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {header.column.getIsSorted() === 'asc' ? (
-                          <ChevronUp size={12} strokeWidth={1.75} />
+                          <ChevronUp size={12} strokeWidth={2} />
                         ) : header.column.getIsSorted() === 'desc' ? (
-                          <ChevronDown size={12} strokeWidth={1.75} />
+                          <ChevronDown size={12} strokeWidth={2} />
                         ) : null}
                       </span>
                     </th>
@@ -522,16 +468,16 @@ export function ComplaintInbox({ csrfToken }: { csrfToken: string }) {
                 </tr>
               ))}
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-black">
               {isLoading ? (
                 <tr>
-                  <td colSpan={columns.length} style={{ padding: 48, textAlign: 'center', color: '#64748B' }}>
+                  <td colSpan={columns.length} className="p-12 text-center text-black/70 font-sans text-xs">
                     Loading complaints…
                   </td>
                 </tr>
               ) : table.getRowModel().rows.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length} style={{ padding: 48, textAlign: 'center', color: '#64748B' }}>
+                  <td colSpan={columns.length} className="p-12 text-center text-black/70 font-sans text-xs">
                     No complaints match the selected filters.
                   </td>
                 </tr>
@@ -540,23 +486,14 @@ export function ComplaintInbox({ csrfToken }: { csrfToken: string }) {
                   <tr
                     key={row.id}
                     onClick={() => setSelectedComplaint(row.original)}
-                    style={{
-                      height: 44, cursor: 'pointer',
-                      borderBottom: '1px solid #E2E8F0',
-                      background: selectedComplaint?.complaint_id === row.original.complaint_id
-                        ? 'rgba(47,91,214,0.06)' : '#FFFFFF',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (selectedComplaint?.complaint_id !== row.original.complaint_id)
-                        (e.currentTarget as HTMLTableRowElement).style.background = 'rgba(47,91,214,0.04)';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (selectedComplaint?.complaint_id !== row.original.complaint_id)
-                        (e.currentTarget as HTMLTableRowElement).style.background = '#FFFFFF';
-                    }}
+                    className={`h-11 cursor-pointer transition-colors text-black ${
+                      selectedComplaint?.complaint_id === row.original.complaint_id
+                        ? 'bg-saffron font-bold'
+                        : 'hover:bg-paper'
+                    }`}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} style={{ padding: '0 12px' }}>
+                      <td key={cell.id} className="px-3">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
@@ -569,38 +506,46 @@ export function ComplaintInbox({ csrfToken }: { csrfToken: string }) {
 
         {/* Pagination */}
         {!isLoading && !isError && (
-          <div style={{
-            padding: '10px 16px', borderTop: '1px solid #E2E8F0',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: '#F8FAFC',
-          }}>
-            <span style={{ fontSize: 13, color: '#64748B', fontVariantNumeric: 'tabular-nums' }}>
+          <div className="p-3 bg-surface-subtle/20 border-t-2 border-black flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-black">
+            <span className="font-mono font-bold tabular-nums">
               {data?.complaints?.length ?? 0} total complaints
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <button onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#475569', opacity: !table.getCanPreviousPage() ? 0.3 : 1 }}>
-                <ChevronsLeft size={15} strokeWidth={1.75} />
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => table.setPageIndex(0)}
+                disabled={!table.getCanPreviousPage()}
+                className="p-1 rounded-[8px] border-2 border-black bg-white text-black hover:bg-saffron disabled:opacity-40 disabled:cursor-not-allowed shadow-hard-sm"
+              >
+                <ChevronsLeft size={15} strokeWidth={2} />
               </button>
-              <button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#475569', opacity: !table.getCanPreviousPage() ? 0.3 : 1 }}>
-                <ChevronLeft size={15} strokeWidth={1.75} />
+              <button
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+                className="p-1 rounded-[8px] border-2 border-black bg-white text-black hover:bg-saffron disabled:opacity-40 disabled:cursor-not-allowed shadow-hard-sm"
+              >
+                <ChevronLeft size={15} strokeWidth={2} />
               </button>
-              <span style={{ fontSize: 13, color: '#475569', fontVariantNumeric: 'tabular-nums', padding: '0 8px' }}>
+              <span className="font-mono font-bold tabular-nums px-2">
                 Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
               </span>
-              <button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#475569', opacity: !table.getCanNextPage() ? 0.3 : 1 }}>
-                <ChevronRight size={15} strokeWidth={1.75} />
+              <button
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+                className="p-1 rounded-[8px] border-2 border-black bg-white text-black hover:bg-saffron disabled:opacity-40 disabled:cursor-not-allowed shadow-hard-sm"
+              >
+                <ChevronRight size={15} strokeWidth={2} />
               </button>
-              <button onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#475569', opacity: !table.getCanNextPage() ? 0.3 : 1 }}>
-                <ChevronsRight size={15} strokeWidth={1.75} />
+              <button
+                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                disabled={!table.getCanNextPage()}
+                className="p-1 rounded-[8px] border-2 border-black bg-white text-black hover:bg-saffron disabled:opacity-40 disabled:cursor-not-allowed shadow-hard-sm"
+              >
+                <ChevronsRight size={15} strokeWidth={2} />
               </button>
               <select
                 value={table.getState().pagination.pageSize}
                 onChange={(e) => table.setPageSize(Number(e.target.value))}
-                style={{ marginLeft: 8, padding: '4px 8px', border: '1px solid #E2E8F0', borderRadius: 4, fontSize: 13 }}
+                className="ml-2 px-2 py-1 border-2 border-black rounded-[8px] text-xs font-heading font-bold bg-white text-black shadow-hard-sm focus:outline-none"
               >
                 {[10, 25, 50, 100].map((ps) => <option key={ps} value={ps}>{ps} / page</option>)}
               </select>

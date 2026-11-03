@@ -29,31 +29,47 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    // Base styles: crisp, hairline borders, no shadows, no gradients
+    // Base styles: Neo-Brutalist 2px black border, 8px radius, font-heading font-bold, press easing
     const baseStyles =
-      'inline-flex items-center justify-center font-sans font-medium select-none transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed';
+      'inline-flex items-center justify-center font-heading font-bold select-none border-2 border-black rounded-[8px] transition-[transform,box-shadow,background-color] duration-150 ease-press focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none disabled:transform-none disabled:shadow-none';
 
-    // Size variants: dense, institutional heights
+    // Size variants: heights sm 32px (h-8), md 36px (h-9), lg 40px (h-10)
     const sizeStyles: Record<ButtonSize, string> = {
-      sm: 'h-8 px-2.5 text-xs gap-1.5 rounded',
-      md: 'h-9 px-3.5 text-sm gap-2 rounded',
-      lg: 'h-10 px-4 text-base gap-2 rounded-md',
+      sm: 'h-8 px-2.5 text-xs gap-1.5',
+      md: 'h-9 px-3.5 text-sm gap-2',
+      lg: 'h-10 px-4 text-base gap-2',
     };
 
-    // Variant styles using our strict semantic tokens
-    const variantStyles: Record<ButtonVariant, string> = {
-      primary:
-        'bg-primary text-ink-onDark hover:bg-primary-hover active:bg-primary-hover focus:ring-primary border border-transparent',
-      secondary:
-        'bg-surface-subtle text-ink-primary hover:bg-surface border border-border hover:border-border-strong active:bg-surface-muted focus:ring-primary',
-      outline:
-        'bg-surface text-ink-primary hover:bg-surface-subtle border border-border hover:border-border-strong active:bg-surface-muted focus:ring-primary',
-      destructive:
-        'bg-status-danger-text text-ink-onDark hover:opacity-95 active:opacity-90 focus:ring-status-danger-text border border-transparent',
-      subtle:
-        'bg-transparent text-ink-secondary hover:text-ink-primary hover:bg-surface-subtle active:bg-surface-muted focus:ring-primary border border-transparent',
-      saffron:
-        'bg-saffron text-ink-onDark hover:bg-saffron-hover active:bg-saffron-hover focus:ring-saffron border border-transparent',
+    // Variant styles with density exception for size="sm"
+    const getVariantStyles = (): string => {
+      const isSm = size === 'sm';
+
+      switch (variant) {
+        case 'primary':
+          return isSm
+            ? 'bg-black text-white shadow-hard hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-hard-sm active:translate-x-[2px] active:translate-y-[2px] active:shadow-hard-sm'
+            : 'bg-black text-white shadow-hard-lg hover:translate-x-1 hover:translate-y-1 hover:shadow-hard active:translate-x-1 active:translate-y-1 active:shadow-hard';
+
+        case 'secondary':
+        case 'outline':
+          return 'bg-white text-black shadow-hard hover:bg-saffron hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-hard-sm active:bg-saffron active:translate-x-[2px] active:translate-y-[2px] active:shadow-hard-sm';
+
+        case 'saffron':
+          return isSm
+            ? 'bg-saffron text-black shadow-hard hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-hard-sm active:translate-x-[2px] active:translate-y-[2px] active:shadow-hard-sm'
+            : 'bg-saffron text-black shadow-hard-lg hover:translate-x-1 hover:translate-y-1 hover:shadow-hard active:translate-x-1 active:translate-y-1 active:shadow-hard';
+
+        case 'destructive':
+          return isSm
+            ? 'bg-status-danger-text text-white shadow-hard hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-hard-sm active:translate-x-[2px] active:translate-y-[2px] active:shadow-hard-sm'
+            : 'bg-status-danger-text text-white shadow-hard-lg hover:translate-x-1 hover:translate-y-1 hover:shadow-hard active:translate-x-1 active:translate-y-1 active:shadow-hard';
+
+        case 'subtle':
+          return 'bg-transparent text-black border-2 border-black hover:bg-saffron active:bg-saffron';
+
+        default:
+          return 'bg-black text-white shadow-hard-lg';
+      }
     };
 
     return (
@@ -61,7 +77,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type}
         disabled={disabled || isLoading}
-        className={`${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
+        className={`${baseStyles} ${sizeStyles[size]} ${getVariantStyles()} ${className}`}
         {...props}
       >
         {isLoading ? (

@@ -38,7 +38,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={selectId}
-            className="block text-xs font-semibold text-ink-secondary tracking-tight"
+            className="block text-xs font-bold text-black tracking-tight"
           >
             {label}
           </label>
@@ -46,7 +46,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 
         <div className="relative flex items-center">
           {leftIcon && (
-            <div className="absolute left-3 flex items-center pointer-events-none text-ink-muted">
+            <div className="absolute left-3 flex items-center pointer-events-none text-black">
               {leftIcon}
             </div>
           )}
@@ -55,12 +55,12 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             ref={ref}
             id={selectId}
             disabled={disabled}
-            className={`w-full h-9 rounded bg-surface border text-sm text-ink-primary appearance-none transition-colors duration-150 focus:outline-none focus:ring-1 ${
+            className={`w-full h-9 rounded-[8px] bg-white border-2 text-base sm:text-sm text-black appearance-none transition-all duration-150 focus:outline-none focus:shadow-hard ${
               error
-                ? 'border-status-danger-text focus:border-status-danger-text focus:ring-status-danger-text'
-                : 'border-border hover:border-border-strong focus:border-primary focus:ring-primary'
+                ? 'border-status-danger-text focus:border-status-danger-text'
+                : 'border-black hover:border-black focus:border-black'
             } ${leftIcon ? 'pl-9' : 'pl-3'} pr-9 ${
-              disabled ? 'bg-surface-subtle text-ink-muted cursor-not-allowed opacity-60' : ''
+              disabled ? 'bg-surface-subtle text-black cursor-not-allowed opacity-60' : ''
             } ${className}`}
             {...props}
           >
@@ -76,13 +76,13 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             {error ? (
               <AlertCircle className="w-4 h-4 text-status-danger-text" strokeWidth={1.75} />
             ) : (
-              <ChevronDown className="w-4 h-4 text-ink-muted" strokeWidth={1.75} />
+              <ChevronDown className="w-4 h-4 text-black" strokeWidth={2} />
             )}
           </div>
         </div>
 
         {error ? (
-          <p className="text-xs text-status-danger-text font-medium">{error}</p>
+          <p className="text-xs text-status-danger-text font-bold">{error}</p>
         ) : helperText ? (
           <p className="text-xs text-ink-muted">{helperText}</p>
         ) : null}

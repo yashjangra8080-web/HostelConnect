@@ -77,27 +77,27 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`w-full space-y-2.5 ${className}`}>
+    <div className={`w-full p-3 bg-white border-2 border-black rounded-[4px] shadow-hard space-y-2.5 ${className}`}>
       {/* Top search & filter controls */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
         <div className="relative flex-1">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-ink-muted flex items-center">
-            <Search className="w-4 h-4" strokeWidth={1.75} />
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-black flex items-center">
+            <Search className="w-4 h-4" strokeWidth={2} />
           </div>
           <input
             type="text"
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={searchPlaceholder}
-            className="w-full h-9 pl-9 pr-8 bg-surface border border-border rounded text-sm text-ink-primary placeholder:text-ink-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            className="w-full h-9 pl-9 pr-8 bg-white border-2 border-black rounded-[8px] text-base sm:text-sm text-black placeholder:text-ink-light focus:outline-none focus:shadow-hard"
           />
           {searchValue && (
             <button
               type="button"
               onClick={() => onSearchChange('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-muted hover:text-ink-primary p-0.5"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-black hover:text-status-danger-text p-0.5"
             >
-              <X className="w-4 h-4" strokeWidth={1.75} />
+              <X className="w-4 h-4" strokeWidth={2} />
             </button>
           )}
         </div>
@@ -109,7 +109,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             variant="subtle"
             size="sm"
             onClick={onClearAll}
-            leftIcon={<RotateCcw className="w-3.5 h-3.5" strokeWidth={1.75} />}
+            leftIcon={<RotateCcw className="w-3.5 h-3.5" strokeWidth={2} />}
           >
             Clear Filters
           </Button>
@@ -118,22 +118,22 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
       {/* Active Filter Chips */}
       {activeChips.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          <span className="text-xs font-medium text-ink-muted mr-1">Active Filters:</span>
+        <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t-2 border-black">
+          <span className="text-xs font-bold text-black mr-1">Active Filters:</span>
           {activeChips.map((chip) => (
             <span
               key={chip.key}
-              className="inline-flex items-center gap-1 px-2 py-0.5 bg-surface border border-border rounded text-xs text-ink-primary font-medium"
+              className="inline-flex items-center gap-1 px-2 py-0.5 bg-white border-2 border-black rounded-[6px] text-xs text-black font-bold"
             >
-              <span className="text-ink-muted">{chip.label}:</span>
+              <span className="text-black/70">{chip.label}:</span>
               <span>{chip.displayValue || chip.value}</span>
               <button
                 type="button"
                 onClick={() => onRemoveChip(chip.key)}
                 aria-label={`Remove filter for ${chip.label}`}
-                className="text-ink-muted hover:text-status-danger-text p-0.5 rounded focus:outline-none"
+                className="text-black hover:text-status-danger-text p-0.5 focus:outline-none"
               >
-                <X className="w-3.5 h-3.5" strokeWidth={2} />
+                <X className="w-3.5 h-3.5" strokeWidth={2.5} />
               </button>
             </span>
           ))}

@@ -1,71 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import {
   Search,
-  Users,
+  ArrowUpDown,
   ChevronLeft,
   ChevronRight,
   X,
+  Users,
   MapPin,
-  Moon,
-  Sun,
   BedDouble,
   FileCheck,
-  ArrowUpDown,
+  Sun,
+  Moon,
 } from 'lucide-react';
-import { Student, KeysetResponse } from '../types';
+import { Student, KeysetResponse } from '../types.js';
 
 export const StudentDirectory: React.FC = () => {
+  // Query parameters
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [gender, setGender] = useState('');
   const [branch, setBranch] = useState('');
   const [schooling, setSchooling] = useState('');
-  const [sortBy, setSortBy] = useState<'roll_no' | 'full_name' | 'merit_rank' | 'branch'>('roll_no');
+  const [sortBy, setSortBy] = useState('merit_rank');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  const handleSort = (column: 'roll_no' | 'full_name' | 'merit_rank' | 'branch') => {
-    if (sortBy === column) {
-      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortBy(column);
-      setSortOrder('asc');
-    }
-    setCurrentCursor(null);
-    setCursorStack([]);
-  };
-
-  // Keyset state
-  const [data, setData] = useState<KeysetResponse<Student> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [cursorStack, setCursorStack] = useState<string[]>([]);
+  // Keyset cursor pagination state
   const [currentCursor, setCurrentCursor] = useState<string | null>(null);
+  const [cursorStack, setCursorStack] = useState<string[]>([]);
+
+  // Directory records & loading
+  const [data, setData] = useState<KeysetResponse<Student> | null>(null);
+  const [loading, setLoading] = useState(false);
 
   // Detail Drawer state
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
   const [studentDetail, setStudentDetail] = useState<Student | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
-  // Fetch directory listing
+  // Fetch directory page
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      const q = new URLSearchParams();
-      q.set('limit', '50');
-      q.set('sort_by', sortBy);
-      q.set('sort_order', sortOrder);
+      const params = new URLSearchParams({
+        limit: '20',
+        sort: sortBy,
+        order: sortOrder,
+      });
 
-      if (search) q.set('search', search);
-      if (gender) q.set('gender', gender);
-      if (branch) q.set('branch', branch);
-      if (schooling) q.set('schooling_state', schooling);
-      if (currentCursor) q.set('cursor', currentCursor);
+      if (search.trim()) params.append('search', search.trim());
+      if (gender) params.append('gender', gender);
+      if (branch) params.append('branch', branch);
+      if (schooling) params.append('schooling', schooling);
+      if (currentCursor) params.append('cursor', currentCursor);
 
-      const res = await fetch(`/api/students?${q.toString()}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json: KeysetResponse<Student> = await res.json();
-      setData(json);
+      const res = await fetch(`/api/students?${params.toString()}`);
+      if (res.ok) {
+        const json: KeysetResponse<Student> = await res.json();
+        setData(json);
+      }
     } catch (err) {
-      console.error('Failed fetching students:', err);
+      console.error('Failed to load students:', err);
     } finally {
       setLoading(false);
     }
@@ -75,9 +69,21 @@ export const StudentDirectory: React.FC = () => {
     fetchStudents();
   }, [search, gender, branch, schooling, sortBy, sortOrder, currentCursor]);
 
-  // Fetch individual student details when selected
+  // Handle Sort Toggle
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+    setCurrentCursor(null);
+    setCursorStack([]);
+  };
+
+  // Fetch full student detail for the drawer
   useEffect(() => {
-    if (!selectedStudentId) {
+    if (selectedStudentId === null) {
       setStudentDetail(null);
       return;
     }
@@ -86,11 +92,12 @@ export const StudentDirectory: React.FC = () => {
       setDetailLoading(true);
       try {
         const res = await fetch(`/api/students/${selectedStudentId}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json: Student = await res.json();
-        setStudentDetail(json);
+        if (res.ok) {
+          const json: Student = await res.json();
+          setStudentDetail(json);
+        }
       } catch (err) {
-        console.error('Failed fetching student detail:', err);
+        console.error('Failed to load student detail:', err);
       } finally {
         setDetailLoading(false);
       }
@@ -102,13 +109,13 @@ export const StudentDirectory: React.FC = () => {
   return (
     <div className="space-y-4">
       {/* Search and Filters Header */}
-      <div className="bg-white border border-[#E2E8F0] rounded p-4 shadow-sm space-y-3">
+      <div className="bg-white border-2 border-black rounded-[4px] p-4 shadow-hard space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 flex-1 min-w-[280px]">
             <div className="relative flex-1">
               <Search
-                className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]"
-                strokeWidth={1.75}
+                className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-black/60"
+                strokeWidth={2}
               />
               <input
                 type="text"
@@ -122,7 +129,7 @@ export const StudentDirectory: React.FC = () => {
                     setCursorStack([]);
                   }
                 }}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#F8FAFC] border border-[#CBD5E1] rounded text-[#0F172A] placeholder-[#94A3B8] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2F5BD6]"
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border-2 border-black rounded-[8px] text-black placeholder-black/50 font-sans focus:outline-none focus:shadow-hard"
               />
             </div>
             <button
@@ -131,7 +138,7 @@ export const StudentDirectory: React.FC = () => {
                 setCurrentCursor(null);
                 setCursorStack([]);
               }}
-              className="px-3 py-1.5 text-xs font-semibold bg-[#2F5BD6] text-white rounded hover:bg-[#1B43A6] transition-colors"
+              className="px-3 py-1.5 text-xs font-heading font-bold bg-black text-white rounded-[8px] border-2 border-black hover:bg-black/80 transition-all shadow-hard-sm active:translate-x-[2px] active:translate-y-[2px]"
             >
               Search
             </button>
@@ -146,7 +153,7 @@ export const StudentDirectory: React.FC = () => {
                 setCurrentCursor(null);
                 setCursorStack([]);
               }}
-              className="bg-[#F8FAFC] border border-[#CBD5E1] rounded px-2.5 py-1.5 font-medium text-[#0F172A] focus:outline-none"
+              className="bg-white border-2 border-black rounded-[8px] px-2.5 py-1.5 font-heading font-bold text-black focus:outline-none focus:shadow-hard"
             >
               <option value="">All Genders</option>
               <option value="M">Male (M)</option>
@@ -161,7 +168,7 @@ export const StudentDirectory: React.FC = () => {
                 setCurrentCursor(null);
                 setCursorStack([]);
               }}
-              className="bg-[#F8FAFC] border border-[#CBD5E1] rounded px-2.5 py-1.5 font-medium text-[#0F172A] focus:outline-none"
+              className="bg-white border-2 border-black rounded-[8px] px-2.5 py-1.5 font-heading font-bold text-black focus:outline-none focus:shadow-hard"
             >
               <option value="">All Branches</option>
               {['CSE', 'CSDS', 'IT', 'ECE', 'EE', 'ME', 'ICE', 'BT', 'MAC', 'EIOT'].map((b) => (
@@ -179,7 +186,7 @@ export const StudentDirectory: React.FC = () => {
                 setCurrentCursor(null);
                 setCursorStack([]);
               }}
-              className="bg-[#F8FAFC] border border-[#CBD5E1] rounded px-2.5 py-1.5 font-medium text-[#0F172A] focus:outline-none"
+              className="bg-white border-2 border-black rounded-[8px] px-2.5 py-1.5 font-heading font-bold text-black focus:outline-none focus:shadow-hard"
             >
               <option value="">All Domiciles</option>
               <option value="outside_delhi">Non-Delhi (Priority)</option>
@@ -198,7 +205,7 @@ export const StudentDirectory: React.FC = () => {
                   setCurrentCursor(null);
                   setCursorStack([]);
                 }}
-                className="px-2.5 py-1.5 text-[#DC2626] hover:bg-[#FEF2F2] rounded transition-colors"
+                className="px-2.5 py-1.5 text-black hover:bg-status-danger-bg rounded-[8px] border-2 border-black font-heading font-bold transition-colors shadow-hard-sm"
               >
                 Reset
               </button>
@@ -208,34 +215,34 @@ export const StudentDirectory: React.FC = () => {
       </div>
 
       {/* Main Table */}
-      <div className="bg-white border border-[#E2E8F0] rounded shadow-sm overflow-hidden">
+      <div className="bg-white border-2 border-black rounded-[4px] shadow-hard-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#475569] font-semibold text-[11px] uppercase tracking-wider select-none">
-                <th className="py-2.5 px-4 cursor-pointer hover:text-[#0F172A]" onClick={() => handleSort('roll_no')}>
+              <tr className="bg-surface-subtle border-b-2 border-black text-black font-heading font-extrabold text-[11px] uppercase tracking-wider select-none">
+                <th className="py-2.5 px-4 cursor-pointer hover:text-black" onClick={() => handleSort('roll_no')}>
                   <div className="flex items-center gap-1">
                     <span>Roll Number</span>
-                    <ArrowUpDown className="w-3 h-3 text-[#94A3B8]" />
+                    <ArrowUpDown className="w-3 h-3 text-black" strokeWidth={2} />
                   </div>
                 </th>
-                <th className="py-2.5 px-4 cursor-pointer hover:text-[#0F172A]" onClick={() => handleSort('full_name')}>
+                <th className="py-2.5 px-4 cursor-pointer hover:text-black" onClick={() => handleSort('full_name')}>
                   <div className="flex items-center gap-1">
                     <span>Full Name</span>
-                    <ArrowUpDown className="w-3 h-3 text-[#94A3B8]" />
+                    <ArrowUpDown className="w-3 h-3 text-black" strokeWidth={2} />
                   </div>
                 </th>
                 <th className="py-2.5 px-2 text-center">Gender</th>
-                <th className="py-2.5 px-2 text-center cursor-pointer hover:text-[#0F172A]" onClick={() => handleSort('branch')}>
+                <th className="py-2.5 px-2 text-center cursor-pointer hover:text-black" onClick={() => handleSort('branch')}>
                   <div className="flex items-center justify-center gap-1">
                     <span>Branch</span>
-                    <ArrowUpDown className="w-3 h-3 text-[#94A3B8]" />
+                    <ArrowUpDown className="w-3 h-3 text-black" strokeWidth={2} />
                   </div>
                 </th>
-                <th className="py-2.5 px-3 text-right cursor-pointer hover:text-[#0F172A]" onClick={() => handleSort('merit_rank')}>
+                <th className="py-2.5 px-3 text-right cursor-pointer hover:text-black" onClick={() => handleSort('merit_rank')}>
                   <div className="flex items-center justify-end gap-1">
                     <span>Merit Rank</span>
-                    <ArrowUpDown className="w-3 h-3 text-[#94A3B8]" />
+                    <ArrowUpDown className="w-3 h-3 text-black" strokeWidth={2} />
                   </div>
                 </th>
                 <th className="py-2.5 px-3">Schooling Priority</th>
@@ -245,16 +252,16 @@ export const StudentDirectory: React.FC = () => {
                 <th className="py-2.5 px-3 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E2E8F0]">
+            <tbody className="divide-y divide-black">
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="py-12 text-center text-[#64748B]">
+                  <td colSpan={10} className="py-12 text-center text-black/70 font-sans">
                     Loading student directory...
                   </td>
                 </tr>
               ) : !data?.items || data.items.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-12 text-center text-[#64748B]">
+                  <td colSpan={10} className="py-12 text-center text-black/70 font-sans">
                     No students match the criteria.
                   </td>
                 </tr>
@@ -263,69 +270,69 @@ export const StudentDirectory: React.FC = () => {
                   <tr
                     key={s.student_id}
                     onClick={() => setSelectedStudentId(s.student_id)}
-                    className="hover:bg-[#F8FAFC] cursor-pointer transition-colors"
+                    className="hover:bg-paper cursor-pointer transition-colors text-black"
                   >
-                    <td className="py-2.5 px-4 font-mono font-medium text-[#0F172A]">
+                    <td className="py-2.5 px-4 font-mono font-bold text-black">
                       {s.roll_no}
                     </td>
-                    <td className="py-2.5 px-4 font-semibold text-[#0F172A]">
+                    <td className="py-2.5 px-4 font-heading font-bold text-black">
                       {s.full_name}
                     </td>
                     <td className="py-2.5 px-2 text-center">
                       <span
-                        className={`inline-block px-1.5 py-0.2 text-[10px] font-bold rounded ${
+                        className={`inline-block px-1.5 py-0.2 text-[10px] font-heading font-bold rounded-[4px] border-2 border-black ${
                           s.gender === 'M'
-                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                            : 'bg-rose-50 text-rose-700 border border-rose-200'
+                            ? 'bg-surface-subtle text-black'
+                            : 'bg-saffron text-black'
                         }`}
                       >
                         {s.gender}
                       </span>
                     </td>
-                    <td className="py-2.5 px-2 text-center font-mono font-semibold text-[#475569]">
+                    <td className="py-2.5 px-2 text-center font-mono font-bold text-black">
                       {s.branch}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono tabular-nums text-[#0F172A]">
+                    <td className="py-2.5 px-3 text-right font-mono tabular-nums font-bold text-black">
                       #{s.merit_rank}
                     </td>
                     <td className="py-2.5 px-3">
                       {s.is_delhi_candidate ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-[#F3F4F6] text-[#4B5563] border border-[#E5E7EB]">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-heading font-bold bg-white text-black border-2 border-black">
                           Delhi
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-[#EEF2FF] text-[#2F5BD6] border border-[#CBD5E1]">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-heading font-bold bg-saffron text-black border-2 border-black">
                           Non-Delhi ({s.schooling_state})
                         </span>
                       )}
                     </td>
-                    <td className="py-2.5 px-3 text-[#475569]">
+                    <td className="py-2.5 px-3 text-black font-medium">
                       {s.home_city}, {s.home_state}
                     </td>
                     <td className="py-2.5 px-3">
                       {s.hostel_name ? (
-                        <span className="inline-flex items-center gap-1 font-medium text-[#0F172A]">
-                          <BedDouble className="w-3.5 h-3.5 text-[#059669]" />
+                        <span className="inline-flex items-center gap-1 font-bold text-black">
+                          <BedDouble className="w-3.5 h-3.5 text-black" strokeWidth={2} />
                           <span>
                             {s.hostel_name} — Rm {s.room_no}
                           </span>
                         </span>
                       ) : (
-                        <span className="text-[#94A3B8] italic">Unallotted</span>
+                        <span className="text-black/50 italic font-sans">Unallotted</span>
                       )}
                     </td>
                     <td className="py-2.5 px-3 text-center">
                       <span
-                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[10px] font-heading font-bold border-2 border-black ${
                           s.study_habit === 'DAY'
-                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                            : 'bg-indigo-50 text-indigo-800 border border-indigo-200'
+                            ? 'bg-paper text-black'
+                            : 'bg-surface-subtle text-black'
                         }`}
                       >
                         {s.study_habit === 'DAY' ? (
-                          <Sun className="w-2.5 h-2.5 text-amber-600" />
+                          <Sun className="w-2.5 h-2.5 text-black" strokeWidth={2} />
                         ) : (
-                          <Moon className="w-2.5 h-2.5 text-indigo-600" />
+                          <Moon className="w-2.5 h-2.5 text-black" strokeWidth={2} />
                         )}
                         <span>{s.study_habit}</span>
                       </span>
@@ -336,7 +343,7 @@ export const StudentDirectory: React.FC = () => {
                           e.stopPropagation();
                           setSelectedStudentId(s.student_id);
                         }}
-                        className="px-2.5 py-1 text-[11px] font-semibold text-[#2F5BD6] hover:bg-[#EEF2FF] rounded border border-[#CBD5E1] transition-colors"
+                        className="px-2.5 py-1 text-[11px] font-heading font-bold text-black bg-white hover:bg-saffron rounded-[8px] border-2 border-black transition-colors shadow-hard-sm"
                       >
                         Details
                       </button>
@@ -349,14 +356,14 @@ export const StudentDirectory: React.FC = () => {
         </div>
 
         {/* Keyset Pagination Toolbar */}
-        <div className="bg-[#F8FAFC] border-t border-[#E2E8F0] px-4 py-3 flex items-center justify-between text-xs text-[#475569]">
+        <div className="bg-surface-subtle/20 border-t-2 border-black px-4 py-3 flex items-center justify-between text-xs text-black">
           <div>
             Showing{' '}
-            <strong className="font-semibold text-[#0F172A] tabular-nums">
+            <strong className="font-bold text-black tabular-nums">
               {data?.items ? data.items.length : 0}
             </strong>{' '}
             of{' '}
-            <strong className="font-semibold text-[#0F172A] tabular-nums">
+            <strong className="font-bold text-black tabular-nums">
               {data?.total ?? 0}
             </strong>{' '}
             students
@@ -374,9 +381,9 @@ export const StudentDirectory: React.FC = () => {
                 }
               }}
               disabled={cursorStack.length === 0 || loading}
-              className="px-2.5 py-1.5 border border-[#CBD5E1] rounded bg-white font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F8FAFC] flex items-center gap-1"
+              className="px-2.5 py-1.5 border-2 border-black rounded-[8px] bg-white font-heading font-bold text-black disabled:opacity-40 disabled:cursor-not-allowed hover:bg-saffron flex items-center gap-1 shadow-hard-sm"
             >
-              <ChevronLeft className="w-3.5 h-3.5" />
+              <ChevronLeft className="w-3.5 h-3.5" strokeWidth={2} />
               <span>Previous</span>
             </button>
 
@@ -388,10 +395,10 @@ export const StudentDirectory: React.FC = () => {
                 }
               }}
               disabled={!data?.hasMore || loading}
-              className="px-2.5 py-1.5 border border-[#CBD5E1] rounded bg-white font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F8FAFC] flex items-center gap-1"
+              className="px-2.5 py-1.5 border-2 border-black rounded-[8px] bg-white font-heading font-bold text-black disabled:opacity-40 disabled:cursor-not-allowed hover:bg-saffron flex items-center gap-1 shadow-hard-sm"
             >
               <span>Next</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
             </button>
           </div>
         </div>
@@ -402,63 +409,63 @@ export const StudentDirectory: React.FC = () => {
         <div className="fixed inset-0 z-50 overflow-hidden">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-slate-900/40 transition-opacity"
+            className="absolute inset-0 bg-black/60 transition-opacity"
             onClick={() => setSelectedStudentId(null)}
           />
 
-          <div className="fixed inset-y-0 right-0 max-w-lg w-full bg-white shadow-2xl border-l border-[#CBD5E1] flex flex-col z-50 animate-in slide-in-from-right duration-200">
+          <div className="fixed inset-y-0 right-0 max-w-lg w-full bg-white shadow-hard-xl border-l-2 border-black flex flex-col z-50 animate-in slide-in-from-right duration-200">
             {/* Drawer Header */}
-            <div className="p-5 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
+            <div className="p-5 border-b-2 border-black flex items-center justify-between bg-surface-subtle">
               <div>
-                <span className="text-[11px] font-mono text-[#64748B] uppercase tracking-wider">
+                <span className="text-[11px] font-mono font-bold text-black uppercase tracking-wider">
                   Student Record
                 </span>
-                <h3 className="text-lg font-bold font-heading text-[#0F172A]">
+                <h3 className="text-lg font-heading font-extrabold text-black">
                   {detailLoading ? 'Loading profile...' : studentDetail?.full_name}
                 </h3>
               </div>
               <button
                 onClick={() => setSelectedStudentId(null)}
-                className="w-8 h-8 rounded hover:bg-[#E2E8F0] text-[#64748B] hover:text-[#0F172A] flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-[8px] border-2 border-black bg-white hover:bg-status-danger-bg text-black flex items-center justify-center transition-colors shadow-hard-sm"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 text-black" strokeWidth={2} />
               </button>
             </div>
 
             {/* Drawer Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 text-xs text-[#0F172A]">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 text-xs text-black">
               {detailLoading || !studentDetail ? (
-                <div className="py-20 text-center text-[#64748B]">Loading student details...</div>
+                <div className="py-20 text-center text-black/70 font-sans">Loading student details...</div>
               ) : (
                 <>
                   {/* Academic Profile Card */}
-                  <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded p-4 space-y-3">
-                    <h4 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider border-b border-[#E2E8F0] pb-1.5 flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-[#2F5BD6]" />
+                  <div className="bg-white border-2 border-black rounded-[4px] p-4 space-y-3 shadow-hard-sm">
+                    <h4 className="text-xs font-heading font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1.5 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-black" strokeWidth={2} />
                       Academic & Identity
                     </h4>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <span className="text-[#64748B] block">Roll Number</span>
-                        <span className="font-mono font-bold text-[#0F172A] text-sm">
+                        <span className="text-black/70 font-sans block">Roll Number</span>
+                        <span className="font-mono font-bold text-black text-sm">
                           {studentDetail.roll_no}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[#64748B] block">Merit Rank</span>
-                        <span className="font-mono font-bold text-[#2F5BD6] text-sm">
+                        <span className="text-black/70 font-sans block">Merit Rank</span>
+                        <span className="font-mono font-bold text-black text-sm">
                           #{studentDetail.merit_rank}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[#64748B] block">Branch & Batch</span>
-                        <span className="font-semibold text-[#0F172A]">
+                        <span className="text-black/70 font-sans block">Branch & Batch</span>
+                        <span className="font-heading font-bold text-black">
                           {studentDetail.branch} ({studentDetail.batch_year})
                         </span>
                       </div>
                       <div>
-                        <span className="text-[#64748B] block">Gender</span>
-                        <span className="font-semibold text-[#0F172A]">
+                        <span className="text-black/70 font-sans block">Gender</span>
+                        <span className="font-heading font-bold text-black">
                           {studentDetail.gender === 'M' ? 'Male (M)' : 'Female (F)'}
                         </span>
                       </div>
@@ -466,49 +473,49 @@ export const StudentDirectory: React.FC = () => {
                   </div>
 
                   {/* Schooling & Domicile */}
-                  <div className="bg-white border border-[#E2E8F0] rounded p-4 space-y-3">
-                    <h4 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider border-b border-[#E2E8F0] pb-1.5 flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-[#2F5BD6]" />
+                  <div className="bg-white border-2 border-black rounded-[4px] p-4 space-y-3 shadow-hard-sm">
+                    <h4 className="text-xs font-heading font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1.5 flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-black" strokeWidth={2} />
                       Domicile & Geolocation
                     </h4>
-                    <div className="space-y-2">
+                    <div className="space-y-2 font-sans">
                       <div className="flex items-center justify-between">
-                        <span className="text-[#64748B]">Schooling State:</span>
-                        <span className="font-semibold text-[#0F172A]">
+                        <span className="text-black/70">Schooling State:</span>
+                        <span className="font-bold text-black">
                           {studentDetail.schooling_state}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[#64748B]">Priority Allocation:</span>
+                        <span className="text-black/70">Priority Allocation:</span>
                         {studentDetail.is_delhi_candidate ? (
-                          <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-[#F3F4F6] text-[#4B5563]">
+                          <span className="px-2 py-0.5 rounded-[4px] text-[11px] font-heading font-bold bg-white border-2 border-black text-black">
                             Delhi Candidate
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#EEF2FF] text-[#2F5BD6]">
+                          <span className="px-2 py-0.5 rounded-[4px] text-[11px] font-heading font-bold bg-saffron border-2 border-black text-black">
                             Non-Delhi (Prioritized)
                           </span>
                         )}
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[#64748B]">Home City & State:</span>
-                        <span className="font-semibold text-[#0F172A]">
+                        <span className="text-black/70">Home City & State:</span>
+                        <span className="font-bold text-black">
                           {studentDetail.home_city}, {studentDetail.home_state}
                         </span>
                       </div>
                       <div className="flex items-center justify-between font-mono text-[11px]">
-                        <span className="text-[#64748B]">Coordinates:</span>
-                        <span>
+                        <span className="text-black/70">Coordinates:</span>
+                        <span className="font-bold text-black">
                           {studentDetail.home_latitude.toFixed(4)}° N, {studentDetail.home_longitude.toFixed(4)}° E
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-[#64748B]">Study Habit:</span>
+                        <span className="text-black/70">Study Habit:</span>
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] font-heading font-bold text-[10px] border-2 border-black ${
                             studentDetail.study_habit === 'DAY'
-                              ? 'bg-amber-50 text-amber-800'
-                              : 'bg-indigo-50 text-indigo-800'
+                              ? 'bg-paper text-black'
+                              : 'bg-surface-subtle text-black'
                           }`}
                         >
                           {studentDetail.study_habit === 'DAY' ? 'Day Studier' : 'Night Owl'}
@@ -518,80 +525,80 @@ export const StudentDirectory: React.FC = () => {
                   </div>
 
                   {/* Residence & Room */}
-                  <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded p-4 space-y-3">
-                    <h4 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider border-b border-[#E2E8F0] pb-1.5 flex items-center gap-1.5">
-                      <BedDouble className="w-3.5 h-3.5 text-[#059669]" />
+                  <div className="bg-white border-2 border-black rounded-[4px] p-4 space-y-3 shadow-hard-sm">
+                    <h4 className="text-xs font-heading font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1.5 flex items-center gap-1.5">
+                      <BedDouble className="w-3.5 h-3.5 text-black" strokeWidth={2} />
                       Current Residence
                     </h4>
                     {studentDetail.hostel_name ? (
-                      <div className="space-y-2">
+                      <div className="space-y-2 font-sans">
                         <div className="flex items-center justify-between">
-                          <span className="text-[#64748B]">Hostel:</span>
-                          <span className="font-bold text-[#0F172A]">{studentDetail.hostel_name}</span>
+                          <span className="text-black/70">Hostel:</span>
+                          <span className="font-bold text-black">{studentDetail.hostel_name}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-[#64748B]">Room Number:</span>
-                          <span className="font-mono font-bold text-[#0F172A]">
+                          <span className="text-black/70">Room Number:</span>
+                          <span className="font-mono font-bold text-black">
                             Room {studentDetail.room_no} (Floor {studentDetail.floor_no})
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-[#64748B]">Allotment Status:</span>
-                          <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-[#ECFDF5] text-[#059669]">
+                          <span className="text-black/70">Allotment Status:</span>
+                          <span className="px-2 py-0.5 rounded-[4px] text-[11px] font-heading font-bold bg-status-success-bg text-black border-2 border-black">
                             {studentDetail.allotment_status}
                           </span>
                         </div>
                       </div>
                     ) : (
-                      <p className="text-xs text-[#64748B] italic">
+                      <p className="text-xs text-black/70 font-sans italic">
                         No active room allotment assigned.
                       </p>
                     )}
                   </div>
 
                   {/* Application History */}
-                  <div className="bg-white border border-[#E2E8F0] rounded p-4 space-y-3">
-                    <h4 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider border-b border-[#E2E8F0] pb-1.5 flex items-center gap-1.5">
-                      <FileCheck className="w-3.5 h-3.5 text-[#2F5BD6]" />
+                  <div className="bg-white border-2 border-black rounded-[4px] p-4 space-y-3 shadow-hard-sm">
+                    <h4 className="text-xs font-heading font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1.5 flex items-center gap-1.5">
+                      <FileCheck className="w-3.5 h-3.5 text-black" strokeWidth={2} />
                       Allotment Applications
                     </h4>
                     {!studentDetail.applications || studentDetail.applications.length === 0 ? (
-                      <p className="text-xs text-[#64748B] italic">No applications filed yet.</p>
+                      <p className="text-xs text-black/70 font-sans italic">No applications filed yet.</p>
                     ) : (
                       <div className="space-y-3">
                         {studentDetail.applications.map((app) => (
                           <div
                             key={app.application_id}
-                            className="p-3 border border-[#E2E8F0] rounded bg-[#F8FAFC] space-y-1.5 text-[11px]"
+                            className="p-3 border-2 border-black rounded-[4px] bg-surface-subtle/20 space-y-1.5 text-[11px]"
                           >
-                            <div className="flex items-center justify-between font-semibold">
+                            <div className="flex items-center justify-between font-bold">
                               <span>Cycle: {app.academic_year}</span>
                               <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                className={`px-2 py-0.5 rounded-[4px] text-[10px] font-heading font-bold border-2 border-black ${
                                   app.verification_status === 'VERIFIED'
-                                    ? 'bg-[#ECFDF5] text-[#059669]'
+                                    ? 'bg-status-success-bg text-black'
                                     : app.verification_status === 'REJECTED'
-                                    ? 'bg-[#FEF2F2] text-[#DC2626]'
-                                    : 'bg-[#FFFBEB] text-[#D97706]'
+                                    ? 'bg-status-danger-bg text-black'
+                                    : 'bg-paper text-black'
                                 }`}
                               >
                                 {app.verification_status}
                               </span>
                             </div>
                             <div className="flex items-center justify-between">
-                              <span className="text-[#64748B]">Distance to NSUT:</span>
-                              <span className="font-mono font-bold">
+                              <span className="text-black/70">Distance to NSUT:</span>
+                              <span className="font-mono font-bold text-black">
                                 {app.distance_km} km (Band {app.distance_band})
                               </span>
                             </div>
                             <div className="flex items-center justify-between">
-                              <span className="text-[#64748B]">Status:</span>
-                              <span className="font-semibold">{app.application_status}</span>
+                              <span className="text-black/70">Status:</span>
+                              <span className="font-bold text-black">{app.application_status}</span>
                             </div>
                             {app.verified_by_name && (
-                              <div className="flex items-center justify-between text-[#64748B]">
+                              <div className="flex items-center justify-between text-black/70">
                                 <span>Verified by:</span>
-                                <span>{app.verified_by_name}</span>
+                                <span className="font-medium text-black">{app.verified_by_name}</span>
                               </div>
                             )}
                           </div>
@@ -604,10 +611,10 @@ export const StudentDirectory: React.FC = () => {
             </div>
 
             {/* Drawer Footer */}
-            <div className="p-4 border-t border-[#E2E8F0] bg-[#F8FAFC] flex justify-end">
+            <div className="p-4 border-t-2 border-black bg-white flex justify-end">
               <button
                 onClick={() => setSelectedStudentId(null)}
-                className="px-4 py-2 text-xs font-semibold bg-white border border-[#CBD5E1] text-[#0F172A] rounded hover:bg-[#E2E8F0] transition-colors"
+                className="px-4 py-2 text-xs font-heading font-bold bg-white border-2 border-black text-black rounded-[8px] hover:bg-paper transition-colors shadow-hard-sm"
               >
                 Close Drawer
               </button>

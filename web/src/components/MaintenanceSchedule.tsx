@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
   Wrench,
+  Plus,
   Calendar,
   Clock,
-  Plus,
   Building,
-  AlertCircle,
-  X,
   ChevronLeft,
   ChevronRight,
+  X,
+  AlertCircle,
 } from 'lucide-react';
-import { MaintenanceScheduleItem, MaintenanceType, MaintenanceStatus, Role } from '../types';
+import { MaintenanceScheduleItem, MaintenanceType, Role } from '../types';
 
 interface MaintenanceScheduleProps {
   userRole: Role;
@@ -24,56 +24,64 @@ const HOSTEL_TABS = [
   { id: 4, name: 'GH2 (Gargi)', code: 'GH2' },
 ];
 
-const MAINT_TYPE_COLORS: Record<MaintenanceType, { bg: string; text: string; border: string }> = {
-  MOSQUITO_SPRAY: { bg: '#FEF3C7', text: '#B45309', border: '#FDE68A' },
-  ELECTRICIAN: { bg: '#FAF5FF', text: '#7E22CE', border: '#E9D5FF' },
-  PLUMBER: { bg: '#F0FDF4', text: '#15803D', border: '#BBF7D0' },
-  TANK_CLEANING: { bg: '#ECFEFF', text: '#0891B2', border: '#A5F3FC' },
-  PEST_CONTROL: { bg: '#FFFBEB', text: '#D97706', border: '#FDE68A' },
+const MAINT_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
+  MOSQUITO_SPRAY: { bg: 'bg-paper', text: 'text-black' },
+  ELECTRICIAN: { bg: 'bg-saffron', text: 'text-black' },
+  PLUMBER: { bg: 'bg-surface-subtle', text: 'text-black' },
+  TANK_CLEANING: { bg: 'bg-status-success-bg', text: 'text-black' },
+  PEST_CONTROL: { bg: 'bg-paper', text: 'text-black' },
 };
 
 export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRole, csrfToken }) => {
   const [selectedHostel, setSelectedHostel] = useState(1);
-  const [selectedBlock, setSelectedBlock] = useState<string>('');
-  const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {
-    // Seed maintenance dates are around Nov 05 - Nov 12, 2026. Let's start week on 2026-11-02 (Monday)
+  const [selectedBlock, setSelectedBlock] = useState('');
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    // SEED_TODAY anchor: 2026-11-02 (Monday)
     return new Date('2026-11-02T00:00:00+05:30');
   });
+
   const [schedules, setSchedules] = useState<MaintenanceScheduleItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
   const [modalMaintType, setModalMaintType] = useState<MaintenanceType>('ELECTRICIAN');
-  const [modalDate, setModalDate] = useState('2026-11-05');
+  const [modalDate, setModalDate] = useState('2026-11-04');
   const [modalTimeSlot, setModalTimeSlot] = useState('10:00-12:00');
   const [modalBlock, setModalBlock] = useState('A');
   const [modalFloor, setModalFloor] = useState<number | ''>(1);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const canManage = ['ADMIN', 'HOSTEL_OFFICE', 'CHIEF_WARDEN', 'WARDEN', 'CARETAKER'].includes(userRole);
+  const canManage = ['ADMIN', 'HOSTEL_OFFICE', 'CARETAKER', 'WARDEN', 'CHIEF_WARDEN'].includes(userRole);
+
+  // Build array of 7 consecutive dates for the current view
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(currentWeekStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
 
   const fetchSchedules = async () => {
     setLoading(true);
     try {
-      const weekStr = currentWeekStart.toISOString().slice(0, 10);
-      const params = new URLSearchParams();
-      if (userRole !== 'STUDENT') {
-        params.set('hostel_id', String(selectedHostel));
-      }
-      if (selectedBlock) {
-        params.set('block', selectedBlock);
-      }
-      params.set('week_start', weekStr);
+      const startDate = weekDays[0].toISOString().slice(0, 10);
+      const endDate = weekDays[6].toISOString().slice(0, 10);
 
-      const res = await fetch(`/api/maintenance?${params.toString()}`);
+      const params = new URLSearchParams({
+        hostel: selectedHostel.toString(),
+        from: startDate,
+        to: endDate,
+      });
+      if (selectedBlock) params.append('block', selectedBlock);
+
+      const res = await fetch(`/api/maintenance/schedule?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setSchedules(data.schedules || []);
       }
     } catch (err) {
-      console.error('Failed fetching maintenance schedules:', err);
+      console.error('Failed to load maintenance schedules:', err);
     } finally {
       setLoading(false);
     }
@@ -83,16 +91,9 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
     fetchSchedules();
   }, [selectedHostel, selectedBlock, currentWeekStart]);
 
-  // Generate 7 days for the current week
-  const weekDays = Array.from({ length: 7 }).map((_, i) => {
-    const d = new Date(currentWeekStart);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
-
-  const handleStatusChange = async (scheduleId: number, newStatus: MaintenanceStatus) => {
+  const handleStatusChange = async (scheduleId: number, newStatus: 'DONE' | 'CANCELLED') => {
     try {
-      const res = await fetch(`/api/maintenance/${scheduleId}`, {
+      const res = await fetch(`/api/maintenance/schedule/${scheduleId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -100,12 +101,11 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
         },
         body: JSON.stringify({ status: newStatus }),
       });
-
       if (res.ok) {
         fetchSchedules();
       }
     } catch (err) {
-      console.error('Failed to update maintenance status:', err);
+      console.error('Failed to update maintenance task status:', err);
     }
   };
 
@@ -115,7 +115,7 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
     setErrorMsg(null);
 
     try {
-      const res = await fetch('/api/maintenance', {
+      const res = await fetch('/api/maintenance/schedule', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -124,10 +124,10 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
         body: JSON.stringify({
           hostel_id: selectedHostel,
           maint_type: modalMaintType,
-          block: modalBlock || null,
-          floor_no: modalFloor !== '' ? Number(modalFloor) : null,
           sched_date: modalDate,
-          time_slot: modalTimeSlot || null,
+          time_slot: modalTimeSlot.trim() || null,
+          block: modalBlock.trim() || null,
+          floor_no: modalFloor !== '' ? Number(modalFloor) : null,
         }),
       });
 
@@ -154,17 +154,17 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
   return (
     <div className="space-y-6">
       {/* Header and Controls */}
-      <div className="bg-white border border-[#E2E8F0] rounded-lg p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#E2E8F0]">
+      <div className="bg-white border-2 border-black rounded-[4px] p-6 shadow-hard-lg">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b-2 border-black">
           <div>
             <div className="flex items-center gap-2">
-              <Wrench className="w-5 h-5 text-[#2F5BD6]" strokeWidth={1.75} />
-              <h2 className="text-xl font-bold font-heading text-[#0F172A]">Maintenance 7-Day Matrix</h2>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-[#EEF2FF] text-[#2F5BD6] font-semibold border border-[#CBD5E1]">
+              <Wrench className="w-5 h-5 text-black" strokeWidth={2} />
+              <h2 className="text-xl font-heading font-extrabold text-black tracking-tight">Maintenance 7-Day Matrix</h2>
+              <span className="text-xs px-2 py-0.5 rounded-[4px] bg-saffron text-black font-heading font-bold border-2 border-black uppercase tracking-wider shadow-hard-sm">
                 Block-Level Operations
               </span>
             </div>
-            <p className="text-xs text-[#64748B] mt-1">
+            <p className="text-xs text-black/70 font-sans mt-1">
               Scheduled sanitization, mosquito fogging, electrical maintenance, and plumbing overhauls across hostels.
             </p>
           </div>
@@ -172,9 +172,9 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
           {canManage && (
             <button
               onClick={() => setShowModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#2F5BD6] text-white rounded text-xs font-semibold hover:bg-[#1B43A6] transition-colors shadow-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-[8px] text-xs font-heading font-bold border-2 border-black hover:bg-black/80 transition-all shadow-hard-sm active:translate-x-[2px] active:translate-y-[2px]"
             >
-              <Plus className="w-4 h-4" strokeWidth={1.75} />
+              <Plus className="w-4 h-4 text-white" strokeWidth={2.5} />
               <span>Schedule Maintenance</span>
             </button>
           )}
@@ -189,10 +189,10 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
                 <button
                   key={h.id}
                   onClick={() => setSelectedHostel(h.id)}
-                  className={`px-3 py-1 text-xs font-semibold rounded border transition-colors ${
+                  className={`px-3 py-1 text-xs font-heading font-bold rounded-[8px] border-2 border-black transition-colors ${
                     selectedHostel === h.id
-                      ? 'bg-[#1E3A8A] text-white border-[#1E3A8A]'
-                      : 'bg-white text-[#475569] border-[#CBD5E1] hover:bg-[#F8FAFC]'
+                      ? 'bg-black text-white shadow-hard-sm'
+                      : 'bg-white text-black hover:bg-saffron'
                   }`}
                 >
                   {h.name}
@@ -200,18 +200,18 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
               ))}
             </div>
           ) : (
-            <div className="text-xs text-[#475569] flex items-center gap-1.5">
-              <Building className="w-4 h-4 text-[#2F5BD6]" strokeWidth={1.75} />
+            <div className="text-xs text-black/80 flex items-center gap-1.5 font-sans">
+              <Building className="w-4 h-4 text-black" strokeWidth={2} />
               <span>Viewing maintenance calendar for your allotted residential wing.</span>
             </div>
           )}
 
           {/* Block Filter and Week Navigation */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <select
               value={selectedBlock}
               onChange={(e) => setSelectedBlock(e.target.value)}
-              className="px-2.5 py-1 text-xs border border-[#CBD5E1] rounded bg-white text-[#0F172A] focus:outline-none focus:border-[#2F5BD6]"
+              className="px-2.5 py-1 text-xs border-2 border-black rounded-[8px] bg-white text-black font-heading font-bold shadow-hard-sm focus:outline-none focus:shadow-hard"
             >
               <option value="">All Blocks</option>
               <option value="A">Block A</option>
@@ -223,14 +223,14 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => changeWeek(-7)}
-                className="p-1.5 border border-[#CBD5E1] rounded bg-white hover:bg-[#F8FAFC] text-[#475569]"
+                className="p-1.5 border-2 border-black rounded-[8px] bg-white hover:bg-saffron text-black shadow-hard-sm"
                 title="Previous Week"
               >
-                <ChevronLeft className="w-4 h-4" strokeWidth={1.75} />
+                <ChevronLeft className="w-4 h-4 text-black" strokeWidth={2} />
               </button>
 
-              <div className="text-xs font-bold text-[#0F172A] px-3 py-1 bg-[#F8FAFC] border border-[#CBD5E1] rounded tabular-nums flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-[#2F5BD6]" strokeWidth={1.75} />
+              <div className="text-xs font-heading font-bold text-black px-3 py-1 bg-white border-2 border-black rounded-[8px] tabular-nums flex items-center gap-1.5 shadow-hard-sm">
+                <Calendar className="w-3.5 h-3.5 text-black" strokeWidth={2} />
                 <span>
                   {weekDays[0].toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} &ndash;{' '}
                   {weekDays[6].toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -239,15 +239,15 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
 
               <button
                 onClick={() => changeWeek(7)}
-                className="p-1.5 border border-[#CBD5E1] rounded bg-white hover:bg-[#F8FAFC] text-[#475569]"
+                className="p-1.5 border-2 border-black rounded-[8px] bg-white hover:bg-saffron text-black shadow-hard-sm"
                 title="Next Week"
               >
-                <ChevronRight className="w-4 h-4" strokeWidth={1.75} />
+                <ChevronRight className="w-4 h-4 text-black" strokeWidth={2} />
               </button>
 
               <button
                 onClick={() => setCurrentWeekStart(new Date('2026-11-02T00:00:00+05:30'))}
-                className="px-2.5 py-1 text-xs font-semibold text-[#2F5BD6] hover:bg-[#EEF2FF] rounded border border-[#CBD5E1]"
+                className="px-2.5 py-1 text-xs font-heading font-bold text-black bg-white hover:bg-paper rounded-[8px] border-2 border-black shadow-hard-sm"
               >
                 Current Week
               </button>
@@ -257,13 +257,13 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
       </div>
 
       {/* 7-Day Grid View */}
-      <div className="bg-white border border-[#E2E8F0] rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-white border-2 border-black rounded-[4px] shadow-hard-xl overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center text-xs text-[#64748B]">
+          <div className="p-12 text-center text-xs text-black/70 font-sans">
             Loading maintenance schedules...
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-7 divide-y md:divide-y-0 md:divide-x divide-[#E2E8F0] min-h-[360px]">
+          <div className="grid grid-cols-1 md:grid-cols-7 divide-y md:divide-y-0 md:divide-x-2 divide-black min-h-[360px]">
           {weekDays.map((day, idx) => {
             const dateStr = day.toISOString().slice(0, 10);
             const dayName = day.toLocaleDateString('en-IN', { weekday: 'short' });
@@ -274,20 +274,20 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
             return (
               <div key={idx} className="flex flex-col bg-white">
                 {/* Day Header */}
-                <div className="px-3 py-2.5 bg-[#F8FAFC] border-b border-[#E2E8F0] text-center">
-                  <div className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">{dayName}</div>
-                  <div className="text-xs font-semibold text-[#0F172A] tabular-nums mt-0.5">{dayDate}</div>
+                <div className="px-3 py-2.5 bg-surface-subtle border-b-2 border-black text-center">
+                  <div className="text-[11px] font-heading font-extrabold text-black uppercase tracking-wider">{dayName}</div>
+                  <div className="text-xs font-mono font-bold text-black tabular-nums mt-0.5">{dayDate}</div>
                   <div className="mt-1">
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full font-semibold bg-[#EEF2FF] text-[#2F5BD6] tabular-nums">
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-[4px] font-mono font-bold bg-white text-black border border-black inline-block shadow-hard-sm">
                       {dayTasks.length} {dayTasks.length === 1 ? 'task' : 'tasks'}
                     </span>
                   </div>
                 </div>
 
                 {/* Day Task Cards */}
-                <div className="p-2.5 flex-1 space-y-2 bg-[#FBFBFE]/50">
+                <div className="p-2.5 flex-1 space-y-2 bg-surface-subtle/10">
                   {dayTasks.length === 0 ? (
-                    <div className="h-24 flex items-center justify-center text-[11px] text-[#94A3B8] italic">
+                    <div className="h-24 flex items-center justify-center text-[11px] text-black/50 font-sans italic">
                       No visits
                     </div>
                   ) : (
@@ -299,60 +299,55 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
                       return (
                         <div
                           key={task.schedule_id}
-                          className={`p-2.5 rounded border bg-white shadow-2xs transition-all ${
+                          className={`p-2.5 rounded-[4px] border-2 border-black bg-white shadow-hard-sm space-y-2 ${
                             isCancelled
-                              ? 'opacity-60 border-[#FECACA] bg-[#FEF2F2]/30'
+                              ? 'opacity-60 bg-status-danger-bg'
                               : isDone
-                              ? 'border-[#A7F3D0] bg-[#ECFDF5]/30'
-                              : 'border-[#CBD5E1]'
+                              ? 'bg-status-success-bg'
+                              : 'bg-white'
                           }`}
                         >
-                          <div className="flex items-center justify-between gap-1 mb-1.5">
+                          <div className="flex items-center justify-between gap-1 mb-1">
                             <span
-                              className="px-1.5 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider"
-                              style={{
-                                backgroundColor: color.bg,
-                                color: color.text,
-                                borderColor: color.border,
-                              }}
+                              className={`px-1.5 py-0.5 rounded-[4px] text-[10px] font-heading font-bold border-2 border-black uppercase tracking-wider ${color.bg} ${color.text}`}
                             >
                               {task.maint_type.replace('_', ' ')}
                             </span>
 
                             <span
-                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase ${
+                              className={`text-[9px] font-heading font-bold px-1.5 py-0.5 rounded-[4px] border border-black uppercase ${
                                 isDone
-                                  ? 'bg-[#ECFDF5] text-[#059669]'
+                                  ? 'bg-status-success-bg text-black'
                                   : isCancelled
-                                  ? 'bg-[#FEF2F2] text-[#DC2626] line-through'
-                                  : 'bg-[#EFF6FF] text-[#2F5BD6]'
+                                  ? 'bg-status-danger-bg text-black line-through'
+                                  : 'bg-saffron text-black'
                               }`}
                             >
                               {task.status}
                             </span>
                           </div>
 
-                          <div className="text-xs font-semibold text-[#0F172A] mb-1">
+                          <div className="text-xs font-heading font-bold text-black">
                             Block {task.block || 'All'} {task.floor_no ? `(Flr ${task.floor_no})` : ''}
                           </div>
 
-                          <div className="flex items-center gap-1 text-[11px] text-[#64748B] tabular-nums mb-2">
-                            <Clock className="w-3 h-3 text-[#94A3B8]" strokeWidth={1.75} />
+                          <div className="flex items-center gap-1 text-[11px] text-black/70 font-mono tabular-nums">
+                            <Clock className="w-3 h-3 text-black" strokeWidth={2} />
                             <span>{task.time_slot || 'All Day'}</span>
                           </div>
 
                           {/* Quick Actions for Caretakers & Authorities */}
                           {canManage && task.status === 'SCHEDULED' && (
-                            <div className="flex items-center gap-1.5 pt-1.5 border-t border-dashed border-[#E2E8F0]">
+                            <div className="flex items-center gap-1.5 pt-1.5 border-t-2 border-black">
                               <button
                                 onClick={() => handleStatusChange(task.schedule_id, 'DONE')}
-                                className="flex-1 px-1.5 py-0.5 rounded bg-[#ECFDF5] text-[#059669] hover:bg-[#D1FAE5] text-[10px] font-semibold border border-[#A7F3D0] text-center"
+                                className="flex-1 px-1.5 py-0.5 rounded-[4px] bg-status-success-bg text-black hover:bg-black hover:text-white text-[10px] font-heading font-bold border-2 border-black text-center transition-colors shadow-hard-sm"
                               >
                                 Mark Done
                               </button>
                               <button
                                 onClick={() => handleStatusChange(task.schedule_id, 'CANCELLED')}
-                                className="px-1.5 py-0.5 rounded bg-[#FEF2F2] text-[#DC2626] hover:bg-[#FEE2E2] text-[10px] font-semibold border border-[#FECACA] text-center"
+                                className="px-1.5 py-0.5 rounded-[4px] bg-status-danger-bg text-black hover:bg-black hover:text-white text-[10px] font-heading font-bold border-2 border-black text-center transition-colors shadow-hard-sm"
                               >
                                 Cancel
                               </button>
@@ -372,33 +367,33 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
 
       {/* Schedule Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white border border-[#E2E8F0] rounded-lg max-w-md w-full p-6 shadow-xl">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0] mb-4">
-              <h3 className="font-bold text-base text-[#0F172A]">Schedule Maintenance Visit</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white border-2 border-black rounded-[4px] max-w-md w-full p-6 shadow-hard-xl">
+            <div className="flex items-center justify-between pb-3 border-b-2 border-black mb-4">
+              <h3 className="font-heading font-extrabold text-base text-black">Schedule Maintenance Visit</h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-[#64748B] hover:text-[#0F172A]"
+                className="text-black font-bold"
               >
-                <X className="w-5 h-5" strokeWidth={1.75} />
+                <X className="w-5 h-5 text-black" strokeWidth={2} />
               </button>
             </div>
 
             {errorMsg && (
-              <div className="mb-4 p-3 bg-[#FEF2F2] border border-[#FECACA] rounded text-xs text-[#DC2626] flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={1.75} />
-                <span>{errorMsg}</span>
+              <div className="mb-4 p-3 bg-status-danger-bg border-2 border-black rounded-[4px] text-xs text-black flex items-center gap-2 shadow-hard-sm">
+                <AlertCircle className="w-4 h-4 shrink-0 text-black" strokeWidth={2} />
+                <span className="font-medium font-sans">{errorMsg}</span>
               </div>
             )}
 
-            <form onSubmit={handleCreateSubmit} className="space-y-4 text-xs">
+            <form onSubmit={handleCreateSubmit} className="space-y-4 text-xs font-sans">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-[#0F172A] mb-1">Hostel</label>
+                  <label className="block font-heading font-bold text-black mb-1">Hostel</label>
                   <select
                     value={selectedHostel}
                     onChange={(e) => setSelectedHostel(Number(e.target.value))}
-                    className="w-full px-3 py-1.5 border border-[#CBD5E1] rounded focus:outline-none focus:border-[#2F5BD6] bg-white"
+                    className="w-full px-3 py-1.5 border-2 border-black rounded-[8px] bg-white text-black font-heading font-bold focus:outline-none focus:shadow-hard"
                   >
                     {HOSTEL_TABS.map((h) => (
                       <option key={h.id} value={h.id}>
@@ -409,11 +404,11 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#0F172A] mb-1">Task Type</label>
+                  <label className="block font-heading font-bold text-black mb-1">Task Type</label>
                   <select
                     value={modalMaintType}
                     onChange={(e) => setModalMaintType(e.target.value as MaintenanceType)}
-                    className="w-full px-3 py-1.5 border border-[#CBD5E1] rounded focus:outline-none focus:border-[#2F5BD6] bg-white"
+                    className="w-full px-3 py-1.5 border-2 border-black rounded-[8px] bg-white text-black font-heading font-bold focus:outline-none focus:shadow-hard"
                   >
                     <option value="ELECTRICIAN">ELECTRICIAN</option>
                     <option value="PLUMBER">PLUMBER</option>
@@ -426,42 +421,42 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-[#0F172A] mb-1">Date</label>
+                  <label className="block font-heading font-bold text-black mb-1">Date</label>
                   <input
                     type="date"
                     required
                     value={modalDate}
                     onChange={(e) => setModalDate(e.target.value)}
-                    className="w-full px-3 py-1.5 border border-[#CBD5E1] rounded focus:outline-none focus:border-[#2F5BD6]"
+                    className="w-full px-3 py-1.5 border-2 border-black rounded-[8px] bg-white text-black font-sans focus:outline-none focus:shadow-hard"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#0F172A] mb-1">Time Slot</label>
+                  <label className="block font-heading font-bold text-black mb-1">Time Slot</label>
                   <input
                     type="text"
                     placeholder="e.g. 10:00-12:00"
                     value={modalTimeSlot}
                     onChange={(e) => setModalTimeSlot(e.target.value)}
-                    className="w-full px-3 py-1.5 border border-[#CBD5E1] rounded focus:outline-none focus:border-[#2F5BD6]"
+                    className="w-full px-3 py-1.5 border-2 border-black rounded-[8px] bg-white text-black font-sans focus:outline-none focus:shadow-hard"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-[#0F172A] mb-1">Block / Wing</label>
+                  <label className="block font-heading font-bold text-black mb-1">Block / Wing</label>
                   <input
                     type="text"
                     placeholder="e.g. A, B, Wing-1"
                     value={modalBlock}
                     onChange={(e) => setModalBlock(e.target.value)}
-                    className="w-full px-3 py-1.5 border border-[#CBD5E1] rounded focus:outline-none focus:border-[#2F5BD6]"
+                    className="w-full px-3 py-1.5 border-2 border-black rounded-[8px] bg-white text-black font-sans focus:outline-none focus:shadow-hard"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#0F172A] mb-1">Floor No</label>
+                  <label className="block font-heading font-bold text-black mb-1">Floor No</label>
                   <input
                     type="number"
                     min={0}
@@ -469,23 +464,23 @@ export const MaintenanceSchedule: React.FC<MaintenanceScheduleProps> = ({ userRo
                     placeholder="Floor 1, 2, etc."
                     value={modalFloor}
                     onChange={(e) => setModalFloor(e.target.value !== '' ? Number(e.target.value) : '')}
-                    className="w-full px-3 py-1.5 border border-[#CBD5E1] rounded focus:outline-none focus:border-[#2F5BD6]"
+                    className="w-full px-3 py-1.5 border-2 border-black rounded-[8px] bg-white text-black font-mono focus:outline-none focus:shadow-hard"
                   />
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-end gap-2">
+              <div className="pt-3 border-t-2 border-black flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 border border-[#CBD5E1] rounded font-medium text-[#475569] hover:bg-[#F8FAFC]"
+                  className="px-4 py-2 border-2 border-black rounded-[8px] font-heading font-bold text-black hover:bg-paper shadow-hard-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 bg-[#2F5BD6] text-white rounded font-semibold hover:bg-[#1B43A6] disabled:opacity-50"
+                  className="px-4 py-2 bg-black text-white rounded-[8px] border-2 border-black font-heading font-bold hover:bg-black/80 shadow-hard-sm transition-all active:translate-x-[2px] active:translate-y-[2px] disabled:opacity-50"
                 >
                   {submitting ? 'Scheduling...' : 'Confirm Schedule'}
                 </button>

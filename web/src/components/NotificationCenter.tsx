@@ -12,8 +12,8 @@ import {
   BedDouble,
   MessageSquare,
 } from 'lucide-react';
-import { ViewTab } from './Topbar';
-import { NotificationItem } from '../types';
+import { ViewTab } from './Topbar.js';
+import { NotificationItem } from '../types.js';
 
 interface NotificationCenterProps {
   csrfToken?: string;
@@ -128,23 +128,25 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="bg-white border border-[#E2E8F0] rounded-lg p-6 shadow-sm">
+      <div className="bg-surface border-2 border-black rounded-sm p-6 shadow-hard-lg">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <Bell className="w-5 h-5 text-[#2F5BD6]" strokeWidth={1.75} />
-              <h2 className="text-xl font-bold font-heading text-[#0F172A]">Notification Centre</h2>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-sm bg-paper border-2 border-black flex items-center justify-center text-ink-primary shadow-hard-sm">
+                <Bell className="w-5 h-5 text-ink-primary" strokeWidth={2} />
+              </div>
+              <h2 className="text-xl font-extrabold font-heading text-ink-primary tracking-tight">Notification Centre</h2>
               {unreadCount > 0 ? (
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#FEF2F2] text-[#DC2626] font-semibold border border-[#FECACA] tabular-nums">
+                <span className="text-xs px-2.5 py-0.5 rounded-sm bg-saffron text-black font-extrabold border-2 border-black shadow-hard-sm tabular-nums">
                   {unreadCount} Unread
                 </span>
               ) : (
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#059669] font-semibold border border-[#A7F3D0]">
+                <span className="text-xs px-2.5 py-0.5 rounded-sm bg-status-success-subtle text-status-success-text font-extrabold border-2 border-black shadow-hard-sm">
                   All Caught Up
                 </span>
               )}
             </div>
-            <p className="text-xs text-[#64748B] mt-1">
+            <p className="text-xs font-medium text-ink-secondary mt-2">
               Real-time transactional notifications fanned out via database triggers across notices, water quality, and maintenance.
             </p>
           </div>
@@ -153,9 +155,9 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#CBD5E1] text-[#0F172A] rounded text-xs font-semibold hover:bg-[#F8FAFC] transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface border-2 border-black text-ink-primary rounded-sm text-xs font-extrabold shadow-hard hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-hard-sm active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
               >
-                <CheckCheck className="w-4 h-4 text-[#059669]" strokeWidth={1.75} />
+                <CheckCheck className="w-4 h-4 text-status-success-text" strokeWidth={2} />
                 <span>Mark All Read</span>
               </button>
             )}
@@ -165,13 +167,13 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                 setFilterUnread(!filterUnread);
                 setPage(1);
               }}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold border transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-extrabold border-2 border-black shadow-hard hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-hard-sm active:translate-x-1 active:translate-y-1 active:shadow-none transition-all ${
                 filterUnread
-                  ? 'bg-[#1E3A8A] text-white border-[#1E3A8A]'
-                  : 'bg-white text-[#475569] border-[#CBD5E1] hover:bg-[#F8FAFC]'
+                  ? 'bg-paper text-ink-primary'
+                  : 'bg-surface text-ink-primary'
               }`}
             >
-              <Filter className="w-3.5 h-3.5" strokeWidth={1.75} />
+              <Filter className="w-3.5 h-3.5" strokeWidth={2} />
               <span>{filterUnread ? 'Showing Unread' : 'Filter: Unread'}</span>
             </button>
           </div>
@@ -179,24 +181,24 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       </div>
 
       {/* Notifications List */}
-      <div className="bg-white border border-[#E2E8F0] rounded-lg shadow-sm overflow-hidden">
-        <div className="px-6 py-3 bg-[#F8FAFC] border-b border-[#E2E8F0] flex items-center justify-between">
-          <span className="text-xs font-semibold text-[#475569] uppercase tracking-wider">
+      <div className="bg-surface border-2 border-black rounded-sm shadow-hard-lg overflow-hidden">
+        <div className="px-6 py-3 bg-surface-subtle border-b-2 border-black flex items-center justify-between">
+          <span className="text-xs font-extrabold text-ink-primary uppercase tracking-wider">
             Transactional Alert Stream
           </span>
-          <span className="text-xs text-[#64748B] tabular-nums">
+          <span className="text-xs font-bold text-ink-secondary tabular-nums">
             Showing {notifications.length} of {totalCount} alerts
           </span>
         </div>
 
         {loading ? (
-          <div className="p-12 text-center text-xs text-[#64748B]">Loading notifications...</div>
+          <div className="p-12 text-center text-xs font-bold text-ink-muted">Loading notifications...</div>
         ) : notifications.length === 0 ? (
-          <div className="p-12 text-center text-xs text-[#64748B]">
+          <div className="p-12 text-center text-xs font-bold text-ink-muted">
             No notifications in this view.
           </div>
         ) : (
-          <div className="divide-y divide-[#E2E8F0]">
+          <div className="divide-y-2 divide-black">
             {notifications.map((notif) => {
               const IconComponent = TYPE_ICONS[notif.notif_type] || Bell;
               const isUnread = !notif.is_read;
@@ -205,38 +207,38 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                 <div
                   key={notif.notif_id}
                   className={`p-4 transition-colors flex items-start gap-4 ${
-                    isUnread ? 'bg-[#EEF2FF]/30' : 'hover:bg-[#F8FAFC]'
+                    isUnread ? 'bg-paper/40' : 'bg-surface hover:bg-surface-subtle/30'
                   }`}
                 >
                   <div
-                    className={`w-9 h-9 rounded flex items-center justify-center shrink-0 border ${
+                    className={`w-9 h-9 rounded-sm flex items-center justify-center shrink-0 border-2 border-black ${
                       isUnread
-                        ? 'bg-[#EEF2FF] border-[#2F5BD6] text-[#2F5BD6]'
-                        : 'bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B]'
+                        ? 'bg-saffron text-black shadow-hard-sm'
+                        : 'bg-surface text-ink-secondary'
                     }`}
                   >
-                    <IconComponent className="w-4 h-4" strokeWidth={1.75} />
+                    <IconComponent className="w-4 h-4" strokeWidth={2} />
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-[#0F172A]">{notif.title}</span>
+                        <span className="text-xs font-extrabold text-ink-primary">{notif.title}</span>
                         {isUnread && (
-                          <span className="w-2 h-2 rounded-full bg-[#2F5BD6]" title="Unread" />
+                          <span className="w-2.5 h-2.5 rounded-full bg-saffron border border-black" title="Unread" />
                         )}
-                        <span className="text-[10px] px-1.5 py-0.2 rounded font-semibold bg-[#F1F5F9] text-[#475569] border border-[#CBD5E1]">
+                        <span className="text-[10px] px-2 py-0.5 rounded-sm font-extrabold bg-surface-subtle text-ink-primary border border-black">
                           {notif.notif_type}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1 text-[11px] text-[#64748B] tabular-nums">
-                        <Clock className="w-3 h-3 text-[#94A3B8]" strokeWidth={1.75} />
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-ink-secondary tabular-nums">
+                        <Clock className="w-3.5 h-3.5 text-ink-muted" strokeWidth={2} />
                         <span>{notif.created_at}</span>
                       </div>
                     </div>
 
-                    <p className="text-xs text-[#475569] leading-relaxed mb-2">
+                    <p className="text-xs font-medium text-ink-secondary leading-relaxed mb-2">
                       {notif.body}
                     </p>
 
@@ -244,19 +246,19 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                       {notif.link && (
                         <button
                           onClick={() => handleDeepLink(notif.link, notif.notif_id, notif.is_read)}
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#2F5BD6] hover:underline"
+                          className="inline-flex items-center gap-1 text-[11px] font-extrabold text-ink-primary underline underline-offset-2 hover:text-black"
                         >
                           <span>Open Resource</span>
-                          <ExternalLink className="w-3 h-3" strokeWidth={1.75} />
+                          <ExternalLink className="w-3 h-3" strokeWidth={2} />
                         </button>
                       )}
 
                       {isUnread && (
                         <button
                           onClick={() => handleMarkAsRead(notif.notif_id)}
-                          className="inline-flex items-center gap-1 text-[11px] font-medium text-[#64748B] hover:text-[#0F172A]"
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-ink-secondary hover:text-ink-primary"
                         >
-                          <Check className="w-3 h-3" strokeWidth={1.75} />
+                          <Check className="w-3 h-3" strokeWidth={2} />
                           <span>Mark as read</span>
                         </button>
                       )}
@@ -269,24 +271,24 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
         )}
 
         {/* Pagination Toolbar */}
-        <div className="px-6 py-3 bg-[#F8FAFC] border-t border-[#E2E8F0] flex items-center justify-between text-xs">
-          <span className="text-[#64748B]">
-            Page <strong className="text-[#0F172A] tabular-nums">{page}</strong> of{' '}
-            <strong className="text-[#0F172A] tabular-nums">{totalPages}</strong>
+        <div className="px-6 py-3 bg-surface-subtle border-t-2 border-black flex items-center justify-between text-xs">
+          <span className="font-medium text-ink-secondary">
+            Page <strong className="text-ink-primary tabular-nums font-extrabold">{page}</strong> of{' '}
+            <strong className="text-ink-primary tabular-nums font-extrabold">{totalPages}</strong>
           </span>
 
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="px-3 py-1 bg-white border border-[#CBD5E1] rounded font-medium text-[#0F172A] hover:bg-[#F8FAFC] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1 bg-surface border-2 border-black rounded-sm font-extrabold text-ink-primary shadow-hard-sm hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               Previous
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages}
-              className="px-3 py-1 bg-white border border-[#CBD5E1] rounded font-medium text-[#0F172A] hover:bg-[#F8FAFC] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1 bg-surface border-2 border-black rounded-sm font-extrabold text-ink-primary shadow-hard-sm hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
               Next
             </button>

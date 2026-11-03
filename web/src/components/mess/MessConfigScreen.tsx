@@ -164,61 +164,63 @@ export const MessConfigScreen: React.FC = () => {
   return (
     <div className="space-y-8 max-w-4xl mx-auto pb-12">
       {/* Header and Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-border">
-        <div>
-          <h1 className="text-2xl font-serif font-bold text-ink-primary">
-            Mess Fee & Refund Parameters
-          </h1>
-          <p className="text-xs text-ink-secondary mt-1">
-            Configure monthly dining fees, food component ratios, per-meal rates, and policy rebate caps.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          {/* Hostel Select */}
-          <div className="flex items-center gap-1.5 bg-surface border border-border rounded px-3 py-1.5 text-xs">
-            <Building className="w-3.5 h-3.5 text-ink-muted" strokeWidth={1.75} />
-            <select
-              value={selectedHostel}
-              onChange={(e) => setSelectedHostel(Number(e.target.value))}
-              className="bg-transparent font-medium text-ink-primary focus:outline-none cursor-pointer"
-            >
-              <option value={1}>BH1 (Boys Hostel 1)</option>
-              <option value={2}>BH2 (Boys Hostel 2)</option>
-              <option value={3}>GH1 (Girls Hostel 1)</option>
-            </select>
+      <div className="bg-surface border-2 border-black rounded-sm p-6 shadow-hard-lg">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-extrabold font-heading text-ink-primary tracking-tight">
+              Mess Fee & Refund Parameters
+            </h1>
+            <p className="text-xs font-medium text-ink-secondary mt-1">
+              Configure monthly dining fees, food component ratios, per-meal rates, and policy rebate caps.
+            </p>
           </div>
 
-          {/* Month/Year Select */}
-          <div className="flex items-center gap-1.5 bg-surface border border-border rounded px-3 py-1.5 text-xs">
-            <Calendar className="w-3.5 h-3.5 text-ink-muted" strokeWidth={1.75} />
-            <select
-              value={month}
-              onChange={(e) => setMonth(Number(e.target.value))}
-              className="bg-transparent font-medium text-ink-primary focus:outline-none cursor-pointer"
-            >
-              <option value={9}>Sep 2026</option>
-              <option value={10}>Oct 2026</option>
-              <option value={11}>Nov 2026</option>
-              <option value={12}>Dec 2026</option>
-            </select>
-          </div>
+          <div className="flex items-center gap-2.5">
+            {/* Hostel Select */}
+            <div className="flex items-center gap-1.5 bg-surface border-2 border-black rounded-sm px-3 py-1.5 text-xs shadow-hard-sm">
+              <Building className="w-4 h-4 text-ink-primary" strokeWidth={2} />
+              <select
+                value={selectedHostel}
+                onChange={(e) => setSelectedHostel(Number(e.target.value))}
+                className="bg-transparent font-extrabold text-ink-primary focus:outline-none cursor-pointer"
+              >
+                <option value={1}>BH1 (Boys Hostel 1)</option>
+                <option value={2}>BH2 (Boys Hostel 2)</option>
+                <option value={3}>GH1 (Girls Hostel 1)</option>
+              </select>
+            </div>
 
-          <Button variant="outline" size="sm" onClick={fetchConfig} disabled={loading}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${loading ? 'animate-spin' : ''}`} strokeWidth={1.75} />
-            Reset
-          </Button>
+            {/* Month/Year Select */}
+            <div className="flex items-center gap-1.5 bg-surface border-2 border-black rounded-sm px-3 py-1.5 text-xs shadow-hard-sm">
+              <Calendar className="w-4 h-4 text-ink-primary" strokeWidth={2} />
+              <select
+                value={month}
+                onChange={(e) => setMonth(Number(e.target.value))}
+                className="bg-transparent font-extrabold text-ink-primary focus:outline-none cursor-pointer"
+              >
+                <option value={9}>Sep 2026</option>
+                <option value={10}>Oct 2026</option>
+                <option value={11}>Nov 2026</option>
+                <option value={12}>Dec 2026</option>
+              </select>
+            </div>
+
+            <Button variant="outline" size="sm" onClick={fetchConfig} disabled={loading}>
+              <RefreshCw className={`w-3.5 h-3.5 mr-1 ${loading ? 'animate-spin' : ''}`} strokeWidth={2} />
+              Reset
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Policy Context Box */}
-      <div className="p-4 bg-primary-subtle border border-primary-border rounded-lg text-xs flex items-start gap-3">
-        <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" strokeWidth={1.75} />
-        <div className="space-y-1 text-ink-secondary leading-relaxed">
-          <p className="font-semibold text-primary uppercase tracking-wider text-[11px]">
+      <div className="p-4 bg-paper border-2 border-black rounded-sm text-xs flex items-start gap-3 shadow-hard-sm">
+        <Info className="w-5 h-5 text-ink-primary shrink-0 mt-0.5" strokeWidth={2} />
+        <div className="space-y-1 text-ink-primary leading-relaxed">
+          <p className="font-extrabold uppercase tracking-wider text-[11px]">
             Institutional Refund Policy Framework
           </p>
-          <p>
+          <p className="font-medium text-xs">
             The total monthly dining fee is composed of operational kitchen overheads and a direct edible food component. By institutional decree, attendance refunds apply exclusively to eligible missed meals in excess of the statutory 15-meal skip allowance, capped at the defined percentage of the edible food component.
           </p>
         </div>
@@ -226,12 +228,12 @@ export const MessConfigScreen: React.FC = () => {
 
       {/* Main Settings Form */}
       <form onSubmit={handleSave} className="space-y-6">
-        <div className="p-6 bg-surface border border-border rounded-lg space-y-6 shadow-none">
-          <div className="border-b border-border pb-3">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-ink-primary">
+        <div className="p-6 bg-surface border-2 border-black rounded-sm space-y-6 shadow-hard">
+          <div className="border-b-2 border-black pb-3">
+            <h3 className="text-sm font-extrabold uppercase tracking-wider text-ink-primary">
               Monthly Hostel Financials ({month}/{year})
             </h3>
-            <p className="text-xs text-ink-muted">
+            <p className="text-xs font-medium text-ink-secondary">
               Applies to all active residents in selected hostel.
             </p>
           </div>
@@ -239,131 +241,131 @@ export const MessConfigScreen: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* 1. Monthly Mess Fee */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink-primary flex items-center justify-between">
+              <label className="text-xs font-bold text-ink-primary flex items-center justify-between">
                 <span>Total Monthly Mess Fee (₹)</span>
-                <span className="text-[10px] text-ink-muted font-normal">Base fee billed to student</span>
+                <span className="text-[10px] text-ink-secondary font-medium">Base fee billed to student</span>
               </label>
               <Input
                 type="number"
                 step="0.01"
                 value={monthlyFee}
                 onChange={(e) => setMonthlyFee(e.target.value)}
-                className="font-mono"
+                className="font-mono text-xs"
                 required
               />
             </div>
 
             {/* 2. Food Component */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink-primary flex items-center justify-between">
+              <label className="text-xs font-bold text-ink-primary flex items-center justify-between">
                 <span>Edible Food Component (₹)</span>
-                <span className="text-[10px] text-ink-muted font-normal">Must be ≤ Total Fee</span>
+                <span className="text-[10px] text-ink-secondary font-medium">Must be ≤ Total Fee</span>
               </label>
               <Input
                 type="number"
                 step="0.01"
                 value={foodComponent}
                 onChange={(e) => setFoodComponent(e.target.value)}
-                className="font-mono"
+                className="font-mono text-xs"
                 required
               />
             </div>
 
             {/* 3. Per-Meal Refund Rate */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink-primary flex items-center justify-between">
+              <label className="text-xs font-bold text-ink-primary flex items-center justify-between">
                 <span>Per-Meal Refund Rate (₹)</span>
-                <span className="text-[10px] text-ink-muted font-normal">Rebate per eligible missed meal</span>
+                <span className="text-[10px] text-ink-secondary font-medium">Rebate per eligible missed meal</span>
               </label>
               <Input
                 type="number"
                 step="0.01"
                 value={perMealRate}
                 onChange={(e) => setPerMealRate(e.target.value)}
-                className="font-mono"
+                className="font-mono text-xs"
                 required
               />
             </div>
 
             {/* 4. Free Skips Allowance */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink-primary flex items-center justify-between">
+              <label className="text-xs font-bold text-ink-primary flex items-center justify-between">
                 <span>Free Skips Allowance (Count)</span>
-                <span className="text-[10px] text-ink-muted font-normal">Default statutory allowance: 15</span>
+                <span className="text-[10px] text-ink-secondary font-medium">Default statutory allowance: 15</span>
               </label>
               <Input
                 type="number"
                 step="1"
                 value={freeSkips}
                 onChange={(e) => setFreeSkips(e.target.value)}
-                className="font-mono"
+                className="font-mono text-xs"
                 required
               />
             </div>
 
             {/* 5. Food Component Cap % */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink-primary flex items-center justify-between">
+              <label className="text-xs font-bold text-ink-primary flex items-center justify-between">
                 <span>Food Component Cap %</span>
-                <span className="text-[10px] text-ink-muted font-normal">Max rebate limit (% of food component)</span>
+                <span className="text-[10px] text-ink-secondary font-medium">Max rebate limit (% of food component)</span>
               </label>
               <Input
                 type="number"
                 step="0.01"
                 value={capPct}
                 onChange={(e) => setCapPct(e.target.value)}
-                className="font-mono"
+                className="font-mono text-xs"
                 required
               />
             </div>
 
             {/* 6. Historical Flat Refund Benchmark */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-ink-primary flex items-center justify-between">
+              <label className="text-xs font-bold text-ink-primary flex items-center justify-between">
                 <span>Historical Flat Benchmark (₹)</span>
-                <span className="text-[10px] text-ink-muted font-normal">Legacy setting in app_settings</span>
+                <span className="text-[10px] text-ink-secondary font-medium">Legacy setting in app_settings</span>
               </label>
               <Input
                 type="number"
                 step="0.01"
                 value={flatRefund}
                 onChange={(e) => setFlatRefund(e.target.value)}
-                className="font-mono"
+                className="font-mono text-xs"
                 required
               />
             </div>
           </div>
 
           {/* Computed Formula Summary Callout */}
-          <div className="p-4 bg-surface-subtle rounded border border-border text-xs space-y-2 font-mono">
-            <div className="text-ink-secondary text-[11px] font-sans font-semibold uppercase tracking-wider">
+          <div className="p-4 bg-surface border-2 border-black rounded-sm text-xs space-y-2 font-mono shadow-hard-sm">
+            <div className="text-ink-secondary text-[11px] font-sans font-extrabold uppercase tracking-wider">
               Live Parameter Validation
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <span className="text-ink-muted block text-[10px]">Overhead Component:</span>
-                <span className="text-ink-primary font-bold">
+                <span className="text-ink-secondary block text-[10px] font-bold">Overhead Component:</span>
+                <span className="text-ink-primary font-black">
                   ₹{(Number(monthlyFee) - Number(foodComponent)).toFixed(2)}
                 </span>
               </div>
               <div>
-                <span className="text-ink-muted block text-[10px]">Max Refund Cap:</span>
-                <span className="text-emerald-700 font-bold">
+                <span className="text-ink-secondary block text-[10px] font-bold">Max Refund Cap:</span>
+                <span className="text-status-success-text font-black">
                   ₹{maxRebateCap}
                 </span>
               </div>
               <div>
-                <span className="text-ink-muted block text-[10px]">Meals to hit Cap:</span>
-                <span className="text-ink-primary font-bold">
+                <span className="text-ink-secondary block text-[10px] font-bold">Meals to hit Cap:</span>
+                <span className="text-ink-primary font-black">
                   {Math.ceil(Number(maxRebateCap) / (Number(perMealRate) || 1))} meals
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t-2 border-black">
             <Button type="submit" variant="primary" disabled={saving}>
-              <Save className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.75} />
+              <Save className="w-3.5 h-3.5 mr-1.5" strokeWidth={2} />
               {saving ? 'Saving...' : 'Save Configuration'}
             </Button>
           </div>
@@ -371,14 +373,14 @@ export const MessConfigScreen: React.FC = () => {
       </form>
 
       {/* Meal Slot Scheduling Operations */}
-      <div className="p-6 bg-surface border border-border rounded-lg space-y-4">
+      <div className="p-6 bg-surface border-2 border-black rounded-sm space-y-4 shadow-hard">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-ink-primary">
+            <h3 className="text-sm font-extrabold uppercase tracking-wider text-ink-primary">
               Monthly Meal Slot Generator
             </h3>
-            <p className="text-xs text-ink-secondary mt-1">
-              Idempotently generate daily meal slots (Breakfast, Lunch, Snacks, Dinner) for {month}/{year} using stored procedure <code className="font-mono bg-surface-subtle px-1 py-0.5 rounded">sp_generate_meals</code>.
+            <p className="text-xs font-medium text-ink-secondary mt-1">
+              Idempotently generate daily meal slots (Breakfast, Lunch, Snacks, Dinner) for {month}/{year} using stored procedure <code className="font-mono bg-paper border border-black px-1.5 py-0.5 rounded-sm">sp_generate_meals</code>.
             </p>
           </div>
 
@@ -389,7 +391,7 @@ export const MessConfigScreen: React.FC = () => {
             disabled={generatingMeals}
             className="shrink-0"
           >
-            <PlayCircle className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.75} />
+            <PlayCircle className="w-3.5 h-3.5 mr-1.5" strokeWidth={2} />
             {generatingMeals ? 'Generating...' : 'Generate Meal Slots'}
           </Button>
         </div>

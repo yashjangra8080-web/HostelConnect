@@ -11,8 +11,11 @@ import {
   FileCheck,
   Sun,
   Moon,
+  Phone,
+  Utensils,
 } from 'lucide-react';
 import { Student, KeysetResponse } from '../types.js';
+import { ErrorBoundary } from './ui/ErrorBoundary.js';
 
 export const StudentDirectory: React.FC = () => {
   // Query parameters
@@ -434,11 +437,12 @@ export const StudentDirectory: React.FC = () => {
 
             {/* Drawer Content */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6 text-xs text-black">
-              {detailLoading || !studentDetail ? (
-                <div className="py-20 text-center text-black/70 font-sans">Loading student details...</div>
-              ) : (
-                <>
-                  {/* Academic Profile Card */}
+              <ErrorBoundary fallbackTitle="Error rendering student profile details">
+                {detailLoading || !studentDetail ? (
+                  <div className="py-20 text-center text-black/70 font-sans">Loading student details...</div>
+                ) : (
+                  <>
+                    {/* Academic Profile Card */}
                   <div className="bg-white border-2 border-black rounded-[4px] p-4 space-y-3 shadow-hard-sm">
                     <h4 className="text-xs font-heading font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1.5 flex items-center gap-1.5">
                       <Users className="w-3.5 h-3.5 text-black" strokeWidth={2} />
@@ -506,7 +510,9 @@ export const StudentDirectory: React.FC = () => {
                       <div className="flex items-center justify-between font-mono text-[11px]">
                         <span className="text-black/70">Coordinates:</span>
                         <span className="font-bold text-black">
-                          {studentDetail.home_latitude.toFixed(4)}° N, {studentDetail.home_longitude.toFixed(4)}° E
+                          {studentDetail.home_latitude != null && studentDetail.home_longitude != null
+                            ? `${Number(studentDetail.home_latitude).toFixed(4)}° N, ${Number(studentDetail.home_longitude).toFixed(4)}° E`
+                            : 'Not Recorded'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -524,35 +530,143 @@ export const StudentDirectory: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Residence & Room */}
+                  {/* Authorized Contact Information (Only visible if role has access) */}
+                  {(studentDetail.phone || studentDetail.email) && (
+                    <div className="bg-white border-2 border-black rounded-[4px] p-4 space-y-3 shadow-hard-sm">
+                      <h4 className="text-xs font-heading font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1.5 flex items-center gap-1.5">
+                        <Phone className="w-3.5 h-3.5 text-black" strokeWidth={2} />
+                        Authorized Contact Details
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3 font-sans">
+                        {studentDetail.phone && (
+                          <div>
+                            <span className="text-black/70 block">Mobile Phone</span>
+                            <span className="font-mono font-bold text-black">{studentDetail.phone}</span>
+                          </div>
+                        )}
+                        {studentDetail.email && (
+                          <div>
+                            <span className="text-black/70 block">Institutional Email</span>
+                            <span className="font-mono font-bold text-black truncate block">{studentDetail.email}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Residence, Room & Roommates */}
                   <div className="bg-white border-2 border-black rounded-[4px] p-4 space-y-3 shadow-hard-sm">
                     <h4 className="text-xs font-heading font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1.5 flex items-center gap-1.5">
                       <BedDouble className="w-3.5 h-3.5 text-black" strokeWidth={2} />
-                      Current Residence
+                      Current Residence & Roommates
                     </h4>
                     {studentDetail.hostel_name ? (
-                      <div className="space-y-2 font-sans">
-                        <div className="flex items-center justify-between">
-                          <span className="text-black/70">Hostel:</span>
-                          <span className="font-bold text-black">{studentDetail.hostel_name}</span>
+                      <div className="space-y-3 font-sans">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-black/70">Hostel:</span>
+                            <span className="font-bold text-black">{studentDetail.hostel_name}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-black/70">Room Number:</span>
+                            <span className="font-mono font-bold text-black">
+                              Room {studentDetail.room_no} (Floor {studentDetail.floor_no})
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-black/70">Allotment Status:</span>
+                            <span className="px-2 py-0.5 rounded-[4px] text-[11px] font-heading font-bold bg-status-success-bg text-black border-2 border-black">
+                              {studentDetail.allotment_status}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-black/70">Room Number:</span>
-                          <span className="font-mono font-bold text-black">
-                            Room {studentDetail.room_no} (Floor {studentDetail.floor_no})
+
+                        {/* Roommates List */}
+                        <div className="pt-2.5 border-t border-black/20 space-y-2">
+                          <span className="text-black/80 font-bold block text-[11px]">
+                            Allotted Roommates:
                           </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-black/70">Allotment Status:</span>
-                          <span className="px-2 py-0.5 rounded-[4px] text-[11px] font-heading font-bold bg-status-success-bg text-black border-2 border-black">
-                            {studentDetail.allotment_status}
-                          </span>
+                          {!studentDetail.roommates || studentDetail.roommates.length === 0 ? (
+                            <p className="text-[11px] text-black/60 italic font-sans">
+                              No roommates currently assigned to this room.
+                            </p>
+                          ) : (
+                            <div className="space-y-1.5">
+                              {studentDetail.roommates.map((rm) => (
+                                <div
+                                  key={rm.student_id}
+                                  className="p-2 border border-black rounded-[4px] bg-surface-subtle/20 flex items-center justify-between text-[11px]"
+                                >
+                                  <div>
+                                    <span className="font-heading font-bold text-black">{rm.full_name}</span>
+                                    <span className="font-mono text-black/70 ml-1.5">({rm.roll_no})</span>
+                                  </div>
+                                  <span
+                                    className={`px-1.5 py-0.2 rounded-[4px] text-[10px] font-heading font-bold border border-black ${
+                                      rm.study_habit === 'DAY'
+                                        ? 'bg-paper text-black'
+                                        : 'bg-surface-subtle text-black'
+                                    }`}
+                                  >
+                                    {rm.study_habit}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ) : (
                       <p className="text-xs text-black/70 font-sans italic">
                         No active room allotment assigned.
                       </p>
+                    )}
+                  </div>
+
+                  {/* Mess Dining & Refund Summary */}
+                  <div className="bg-white border-2 border-black rounded-[4px] p-4 space-y-3 shadow-hard-sm">
+                    <h4 className="text-xs font-heading font-extrabold text-black uppercase tracking-wider border-b-2 border-black pb-1.5 flex items-center gap-1.5">
+                      <Utensils className="w-3.5 h-3.5 text-black" strokeWidth={2} />
+                      Mess Dining & Refund Summary
+                    </h4>
+                    {!studentDetail.mess_refunds || studentDetail.mess_refunds.records?.length === 0 ? (
+                      <p className="text-xs text-black/70 font-sans italic">No dining refunds recorded.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="p-2.5 bg-paper/40 border-2 border-black rounded-[4px] flex items-center justify-between font-heading font-bold text-xs">
+                          <span>Cumulative Reconciled Refunds:</span>
+                          <span className="font-mono text-sm">
+                            ₹{Number(studentDetail.mess_refunds.total_amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                        <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                          {studentDetail.mess_refunds.records.map((r) => (
+                            <div
+                              key={r.refund_id}
+                              className="p-2 border border-black rounded-[4px] bg-white flex items-center justify-between text-[11px]"
+                            >
+                              <div>
+                                <span className="font-bold font-mono">
+                                  {new Date(r.year, r.month - 1).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}
+                                </span>
+                                <span className="text-black/70 ml-2">
+                                  ({r.meals_eaten}/{r.meals_scheduled} meals)
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-bold">
+                                  ₹{Number(r.refund_amount).toFixed(2)}
+                                </span>
+                                <span className={`px-1.5 py-0.2 rounded-[4px] text-[10px] font-bold border border-black ${
+                                  r.status === 'FINAL' ? 'bg-status-success-bg text-black' : 'bg-status-warning-bg text-black'
+                                }`}>
+                                  {r.status}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
 
@@ -608,6 +722,7 @@ export const StudentDirectory: React.FC = () => {
                   </div>
                 </>
               )}
+              </ErrorBoundary>
             </div>
 
             {/* Drawer Footer */}

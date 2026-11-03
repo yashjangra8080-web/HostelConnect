@@ -223,6 +223,24 @@ studentsRouter.get('/:id', requireAuth, async (req: Request, res: Response, next
 
       const student = rows[0];
 
+      // Parse latitude & longitude to numbers if returned as strings
+      if (student.home_latitude !== null && student.home_latitude !== undefined) {
+        student.home_latitude = Number(student.home_latitude);
+      }
+      if (student.home_longitude !== null && student.home_longitude !== undefined) {
+        student.home_longitude = Number(student.home_longitude);
+      }
+
+      // Check contact information authorization
+      const canViewContact =
+        ['ADMIN', 'HOSTEL_OFFICE', 'CHIEF_WARDEN', 'WARDEN'].includes(user.role) ||
+        (user.role === 'STUDENT' && student.user_id === user.userId);
+
+      if (!canViewContact) {
+        student.phone = null;
+        student.email = null;
+      }
+
       // Fetch student application history
       const [appRows] = await conn.query<any[]>(
         `SELECT 
@@ -237,9 +255,41 @@ studentsRouter.get('/:id', requireAuth, async (req: Request, res: Response, next
         [studentId]
       );
 
+      // Fetch active roommates if allotted to a room
+      let roommates: any[] = [];
+      if (student.room_id) {
+        const [roommateRows] = await conn.query<any[]>(
+          `SELECT 
+            cr.student_id, cr.roll_no, cr.full_name, cr.gender, 
+            cr.study_habit, cr.response_status AS allotment_status
+           FROM v_current_residence cr
+           WHERE cr.room_id = ? AND cr.student_id != ?`,
+          [student.room_id, studentId]
+        );
+        roommates = roommateRows;
+      }
+
+      // Fetch mess refunds summary
+      const [refundRows] = await conn.query<any[]>(
+        `SELECT 
+          refund_id, month, year, meals_scheduled, meals_eaten,
+          refund_amount, status
+         FROM mess_refunds
+         WHERE student_id = ?
+         ORDER BY year DESC, month DESC`,
+        [studentId]
+      );
+      const totalRefundAmount = refundRows.reduce((acc, r) => acc + Number(r.refund_amount || 0), 0);
+
       return {
         ...student,
         applications: appRows,
+        roommates,
+        mess_refunds: {
+          total_refunds: refundRows.length,
+          total_amount: totalRefundAmount,
+          records: refundRows,
+        },
       };
     });
 

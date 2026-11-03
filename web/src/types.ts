@@ -38,6 +38,31 @@ export interface Student {
   allotment_id: number | null;
   allotment_status: 'AWAITING' | 'ACCEPTED' | 'DECLINED' | null;
   applications?: Application[];
+  roommates?: Roommate[];
+  mess_refunds?: {
+    total_refunds: number;
+    total_amount: number;
+    records: MessRefundRecord[];
+  };
+}
+
+export interface Roommate {
+  student_id: number;
+  roll_no: string;
+  full_name: string;
+  gender: 'M' | 'F';
+  study_habit: 'DAY' | 'NIGHT';
+  allotment_status: string;
+}
+
+export interface MessRefundRecord {
+  refund_id: number;
+  month: number;
+  year: number;
+  meals_scheduled: number;
+  meals_eaten: number;
+  refund_amount: number | string;
+  status: 'PREVIEW' | 'FINAL';
 }
 
 export interface Application {

@@ -28,6 +28,7 @@ import { ComplaintInbox } from './components/ComplaintInbox.js';
 import { LaundryStatus } from './components/LaundryStatus.js';
 import { AdminPrivilegeProof } from './components/AdminPrivilegeProof.js';
 import { Loader2 } from 'lucide-react';
+import { ErrorBoundary } from './components/ui/ErrorBoundary.js';
 
 function AppContent() {
   const { user, isLoading, csrfToken } = useAuth();
@@ -217,7 +218,9 @@ function AppContent() {
 
   return (
     <AppShell currentPath={currentPath} onNavigate={navigateTo}>
-      {renderContent()}
+      <ErrorBoundary key={currentPath}>
+        {renderContent()}
+      </ErrorBoundary>
     </AppShell>
   );
 }

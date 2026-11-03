@@ -10,6 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { RoomOccupancyBoard } from './RoomOccupancyBoard';
+import { ConfirmDialog } from './ui/ConfirmDialog.js';
 
 interface CycleData {
   cycle: {
@@ -45,6 +46,10 @@ export const HostelOfficeConsole: React.FC = () => {
     summary: DryRunSummary;
     plan: any[];
   } | null>(null);
+
+  // Confirm dialogs
+  const [isRunConfirmOpen, setIsRunConfirmOpen] = useState(false);
+  const [isPublishConfirmOpen, setIsPublishConfirmOpen] = useState(false);
 
   const fetchCycle = async () => {
     setLoading(true);
@@ -93,9 +98,7 @@ export const HostelOfficeConsole: React.FC = () => {
   };
 
   const handleRunAllotment = async () => {
-    if (!window.confirm('Execute authoritative allotment engine for Cycle 1? This will seat verified applicants into hostel rooms according to the 4-tier sort rule.')) {
-      return;
-    }
+    setIsRunConfirmOpen(false);
     setActionLoading(true);
     setError(null);
     setSuccess(null);
@@ -121,9 +124,7 @@ export const HostelOfficeConsole: React.FC = () => {
   };
 
   const handlePublish = async () => {
-    if (!window.confirm('Publish Cycle 1 allotment results? This will snapshot rankings, lock published allotments, notify students, and initiate the 7-day acceptance deadline.')) {
-      return;
-    }
+    setIsPublishConfirmOpen(false);
     setActionLoading(true);
     setError(null);
     setSuccess(null);
@@ -254,7 +255,7 @@ export const HostelOfficeConsole: React.FC = () => {
 
           {/* Authoritative Run Button */}
           <button
-            onClick={handleRunAllotment}
+            onClick={() => setIsRunConfirmOpen(true)}
             disabled={actionLoading || (cycleStatus !== 'CLOSED' && cycleStatus !== 'OPEN')}
             className="px-4 py-2 text-xs font-semibold rounded bg-[#2F5BD6] text-white hover:bg-[#1B43A6] transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           >
@@ -264,7 +265,7 @@ export const HostelOfficeConsole: React.FC = () => {
 
           {/* Publish Button */}
           <button
-            onClick={handlePublish}
+            onClick={() => setIsPublishConfirmOpen(true)}
             disabled={actionLoading || cycleStatus !== 'ALLOTTED'}
             className="px-4 py-2 text-xs font-semibold rounded bg-[#059669] text-white hover:bg-[#047857] transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           >
@@ -400,6 +401,48 @@ export const HostelOfficeConsole: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Confirm Engine Execution Dialog */}
+      <ConfirmDialog
+        isOpen={isRunConfirmOpen}
+        onClose={() => setIsRunConfirmOpen(false)}
+        onConfirm={handleRunAllotment}
+        title="Execute Authoritative Allotment Engine"
+        isDestructive={false}
+        isLoading={actionLoading}
+        confirmLabel="Execute Engine"
+        description={
+          <div className="space-y-2 text-xs text-ink-muted">
+            <p>
+              Are you sure you want to execute the authoritative allotment engine for <strong>Cycle 1</strong>?
+            </p>
+            <p>
+              This will allocate verified applicants into hostel rooms according to the strict 4-tier sort rule (Distance &gt; Category &gt; Merit &gt; Roll Number) and update room occupancy.
+            </p>
+          </div>
+        }
+      />
+
+      {/* Confirm Publish Dialog */}
+      <ConfirmDialog
+        isOpen={isPublishConfirmOpen}
+        onClose={() => setIsPublishConfirmOpen(false)}
+        onConfirm={handlePublish}
+        title="Publish Cycle 1 Allotment Results"
+        isDestructive={true}
+        isLoading={actionLoading}
+        confirmLabel="Publish Results"
+        description={
+          <div className="space-y-2 text-xs text-ink-muted">
+            <p>
+              Are you sure you want to publish Cycle 1 allotment results?
+            </p>
+            <p>
+              This irreversible action will snapshot rankings, lock published allotments, notify all students, and activate the 7-day student acceptance deadline.
+            </p>
+          </div>
+        }
+      />
     </div>
   );
 };

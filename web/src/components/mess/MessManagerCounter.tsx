@@ -4,7 +4,6 @@ import {
   Clock,
   Search,
   RefreshCw,
-  Utensils,
   Copy,
   Check,
   Building,
@@ -155,10 +154,6 @@ export const MessManagerCounter: React.FC = () => {
       {/* Top Banner & Hostel Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-saffron mb-1">
-            <Utensils className="w-4 h-4" strokeWidth={1.75} />
-            <span>HostelConnect • Dining Operations</span>
-          </div>
           <h1 className="text-2xl font-serif font-bold text-ink-primary">
             Mess Attendance Counter
           </h1>

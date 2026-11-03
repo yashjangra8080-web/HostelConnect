@@ -32,10 +32,12 @@ import {
   Clock,
   Menu,
   X,
+  User,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import { CommandPalette } from '../ui/CommandPalette.js';
 import { NotificationPopover, NotificationItem } from '../NotificationPopover.js';
+import { Button } from '../ui/Button.js';
 
 interface NavItem {
   key: string;
@@ -123,8 +125,46 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isNotifPopoverOpen, setIsNotifPopoverOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [currentTimeIST, setCurrentTimeIST] = useState<string>('');
+
+  // Platform shortcut detection (Ctrl K vs ⌘K)
+  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPod|iPad/i.test(navigator.platform || navigator.userAgent);
+  const shortcutLabel = isMac ? '⌘K' : 'Ctrl K';
+
+  // Dynamic document.title per page
+  useEffect(() => {
+    const PAGE_TITLE_MAP: Record<string, string> = {
+      '/': 'Dashboard',
+      '/student/dashboard': 'Student Dashboard',
+      '/notifications': 'Notifications & Alerts',
+      '/student/notices': 'Campus Notice Hub',
+      '/notices': 'Campus Notice Hub',
+      '/student/mess': 'Mess Attendance & Refund Ledger',
+      '/mess/attendance': 'Mess Attendance & Refund Ledger',
+      '/mess/refunds': 'Dining Rebate & Refund Ledger',
+      '/mess/counter': 'Mess Attendance Counter',
+      '/mess/check-in': 'Dining Hall Check-In',
+      '/student/laundry': 'Smart Laundry Monitoring',
+      '/laundry': 'Smart Laundry Monitoring',
+      '/student/allotment': 'Hostel Room Allotment',
+      '/allotment': 'Hostel Room Allotment',
+      '/student/apply': 'Student Profile & Application',
+      '/apply': 'Student Profile & Application',
+      '/student/complaints': 'Confidential Complaints',
+      '/complaints': 'Confidential Complaints',
+      '/water-quality': 'Water Quality Surveillance',
+      '/maintenance': 'Maintenance Schedule',
+      '/pool': 'Public Transparency Pool',
+      '/verify': 'Application Verification Queue',
+      '/admin/audit': 'System Audit Log',
+      '/admin/privilege-proof': 'Privilege Proof Console',
+      '/change-password': 'Change Account Password',
+    };
+    const title = PAGE_TITLE_MAP[currentPath] || 'Campus Portal';
+    document.title = `${title} — HostelConnect`;
+  }, [currentPath]);
 
   // Update IST clock
   useEffect(() => {
@@ -217,13 +257,13 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
   const renderSidebarContent = (onItemClick?: () => void) => (
     <>
       <div>
-        {/* Institutional Wordmark Header */}
-        <div className="h-16 px-5 border-b border-white/10 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+        {/* Institutional Wordmark Header (No Clipping) */}
+        <div className="h-16 px-4 shrink-0 border-b border-white/10 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded bg-saffron text-white flex items-center justify-center font-bold text-xs shrink-0 tracking-tight">
               HC
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <span className="font-serif font-bold text-sm tracking-tight leading-tight block truncate text-white">
                 HostelConnect
               </span>
@@ -252,8 +292,8 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
           </span>
         </div>
 
-        {/* Navigation Groups */}
-        <div className="py-4 px-3 space-y-6 overflow-y-auto max-h-[calc(100vh-170px)]">
+        {/* Navigation Groups with Thin Custom Scrollbar */}
+        <div className="py-4 px-3 space-y-6 overflow-y-auto max-h-[calc(100vh-170px)] scrollbar-thin">
           {navGroups.map((group, gIdx) => (
             <div key={`${group.title}-${gIdx}`} className="space-y-1">
               <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
@@ -358,7 +398,7 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
               <Search className="w-4 h-4 text-ink-muted shrink-0" strokeWidth={1.75} />
               <span className="flex-1 truncate">Search...</span>
               <kbd className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-surface border border-border text-[10px] font-mono text-ink-secondary">
-                ⌘K
+                {shortcutLabel}
               </kbd>
             </button>
           </div>
@@ -433,6 +473,18 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
                       type="button"
                       onClick={() => {
                         setIsUserMenuOpen(false);
+                        setIsProfileModalOpen(true);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-ink-secondary hover:text-ink-primary hover:bg-surface-subtle text-left"
+                    >
+                      <User className="w-4 h-4 text-ink-muted" strokeWidth={1.75} />
+                      <span>User Profile</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
                         onNavigate('/change-password');
                       }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-ink-secondary hover:text-ink-primary hover:bg-surface-subtle text-left"
@@ -474,6 +526,91 @@ export const AppShell: React.FC<AppShellProps> = ({ currentPath, onNavigate, chi
           onNavigate(res.url);
         }}
       />
+
+      {/* User Profile Modal */}
+      {isProfileModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-primary/50 p-4">
+          <div className="bg-surface border border-border rounded-lg max-w-md w-full p-6 shadow-xl space-y-5">
+            <div className="flex items-start justify-between pb-3 border-b border-border">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-navy text-white flex items-center justify-center font-bold text-sm">
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-ink-primary font-serif leading-tight">{displayName}</h3>
+                  <span className="text-[11px] font-mono text-ink-muted">{user?.loginId} • {roleLabel}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsProfileModalOpen(false)}
+                className="text-ink-muted hover:text-ink-primary p-1 rounded"
+              >
+                <X className="w-4 h-4" strokeWidth={1.75} />
+              </button>
+            </div>
+
+            <div className="space-y-2.5 font-mono text-xs">
+              <div className="flex justify-between py-1 border-b border-border/50">
+                <span className="text-ink-muted">Account Role:</span>
+                <span className="text-ink-primary font-semibold">{user?.role}</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-border/50">
+                <span className="text-ink-muted">User ID:</span>
+                <span className="text-ink-primary font-semibold">{user?.userId}</span>
+              </div>
+              {user?.student && (
+                <>
+                  <div className="flex justify-between py-1 border-b border-border/50">
+                    <span className="text-ink-muted">Roll Number:</span>
+                    <span className="text-ink-primary font-semibold">{user.student.roll_no}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-border/50">
+                    <span className="text-ink-muted">Student Name:</span>
+                    <span className="text-ink-primary">{user.student.full_name}</span>
+                  </div>
+                </>
+              )}
+              {user?.authority && (
+                <>
+                  <div className="flex justify-between py-1 border-b border-border/50">
+                    <span className="text-ink-muted">Designation:</span>
+                    <span className="text-ink-primary font-semibold">{user.authority.designation}</span>
+                  </div>
+                  {user.authority.hostel_id && (
+                    <div className="flex justify-between py-1 border-b border-border/50">
+                      <span className="text-ink-muted">Assigned Hostel:</span>
+                      <span className="text-ink-primary">Hostel {user.authority.hostel_id}</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2 border-t border-border">
+              {user?.role === 'STUDENT' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsProfileModalOpen(false);
+                    onNavigate('/student/apply');
+                  }}
+                >
+                  View Full Application
+                </Button>
+              )}
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setIsProfileModalOpen(false)}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

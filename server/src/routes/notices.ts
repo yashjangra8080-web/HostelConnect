@@ -115,6 +115,42 @@ noticesRouter.get('/', requireAuth, async (req: Request, res: Response, next: Ne
 });
 
 /**
+ * GET /api/notices/:id
+ * Fetch a single notice for deep-linking (?open=:id) and drawer view.
+ */
+noticesRouter.get('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = req.user!;
+    const noticeId = parseInt(req.params.id, 10);
+    if (isNaN(noticeId)) {
+      return res.status(400).json({ error: 'Invalid notice ID' });
+    }
+
+    const notice = await withRequestConn(user.role, user.userId, async (conn) => {
+      const [rows] = await conn.query<any[]>(
+        `SELECT n.notice_id, n.category, n.hostel_id, h.hostel_name, n.title, n.body,
+                n.is_pinned, n.starts_at, n.ends_at, n.created_at, n.attachment_url,
+                a.full_name AS posted_by_name, a.designation AS posted_by_role
+         FROM notices n
+         LEFT JOIN hostels h ON n.hostel_id = h.hostel_id
+         LEFT JOIN authorities a ON n.posted_by = a.authority_id
+         WHERE n.notice_id = ?`,
+        [noticeId]
+      );
+      return rows[0] || null;
+    });
+
+    if (!notice) {
+      return res.status(404).json({ error: 'Notice not found' });
+    }
+
+    return res.status(200).json({ notice });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * POST /api/notices
  * Restricted to: ADMIN, HOSTEL_OFFICE, CHIEF_WARDEN, WARDEN
  * Caretaker and Student rejected with 403 Forbidden.

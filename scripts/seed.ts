@@ -3,6 +3,7 @@ import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
 import { seedNotifications } from './seed-notifications.js';
 import { seedMess } from './seed-mess.js';
+import { seedNotices } from './seed-notices.js';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 dotenv.config({ path: path.resolve(process.cwd(), 'server/.env') });
@@ -682,36 +683,8 @@ async function seedDatabase() {
       }
     }
 
-    console.log('[Seed Runner] 10. Populating ~40 Notices...');
-    const noticeCategories = ['CIRCULAR', 'WATER_QUALITY', 'PEST_CONTROL', 'ELECTRICIAN', 'PLUMBER', 'GENERAL'];
-    const noticesData: any[] = [];
-    for (let n = 1; n <= 40; n++) {
-      const cat = noticeCategories[n % noticeCategories.length];
-      const hostelId = n % 5 === 0 ? null : (n % 4) + 1;
-      const isPinned = n <= 4 ? 1 : 0;
-      const title = `${cat.replace('_', ' ')}: Notification #${n} regarding hostel facilities`;
-      const body = `Official circular regarding scheduled operations and maintenance for ${hostelId ? `Hostel ${hostelId}` : 'all campus hostels'}. Please contact hostel administration for details.`;
-      const startsAt = '2026-09-01 09:00:00';
-      const endsAt = '2026-11-30 23:59:59';
-      const postedBy = (n % 6) + 1;
-
-      noticesData.push([
-        n,
-        cat,
-        hostelId,
-        title,
-        body,
-        isPinned,
-        startsAt,
-        endsAt,
-        postedBy,
-        null
-      ]);
-    }
-    await conn.query(
-      'INSERT INTO notices (notice_id, category, hostel_id, title, body, is_pinned, starts_at, ends_at, posted_by, attachment_url) VALUES ?',
-      [noticesData]
-    );
+    console.log('[Seed Runner] 10. Populating 46 Realistic Campus Notices (Task 4)...');
+    await seedNotices(conn);
 
     console.log('[Seed Runner] 11. Populating 8 Washing Machines per Hostel (32 machines) & Usage Logs...');
     const machinesData: any[] = [];

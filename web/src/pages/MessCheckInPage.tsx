@@ -125,10 +125,6 @@ export const MessCheckInPage: React.FC<MessCheckInPageProps> = ({ onNavigate }) 
     <div className="max-w-xl mx-auto py-8 px-4 space-y-6">
       {/* Header */}
       <div className="text-center space-y-1">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-subtle border border-border text-[11px] font-mono font-medium text-ink-secondary">
-          <QrCode className="w-3.5 h-3.5 text-primary" />
-          <span>MESS COUNTER CHECK-IN</span>
-        </div>
         <h1 className="text-2xl font-serif font-bold text-ink-primary">
           Dining Hall Attendance
         </h1>

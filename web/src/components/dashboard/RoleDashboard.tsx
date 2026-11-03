@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext.js';
 import { KPIStrip } from '../ui/KPIStrip.js';
 import { StatusTag } from '../ui/StatusTag.js';
 import { Button } from '../ui/Button.js';
-import { ShieldCheck, Building2, Utensils, Shirt } from 'lucide-react';
+import { Building2, Utensils, Shirt } from 'lucide-react';
 
 interface RoleDashboardProps {
   onNavigate: (path: string) => void;
@@ -46,10 +46,6 @@ export const RoleDashboard: React.FC<RoleDashboardProps> = ({ onNavigate }) => {
       {/* Welcome Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-saffron mb-1">
-            <ShieldCheck className="w-4 h-4" strokeWidth={1.75} />
-            <span>HostelConnect • Netaji Subhas University of Technology</span>
-          </div>
           <h1 className="text-2xl font-serif font-bold text-ink-primary">
             {role === 'ADMIN' && 'Administrative Systems Control'}
             {role === 'HOSTEL_OFFICE' && 'Hostel Office Allotment Operations'}

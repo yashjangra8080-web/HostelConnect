@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Receipt,
   Building,
   Calendar,
   Search,
@@ -261,10 +260,6 @@ export const ManagerRefundConsole: React.FC = () => {
       {/* Header and Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-border">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-saffron mb-1">
-            <Receipt className="w-4 h-4" strokeWidth={1.75} />
-            <span>HostelConnect • Mess Manager Console</span>
-          </div>
           <h1 className="text-2xl font-serif font-bold text-ink-primary">
             Monthly Dining Rebate & Refund Ledger
           </h1>

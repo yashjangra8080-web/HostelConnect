@@ -69,7 +69,7 @@ app.use('/api/search', searchRouter);
 // Centralized Error Handling & MySQL Signal/Exception Mapper
 app.use(errorHandler);
 
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   app.listen(config.port, () => {
     console.log(`[HostelConnect API] Listening on port ${config.port} (IST / UTC+05:30)`);
   });

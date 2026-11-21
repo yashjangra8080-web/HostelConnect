@@ -52,8 +52,18 @@ export async function withRequestConn<T>(
   userId: number | null | undefined,
   fn: (conn: mysql.PoolConnection) => Promise<T>
 ): Promise<T> {
-  const p = getPoolForRole(role);
-  const conn = await p.getConnection();
+  let conn: mysql.PoolConnection;
+  try {
+    const p = getPoolForRole(role);
+    conn = await p.getConnection();
+  } catch (err: any) {
+    // Graceful fallback to root/primary pool if role-specific MySQL user does not exist on cloud database
+    if (err && (err.code === 'ER_ACCESS_DENIED_ERROR' || err.errno === 1045)) {
+      conn = await pool.getConnection();
+    } else {
+      throw err;
+    }
+  }
 
   try {
     if (userId !== undefined && userId !== null) {

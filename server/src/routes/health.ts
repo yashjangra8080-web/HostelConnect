@@ -3,6 +3,15 @@ import { query } from '../db.js';
 
 export const healthRouter = Router();
 
+healthRouter.get('/', (_req: Request, res: Response) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'HostelConnect API',
+    uptimeSeconds: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 healthRouter.get('/health', async (_req: Request, res: Response) => {
   try {
     const [rows] = await query<any[]>(

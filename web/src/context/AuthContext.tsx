@@ -51,7 +51,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await fetch('/api/auth/me', { credentials: 'include' });
       if (res.ok) {
-        const data = await res.json();
+        const text = await res.text();
+        if (!text) {
+          setUser(null);
+          return;
+        }
+        let data: any = null;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          setUser(null);
+          return;
+        }
+        if (!data || !data.user) {
+          setUser(null);
+          return;
+        }
         const cookieCsrf = getCsrfFromCookie();
         if (cookieCsrf) setCsrfToken(cookieCsrf);
         setUser({
@@ -78,16 +93,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (loginId: string, password: string): Promise<AuthUser> => {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ login_id: loginId, password }),
-      credentials: 'include',
-    });
+    let res: Response;
+    try {
+      res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login_id: loginId, password }),
+        credentials: 'include',
+      });
+    } catch (networkErr: any) {
+      throw new Error('Network error: Unable to reach the server. Please check your internet connection.');
+    }
 
-    const data = await res.json();
+    const text = await res.text();
+    let data: any = null;
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = null;
+      }
+    }
+
     if (!res.ok) {
-      throw new Error(data.message || 'Login failed. Please check credentials.');
+      const message =
+        data?.message ||
+        data?.error ||
+        (res.status === 404
+          ? 'API route not found (404). Please ensure the backend is deployed.'
+          : res.status === 405
+          ? 'Method not allowed (405). The API endpoint is not receiving POST requests.'
+          : res.status >= 500
+          ? 'Server error (500). Please check database connectivity.'
+          : `Login failed (HTTP ${res.status}).`);
+      throw new Error(message);
+    }
+
+    if (!data || !data.user) {
+      throw new Error('Invalid response from server. Please try again.');
     }
 
     if (data.csrfToken) {

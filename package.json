@@ -19,7 +19,8 @@
     "show-grants": "tsx scripts/show-grants.ts",
     "test": "vitest run",
     "test:sql": "tsx scripts/sql-assertion-runner.ts",
-    "build": "npm run build --workspaces"
+    "build": "npm run build --workspaces",
+    "build:web": "npm run build --workspace=web"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",

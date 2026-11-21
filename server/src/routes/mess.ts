@@ -1144,3 +1144,61 @@ messRouter.post(
     }
   }
 );
+
+// ============================================================================
+// 11. GET /api/mess/timetable
+// Returns weekly dining timetable & menu slots
+// ============================================================================
+messRouter.get(
+  '/timetable',
+  requireAuth,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = req.user!;
+      const hostelId = req.query.hostel_id ? Number(req.query.hostel_id) : 1;
+
+      await withRequestConn(user.role, user.userId, async (conn) => {
+        // Query upcoming and recent meals
+        const [rows] = await conn.query<any[]>(
+          `SELECT 
+             m.meal_id,
+             m.meal_date,
+             m.menu,
+             m.is_closed,
+             mt.meal_type_id,
+             mt.type_name,
+             mt.start_time,
+             mt.end_time,
+             h.hostel_id,
+             h.hostel_name
+           FROM meals m
+           JOIN meal_types mt ON m.meal_type_id = mt.meal_type_id
+           JOIN hostels h ON m.hostel_id = h.hostel_id
+           WHERE m.hostel_id = ?
+           ORDER BY m.meal_date ASC, mt.meal_type_id ASC
+           LIMIT 100`,
+          [hostelId]
+        );
+
+        // Fetch meal types metadata
+        const [typeRows] = await conn.query<any[]>(
+          'SELECT meal_type_id, type_name, start_time, end_time FROM meal_types ORDER BY meal_type_id ASC'
+        );
+
+        // Fetch hostels
+        const [hostelRows] = await conn.query<any[]>(
+          'SELECT hostel_id, hostel_name FROM hostels ORDER BY hostel_id ASC'
+        );
+
+        return res.status(200).json({
+          hostel_id: hostelId,
+          meal_types: typeRows,
+          hostels: hostelRows,
+          meals: rows,
+        });
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);

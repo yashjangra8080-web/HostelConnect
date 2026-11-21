@@ -397,3 +397,93 @@ allotmentRouter.post(
     }
   }
 );
+
+/**
+ * GET /api/allotment/list
+ * Returns list of all bed allocations for the given cycle and optional hostel/status filter.
+ * Accessible to ADMIN, HOSTEL_OFFICE, CHIEF_WARDEN, WARDEN.
+ */
+allotmentRouter.get(
+  '/list',
+  requireAuth,
+  requireRole(['ADMIN', 'HOSTEL_OFFICE', 'CHIEF_WARDEN', 'WARDEN']),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const user = req.user!;
+      const cycleId = req.query.cycle_id ? Number(req.query.cycle_id) : 1;
+      const hostelId = req.query.hostel_id ? Number(req.query.hostel_id) : null;
+      const status = req.query.status ? String(req.query.status) : null;
+      const search = req.query.search ? String(req.query.search).trim() : null;
+
+      await withRequestConn(user.role as Role, user.userId, async (conn) => {
+        let whereClauses: string[] = ['alt.cycle_id = ?'];
+        const params: any[] = [cycleId];
+
+        if (hostelId) {
+          whereClauses.push('h.hostel_id = ?');
+          params.push(hostelId);
+        }
+
+        if (status) {
+          whereClauses.push('alt.response_status = ?');
+          params.push(status);
+        }
+
+        if (search) {
+          whereClauses.push('(s.roll_no LIKE ? OR s.full_name LIKE ? OR r.room_no LIKE ?)');
+          params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+        }
+
+        const whereSql = whereClauses.join(' AND ');
+
+        const [rows] = await conn.query<any[]>(
+          `SELECT 
+             alt.allotment_id,
+             alt.application_id,
+             alt.student_id,
+             alt.cycle_id,
+             alt.room_id,
+             alt.response_status,
+             alt.is_published,
+             alt.allotted_on,
+             s.roll_no,
+             s.full_name,
+             s.gender,
+             s.branch,
+             s.merit_rank,
+             s.study_habit,
+             r.room_no,
+             r.floor_no,
+             r.capacity,
+             r.study_habit_tag,
+             h.hostel_id,
+             h.hostel_name,
+             h.gender_type
+           FROM allotments alt
+           JOIN students s ON alt.student_id = s.student_id
+           JOIN rooms r ON alt.room_id = r.room_id
+           JOIN hostels h ON r.hostel_id = h.hostel_id
+           WHERE ${whereSql}
+           ORDER BY h.hostel_name ASC, r.floor_no ASC, r.room_no ASC, alt.allotted_on DESC`,
+          params
+        );
+
+        // Calculate summary counts
+        const counts = {
+          total: rows.length,
+          accepted: rows.filter((r: any) => r.response_status === 'ACCEPTED').length,
+          awaiting: rows.filter((r: any) => r.response_status === 'AWAITING').length,
+          declined: rows.filter((r: any) => r.response_status === 'DECLINED').length,
+        };
+
+        res.status(200).json({
+          cycle_id: cycleId,
+          counts,
+          allotments: rows,
+        });
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);

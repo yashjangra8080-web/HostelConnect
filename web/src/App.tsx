@@ -27,6 +27,11 @@ import { ComplaintForm } from './components/ComplaintForm.js';
 import { ComplaintInbox } from './components/ComplaintInbox.js';
 import { LaundryStatus } from './components/LaundryStatus.js';
 import { AdminPrivilegeProof } from './components/AdminPrivilegeProof.js';
+import { SystemHealth } from './components/SystemHealth.js';
+import { AuditTrail } from './components/AuditTrail.js';
+import { BedAllocationsConsole } from './components/BedAllocationsConsole.js';
+import { StaffAccounts } from './components/StaffAccounts.js';
+import { MessTimetable } from './components/mess/MessTimetable.js';
 import { Loader2 } from 'lucide-react';
 import { ErrorBoundary } from './components/ui/ErrorBoundary.js';
 
@@ -101,12 +106,15 @@ function AppContent() {
         return <ChangePasswordPage onSuccess={() => navigateTo('/')} />;
 
       // Applications & Allotment
-      case '/student/apply':
-      case '/apply':
-        return <StudentProfileApply currentStudentRollNo={user?.student?.roll_no} />;
       case '/student/allotment':
       case '/allotment':
         return <ApplicantStatus />;
+      case '/admin/allotments':
+      case '/chief-warden/allotments':
+        return <BedAllocationsConsole />;
+      case '/student/apply':
+      case '/apply':
+        return <StudentProfileApply currentStudentRollNo={user?.student?.roll_no} />;
       case '/office/applications':
       case '/admin/applications':
       case '/verify':
@@ -122,6 +130,7 @@ function AppContent() {
       case '/admin/rooms':
       case '/warden/rooms':
       case '/caretaker/rooms':
+      case '/chief-warden/occupancy':
       case '/rooms':
         return <RoomOccupancyBoard />;
       case '/office/residents':
@@ -129,6 +138,8 @@ function AppContent() {
       case '/warden/residents':
       case '/residents':
         return <StudentDirectory />;
+      case '/admin/staff':
+        return <StaffAccounts />;
 
       // Complaints & Grievances
       case '/student/complaints':
@@ -155,6 +166,7 @@ function AppContent() {
       case '/admin/maintenance':
       case '/warden/maintenance':
       case '/caretaker/maintenance':
+      case '/mess/maintenance':
         return <MaintenanceSchedule userRole={user.role} csrfToken={csrfToken || ''} />;
 
       // Smart Laundry
@@ -169,6 +181,8 @@ function AppContent() {
       case '/mess/counter':
       case '/warden/mess':
         return <MessManagerCounter />;
+      case '/mess/menus':
+        return <MessTimetable />;
       case '/mess/check-in':
         return <MessCheckInPage onNavigate={navigateTo} />;
       case '/mess/refunds':
@@ -179,7 +193,11 @@ function AppContent() {
       case '/student/refunds':
         return <StudentAttendanceStrip />;
 
-      // Admin Tools
+      // Admin Tools & Diagnostics
+      case '/admin/health':
+        return <SystemHealth />;
+      case '/admin/audit':
+        return <AuditTrail />;
       case '/admin/privilege-proof':
         return <AdminPrivilegeProof />;
 

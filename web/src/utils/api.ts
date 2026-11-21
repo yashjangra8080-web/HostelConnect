@@ -17,6 +17,44 @@ export function apiUrl(path: string): string {
 }
 
 /**
+ * Global fetch interceptor:
+ * Automatically routes all '/api/...' calls to API_BASE_URL when configured,
+ * and ensures credentials: 'include' is passed on cross-origin requests.
+ */
+export function setupGlobalFetchInterceptor(): void {
+  if (typeof window === 'undefined') return;
+
+  const originalFetch = window.fetch.bind(window);
+
+  window.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    let url: string;
+    if (typeof input === 'string') {
+      url = input;
+    } else if (input instanceof URL) {
+      url = input.href;
+    } else if (input instanceof Request) {
+      url = input.url;
+    } else {
+      url = String(input);
+    }
+
+    if (API_BASE_URL && url.startsWith('/api')) {
+      url = `${API_BASE_URL}${url}`;
+    }
+
+    const options: RequestInit = {
+      ...init,
+      credentials: init?.credentials || 'include',
+    };
+
+    if (input instanceof Request) {
+      return originalFetch(new Request(url, input), options);
+    }
+    return originalFetch(url, options);
+  };
+}
+
+/**
  * Resilient fetch wrapper:
  * 1. Automatically prepends API_BASE_URL if needed.
  * 2. Injects credentials: 'include' for cross-origin cookies.

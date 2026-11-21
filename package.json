@@ -7,6 +7,9 @@
     "server",
     "web"
   ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "start": "npm run start --workspace=server",
     "dev": "concurrently \"npm run dev --workspace=server\" \"npm run dev --workspace=web\"",

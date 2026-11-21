@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { KeyRound, AlertTriangle, CheckCircle2, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.js';
+import { apiUrl } from '../utils/api.js';
 import { Button } from '../components/ui/Button.js';
 import { Input } from '../components/ui/Input.js';
 
@@ -39,7 +40,7 @@ export const ChangePasswordPage: React.FC<ChangePasswordPageProps> = ({ onSucces
 
     setIsLoading(true);
     try {
-      const res = await fetch('/api/auth/change-password', {
+      const res = await fetch(apiUrl('/api/auth/change-password'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

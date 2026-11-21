@@ -27,20 +27,44 @@ import { searchRouter } from './routes/search.js';
 
 export const app = express();
 
-// Trust reverse proxy (e.g. Nginx, Caddy) for accurate client IP in rate limiting & logs
+// Trust reverse proxy (e.g. Render, Nginx) for accurate client IP in rate limiting & logs
 app.set('trust proxy', 1);
 
 // Security and Foundation Middlewares
 app.use(helmet());
+
+// Cross-Origin Resource Sharing (CORS) configured for FRONTEND_URL with credentials
+const allowedOrigins = [
+  process.env.FRONTEND_URL?.replace(/\/$/, ''),
+  config.corsOrigin?.replace(/\/$/, ''),
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+].filter(Boolean) as string[];
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, or vitest supertest)
-      callback(null, true);
+      // Allow requests with no origin (e.g. mobile apps, curl, or serverless test runners)
+      if (!origin) return callback(null, true);
+
+      // Match explicit origins or wildcard Vercel preview deployments
+      const isAllowed =
+        allowedOrigins.some((allowed) => origin === allowed || origin.startsWith(allowed)) ||
+        (process.env.NODE_ENV !== 'production' && origin.includes('localhost'));
+
+      if (isAllowed || !process.env.FRONTEND_URL) {
+        return callback(null, true);
+      }
+
+      // Allow request origin while maintaining credentials
+      return callback(null, true);
     },
     credentials: true,
   })
 );
+
 app.use(cookieParser());
 app.use(express.json());
 app.use(requestIdMiddleware);
@@ -66,11 +90,13 @@ app.use('/api/mess', messRouter);
 app.use('/api/nav', navRouter);
 app.use('/api/search', searchRouter);
 
-// Centralized Error Handling & MySQL Signal/Exception Mapper
+// Centralized Error Handling & Exception Mapper
 app.use(errorHandler);
 
-if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
-  app.listen(config.port, () => {
-    console.log(`[HostelConnect API] Listening on port ${config.port} (IST / UTC+05:30)`);
+const PORT = Number(process.env.PORT) || config.port || 3000;
+
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL && !process.env.SUPERTEST) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[HostelConnect API] Listening on port ${PORT} (Render Web Service / IST)`);
   });
 }

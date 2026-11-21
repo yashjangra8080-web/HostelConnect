@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { apiUrl } from '../utils/api';
 
 export interface AuthUser {
   userId: number;
@@ -49,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUser = async () => {
     try {
-      const res = await fetch('/api/auth/me', { credentials: 'include' });
+      const res = await fetch(apiUrl('/api/auth/me'), { credentials: 'include' });
       if (res.ok) {
         const text = await res.text();
         if (!text) {
@@ -95,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (loginId: string, password: string): Promise<AuthUser> => {
     let res: Response;
     try {
-      res = await fetch('/api/auth/login', {
+      res = await fetch(apiUrl('/api/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ login_id: loginId, password }),
@@ -151,7 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      await fetch(apiUrl('/api/auth/logout'), { method: 'POST', credentials: 'include' });
     } finally {
       setUser(null);
       setCsrfToken(null);

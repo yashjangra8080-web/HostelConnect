@@ -14,47 +14,28 @@ healthRouter.get('/', (_req: Request, res: Response) => {
 
 healthRouter.get('/health', async (_req: Request, res: Response) => {
   try {
-    const [rows] = await query<any[]>(
-      'SELECT @@event_scheduler AS event_scheduler, @@time_zone AS time_zone, NOW() AS server_time'
-    );
+    // Trivial database query verifying PostgreSQL connectivity
+    const [rows] = await query<any[]>('SELECT 1 AS ok, NOW() AS server_time');
 
     if (!rows || rows.length === 0) {
-      res.status(503).json({
+      return res.status(503).json({
         status: 'error',
         message: 'No response from database health query',
       });
-      return;
     }
 
-    const { event_scheduler, time_zone, server_time } = rows[0];
-    const isSchedulerOn = String(event_scheduler).toUpperCase() === 'ON';
-
-    if (!isSchedulerOn) {
-      res.status(503).json({
-        status: 'degraded',
-        message: 'Event scheduler is OFF',
-        database: {
-          connected: true,
-          event_scheduler,
-          time_zone,
-          server_time,
-        },
-      });
-      return;
-    }
-
-    res.status(200).json({
+    return res.status(200).json({
       status: 'ok',
+      service: 'HostelConnect API',
       database: {
         connected: true,
-        event_scheduler,
-        time_zone,
-        server_time,
+        server_time: rows[0].server_time,
       },
-      uptimeSeconds: process.uptime(),
+      uptimeSeconds: Math.floor(process.uptime()),
+      timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    res.status(503).json({
+    return res.status(503).json({
       status: 'error',
       message: 'Failed to connect to database',
       error: error?.message || String(error),

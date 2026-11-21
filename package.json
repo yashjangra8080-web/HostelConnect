@@ -13,10 +13,12 @@
   "scripts": {
     "start": "npm run start --workspace=server",
     "dev": "concurrently \"npm run dev --workspace=server\" \"npm run dev --workspace=web\"",
-    "db:migrate": "tsx scripts/migrate.ts",
+    "db:migrate": "tsx scripts/migrate-postgres.ts",
+    "db:migrate:mysql": "tsx scripts/migrate.ts",
     "db:routines": "tsx scripts/routine-loader.ts",
     "db:audit-triggers": "tsx scripts/generate-audit-triggers.ts",
-    "db:seed": "tsx scripts/seed.ts",
+    "db:seed": "tsx scripts/seed-postgres.ts",
+    "db:seed:mysql": "tsx scripts/seed.ts",
     "db:seed:mess": "tsx scripts/seed-mess.ts",
     "db:reset": "tsx scripts/reset-demo.ts",
     "show-grants": "tsx scripts/show-grants.ts",
@@ -26,6 +28,7 @@
     "build:web": "npm run build --workspace=web"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.17",
     "@types/node": "^22.10.1",
     "concurrently": "^9.1.0",
     "playwright": "^1.64.1",

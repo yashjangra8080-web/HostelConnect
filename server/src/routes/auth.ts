@@ -157,10 +157,10 @@ authRouter.post(
 
       const isProduction = config.nodeEnv === 'production';
 
-      // Set httpOnly SameSite cookie for JWT session
+      // Set httpOnly SameSite cookie for JWT session (none for cross-origin production, lax for local dev)
       res.cookie('token', token, {
         httpOnly: true,
-        sameSite: 'strict',
+        sameSite: isProduction ? 'none' : 'lax',
         secure: isProduction,
         path: '/',
         maxAge: 24 * 60 * 60 * 1000,
@@ -169,7 +169,7 @@ authRouter.post(
       // Set non-httpOnly SameSite cookie for CSRF verification
       res.cookie('csrf_token', csrfToken, {
         httpOnly: false,
-        sameSite: 'strict',
+        sameSite: isProduction ? 'none' : 'lax',
         secure: isProduction,
         path: '/',
         maxAge: 24 * 60 * 60 * 1000,
@@ -196,8 +196,9 @@ authRouter.post(
  * Clears JWT session cookie and CSRF cookie.
  */
 authRouter.post('/logout', (req: Request, res: Response) => {
-  res.clearCookie('token', { path: '/' });
-  res.clearCookie('csrf_token', { path: '/' });
+  const isProduction = config.nodeEnv === 'production';
+  res.clearCookie('token', { path: '/', sameSite: isProduction ? 'none' : 'lax', secure: isProduction });
+  res.clearCookie('csrf_token', { path: '/', sameSite: isProduction ? 'none' : 'lax', secure: isProduction });
   return res.status(200).json({ message: 'Logged out successfully' });
 });
 

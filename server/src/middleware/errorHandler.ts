@@ -10,8 +10,8 @@ export function errorHandler(err: any, req: Request, res: Response, next: NextFu
     code: err.code,
   });
 
-  // 1. MySQL Custom Application Signal: SIGNAL SQLSTATE '45000'
-  if (err.sqlState === '45000' || err.errno === 1644) {
+  // 1. Database Custom Application Signal / Raise Exception: SQLSTATE '45000' or PostgreSQL 'P0001'
+  if (err.sqlState === '45000' || err.code === '45000' || err.code === 'P0001' || err.errno === 1644) {
     return res.status(422).json({
       error: 'Business Rule Violation',
       message: err.sqlMessage || err.message || 'Operation rejected by database rule.',
@@ -19,44 +19,36 @@ export function errorHandler(err: any, req: Request, res: Response, next: NextFu
     });
   }
 
-  // 2. MySQL Duplicate Key (ER_DUP_ENTRY) -> 409 Conflict
-  if (err.errno === 1062 || err.code === 'ER_DUP_ENTRY') {
+  // 2. Duplicate Key / Unique Constraint Violation -> 409 Conflict (PostgreSQL: 23505, MySQL: 1062 / ER_DUP_ENTRY)
+  if (err.code === '23505' || err.errno === 1062 || err.code === 'ER_DUP_ENTRY') {
     return res.status(409).json({
       error: 'Conflict',
       message: 'A record with this identifier or unique property already exists.',
-      code: 'ER_DUP_ENTRY',
+      code: 'UNIQUE_VIOLATION',
     });
   }
 
-  // 3. MySQL Foreign Key Restrict on Delete/Update -> 409 Conflict
-  if (err.errno === 1451 || err.code === 'ER_ROW_IS_REFERENCED_2') {
+  // 3. Foreign Key Reference Violation -> 409 Conflict / 422 Unprocessable Entity (PostgreSQL: 23503, MySQL: 1451/1452)
+  if (err.code === '23503' || err.errno === 1451 || err.errno === 1452 || err.code === 'ER_ROW_IS_REFERENCED_2') {
     return res.status(409).json({
       error: 'Conflict',
-      message: 'Cannot delete or update this record because other records depend on it.',
-      code: 'ER_ROW_IS_REFERENCED',
+      message: 'Referenced foreign record either does not exist or has active dependencies.',
+      code: 'FOREIGN_KEY_VIOLATION',
     });
   }
 
-  // 4. MySQL Foreign Key Missing Reference -> 422 Unprocessable Entity
-  if (err.errno === 1452 || err.code === 'ER_NO_REFERENCED_ROW_2') {
-    return res.status(422).json({
-      error: 'Unprocessable Entity',
-      message: 'Referenced parent record does not exist in the database.',
-      code: 'ER_NO_REFERENCED_ROW',
-    });
-  }
-
-  // 5. MySQL Check Constraint Violated -> 422 Unprocessable Entity
-  if (err.errno === 3819 || err.code === 'ER_CHECK_CONSTRAINT_VIOLATED') {
+  // 4. Check Constraint Violated -> 422 Unprocessable Entity (PostgreSQL: 23514, MySQL: 3819)
+  if (err.code === '23514' || err.errno === 3819 || err.code === 'ER_CHECK_CONSTRAINT_VIOLATED') {
     return res.status(422).json({
       error: 'Unprocessable Entity',
       message: 'Submitted values violate database check constraints.',
-      code: 'ER_CHECK_CONSTRAINT_VIOLATED',
+      code: 'CHECK_CONSTRAINT_VIOLATED',
     });
   }
 
-  // 6. MySQL Privilege Denied -> 403 Forbidden
+  // 5. Database Privilege Denied -> 403 Forbidden (PostgreSQL: 42501, MySQL: 1142/1143)
   if (
+    err.code === '42501' ||
     err.errno === 1142 ||
     err.errno === 1143 ||
     err.code === 'ER_TABLEACCESS_DENIED_ERROR' ||
@@ -64,8 +56,8 @@ export function errorHandler(err: any, req: Request, res: Response, next: NextFu
   ) {
     return res.status(403).json({
       error: 'Forbidden',
-      message: 'Database permission denied for this role.',
-      code: 'ER_TABLEACCESS_DENIED',
+      message: 'Database permission denied for this operation.',
+      code: 'ACCESS_DENIED',
     });
   }
 

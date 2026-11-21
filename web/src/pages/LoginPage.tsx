@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, User, AlertCircle, Building2, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.js';
+import { apiUrl } from '../utils/api.js';
 import { Button } from '../components/ui/Button.js';
 import { Input } from '../components/ui/Input.js';
 
@@ -39,8 +40,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSuccess }) => {
 
   // Fetch live facts from /api/public/stats
   useEffect(() => {
-    fetch('/api/public/stats')
-      .then((res) => (res.ok ? res.json() : null))
+    fetch(apiUrl('/api/public/stats'))
+      .then(async (res) => {
+        if (!res.ok) return null;
+        try {
+          return await res.json();
+        } catch {
+          return null;
+        }
+      })
       .then((data) => setStats(data))
       .catch(() => setStats(null));
   }, []);

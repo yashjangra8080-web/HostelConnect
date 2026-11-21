@@ -4,19 +4,22 @@ import path from 'path';
 // Load .env from root or server
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), 'server/.env') });
 
 export const config = {
   port: Number(process.env.PORT) || 3000,
   nodeEnv: process.env.NODE_ENV || 'development',
   jwtSecret: process.env.JWT_SECRET || 'hostelconnect-dev-secret-key-2026-nsut',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '24h',
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  corsOrigin: process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:5173',
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  databaseUrl: process.env.DATABASE_URL || '',
   db: {
     host: process.env.DB_HOST || '127.0.0.1',
-    port: Number(process.env.DB_PORT) || 3306,
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'yash',
-    database: process.env.DB_NAME || 'hostelconnect',
+    port: Number(process.env.DB_PORT) || 5432,
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'postgres',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
